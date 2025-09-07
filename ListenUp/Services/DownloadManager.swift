@@ -136,7 +136,8 @@ final class DownloadManager: NSObject, URLSessionDownloadDelegate {
         let p = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
         
         realm.update(id) {
-            $0.progress = p
+//            $0.progress = p
+            $0.progress = max($0.progress, min(max(p, 0), 1))
             $0.status = .running
         }
         NotificationCenter.default.post(name: DownloadManager.didUpdate, object: id)
