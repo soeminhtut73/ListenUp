@@ -30,12 +30,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneWillResignActive(_ scene: UIScene) {
-        guard let webView = topBrowserVC() else { return }
-        let js = "__forceResumeAudio && __forceResumeAudio();"
-        webView.evaluateJavaScript(js, completionHandler: nil)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-            webView.evaluateJavaScript(js, completionHandler: nil)
-        }
     }
 
     func sceneWillEnterForeground(_ scene: UIScene) {
@@ -44,10 +38,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func sceneDidEnterBackground(_ scene: UIScene) {
         
-    }
-    
-    private func topBrowserVC() -> WKWebView? {
-        return BrowserController.shared?.webView
     }
 
 

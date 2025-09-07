@@ -11,6 +11,8 @@ import MediaPlayer
 import WebBrowser
 import WebKit
 import RealmSwift
+import AVKit
+import AVFoundation
 
 protocol BrowserControllerDelegate: AnyObject {
     func didTapDownloadButton(url: URL)
@@ -22,16 +24,7 @@ class BrowserController: UIViewController {
     
     static weak var shared: BrowserController?
     
-    var webView: WKWebView = {
-        let ucc = WKUserContentController()
-        ucc.addUserScript(WebViewScripts.autoResumeScript)
-        
-        let cfg = WKWebViewConfiguration()
-        cfg.userContentController = ucc
-        cfg.allowsInlineMediaPlayback = true
-        cfg.mediaTypesRequiringUserActionForPlayback = [] // user taps play once → you may resume
-        return WKWebView(frame: .zero, configuration: cfg)
-    }()
+    var webView: WKWebView = WKWebView()
     
     private var lastWatchURL: String?
     
@@ -39,16 +32,6 @@ class BrowserController: UIViewController {
     private var progressView = UIProgressView(progressViewStyle: .default)
     private var pendingMediaURL: URL?
     private var pendingMediaType: String?
-    
-    private lazy var urlField: UITextField = {
-        let tf = UITextField()
-        tf.placeholder = "Enter URL or search"
-        tf.keyboardType = .URL
-        tf.autocapitalizationType = .none
-        tf.returnKeyType = .go
-        tf.delegate = self
-        return tf
-    }()
     
     private lazy var backButton: UIButton = {
         let btn = UIButton(type: .system)
@@ -70,128 +53,12 @@ class BrowserController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
-//        installAutoResumeAudioScript(into: webView)
-        webView.navigationDelegate = self
-        webView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(webView)
-        NSLayoutConstraint.activate([
-            webView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
         
-        // Optional: wire lock-screen play/pause to page media
-        wireRemoteCommands()
-        
-        // Example start page
-        webView.load(URLRequest(url: URL(string: "https://m.youtube.com")!))
-        
-//        configureWebView()
-//        configureUI()
-//        configureSearchBar()
+        configureWebView()
+        configureUI()
+        configureSearchBar()
         
     }
-    
-    // Favorite toggle button
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "★",
-                                                            style: .plain,
-                                                            target: self,
-                                                            action: #selector(toggleFavorite))
-    }
-    
-    // FIXME: -
-    private func installAutoResumeAudioScript(into webView: WKWebView) {
-        let js = """
-        (function(){
-          if (window.__autoResumeInstalled) return; window.__autoResumeInstalled = true;
-        
-          function pickMedia(){
-            return document.querySelector('audio') || document.querySelector('video');
-          }
-        
-          async function tryPlay(){
-            var el = pickMedia(); if (!el) return false;
-            try {
-              el.muted = false;
-              el.autoplay = true;
-              el.preload = 'auto';
-              el.setAttribute('playsinline','');
-              await el.play();
-              return true;
-            } catch(e){ return false; }
-          }
-        
-          var pending = false;
-          function schedule(){
-            if (pending) return;
-            pending = true;
-            setTimeout(function(){ pending = false; tryPlay(); }, 120);
-          }
-        
-          // Public hook callable from Swift
-          window.__forceResumeAudio = function(){ schedule(); return true; };
-        
-          // If page pauses on background, try resuming
-          document.addEventListener('visibilitychange', function(){
-            if (document.visibilityState === 'hidden') schedule();
-          }, true);
-        
-          // Extra lifecycle hooks
-          window.addEventListener('pagehide', function(){ schedule(); }, true);
-          window.addEventListener('freeze', function(){ schedule(); }, true);
-        
-          // If media emits pause-like signals near background, try again
-          ['pause','suspend','waiting','stalled'].forEach(function(evt){
-            document.addEventListener(evt, function(e){
-              var t = e && e.target;
-              if (t && (t.tagName === 'AUDIO' || t.tagName === 'VIDEO')) schedule();
-            }, true);
-          });
-        })();
-        """;
-        
-        let script = WKUserScript(source: js, injectionTime: .atDocumentStart, forMainFrameOnly: true)
-        webView.configuration.userContentController.addUserScript(script)
-    }
-    
-    /// Call this right before the app resigns active (from SceneDelegate)
-    func ensureAudioResumeBeforeBackground() {
-        let js = "__forceResumeAudio && __forceResumeAudio();"
-        webView.evaluateJavaScript(js, completionHandler: nil)
-        // fire twice with a tiny delay to “win” any page visibility handlers
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-            self.webView.evaluateJavaScript(js, completionHandler: nil)
-        }
-    }
-    
-    // Optional: improve UX with lock-screen commands
-    private func wireRemoteCommands() {
-        let center = MPRemoteCommandCenter.shared()
-        center.playCommand.addTarget { [weak self] _ in
-            self?.webView.evaluateJavaScript("document.querySelector('audio,video')?.play()")
-            return .success
-        }
-        center.pauseCommand.addTarget { [weak self] _ in
-            self?.webView.evaluateJavaScript("document.querySelector('audio,video')?.pause()")
-            return .success
-        }
-        center.togglePlayPauseCommand.addTarget { [weak self] _ in
-            self?.webView.evaluateJavaScript("""
-            (function(){
-              var m=document.querySelector('audio,video'); if(!m) return false;
-              if(m.paused){m.play();} else {m.pause();}
-              return true;
-            })();
-          """)
-            return .success
-        }
-    }
-    
-    // FIXME: -
     
     //MARK: - HelperFunctions
     
@@ -200,28 +67,15 @@ class BrowserController: UIViewController {
         
         view.addSubview(webView)
         view.addSubview(progressView)
-        view.addSubview(urlField)
         
         webView.translatesAutoresizingMaskIntoConstraints = false
         progressView.translatesAutoresizingMaskIntoConstraints = false
-        urlField.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            
-            urlField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            urlField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-            urlField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            urlField.heightAnchor.constraint(equalToConstant: 40),
-            
-            progressView.topAnchor.constraint(equalTo: urlField.bottomAnchor),
-            progressView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            progressView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            progressView.heightAnchor.constraint(equalToConstant: 2),
-            
-            webView.topAnchor.constraint(equalTo: progressView.bottomAnchor),
+            webView.topAnchor.constraint(equalTo: view.topAnchor),
             webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            webView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 54),
         ])
     }
     
@@ -241,12 +95,11 @@ class BrowserController: UIViewController {
         
         // 1. Create a user-content controller and add your scripts
         let userContent = WKUserContentController()
-        userContent.addUserScript(WebViewScripts.autoResumeScript)
-//        userContent.addUserScript(WebViewScripts.trackerScript)
-//        userContent.addUserScript(WebViewScripts.jsUserScript)
-//        userContent.addUserScript(WebViewScripts.mediaScript)
-//        userContent.add(self, name: "pageURL")
-//        userContent.add(self, name: "mediaEvent")
+        userContent.addUserScript(WebViewScripts.trackerScript)
+        userContent.addUserScript(WebViewScripts.jsUserScript)
+        userContent.addUserScript(WebViewScripts.mediaScript)
+        userContent.add(self, name: "pageURL")
+        userContent.add(self, name: "mediaEvent")
         
         // 2. Create a WKWebViewConfiguration that uses it
         let config = WKWebViewConfiguration()
@@ -261,24 +114,6 @@ class BrowserController: UIViewController {
                             forKeyPath: #keyPath(WKWebView.estimatedProgress),
                             options: .new,
                             context: nil)
-        
-        // Remote commands (play/pause via page video element)
-
-        let cmd = MPRemoteCommandCenter.shared()
-        cmd.playCommand.addTarget { [weak self] _ in self?.webView.evaluateJavaScript("document.querySelector('video,audio')?.play()"); return .success }
-        
-        cmd.pauseCommand.addTarget { [weak self] _ in self?.webView.evaluateJavaScript("document.querySelector('video,audio')?.pause()"); return .success }
-        
-        cmd.togglePlayPauseCommand.addTarget { [weak self] _ in
-            self?.webView.evaluateJavaScript("""
-                  (function(){
-                    var m=document.querySelector('audio,video'); if(!m) return false;
-                    if(m.paused){m.play();} else {m.pause();}
-                    return true;
-                  })();
-                """)
-                return .success
-            }
         
         load("https://www.youtube.com")
         
@@ -295,101 +130,94 @@ class BrowserController: UIViewController {
             }
         }
         if let url = URL(string: s) { webView.load(URLRequest(url: url)) }
-        urlField.text = s
+    
     }
     
-    func ensurePlaybackBeforeBackground() {
-        let js = """
-          (function(){
-            var el = document.querySelector('video, audio');
-            if(!el) return false;
-            try { el.muted = false; el.play().catch(()=>{}); } catch(e){}
-            // Try PiP for VIDEO to survive background on some sites
-            if (el.tagName === 'VIDEO' &&
-                document.pictureInPictureEnabled &&
-                !document.pictureInPictureElement) {
-              try { el.requestPictureInPicture().catch(()=>{}); } catch(_){}
-            }
-            return true;
-          })();
-        """
-        // Run immediately and a tick later to race visibility handlers
-        webView.evaluateJavaScript(js, completionHandler: nil)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.webView.evaluateJavaScript(js, completionHandler: nil)
-        }
+    private func configureSearchBar() {
+        searchBar.placeholder = "Enter URL"
+        searchBar.delegate = self
+        searchBar.autocapitalizationType = .none
+        searchBar.keyboardType = .URL
+        searchBar.returnKeyType = .go
+        searchBar.showsCancelButton = false
+        searchBar.translatesAutoresizingMaskIntoConstraints = false
+        searchBar.backgroundColor = .white
+        searchBar.searchBarStyle = .minimal
+        searchBar.backgroundImage = UIImage()
+        searchBar.searchTextField.leftViewMode = .never
+        view.addSubview(searchBar)
+        
+        progressView.trackTintColor = .clear
+        progressView.progressTintColor = .blue
+        view.addSubview(progressView)
+        view.addSubview(backButton)
+        
+        // searchBar pinned to bottom safe area
+        NSLayoutConstraint.activate([
+            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 38),
+            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            searchBar.heightAnchor.constraint(equalToConstant: 54),
+            
+            progressView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            progressView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            progressView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            progressView.heightAnchor.constraint(equalToConstant: 2),
+            
+            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backButton.trailingAnchor.constraint(equalTo: searchBar.leadingAnchor),
+            backButton.centerYAnchor.constraint(equalTo: searchBar.centerYAnchor),
+            backButton.heightAnchor.constraint(equalToConstant: 54)
+        ])
+
+        // Keep the searchBar above the keyboard
+        view.keyboardLayoutGuide.topAnchor.constraint(equalTo: searchBar.bottomAnchor).isActive = true
     }
-    
-    // Bridge play/pause to page <video> (best-effort)
-    private func jsPlay()  {
-        webView.evaluateJavaScript("document.querySelector('video')?.play()")
-    }
-    
-    private func jsPause() {
-        webView.evaluateJavaScript("document.querySelector('video')?.pause()")
-    }
-    
-    private func jsToggle() {
-        webView.evaluateJavaScript("""
-          (function(){
-            var v=document.querySelector('video'); if(!v) return false;
-            if(v.paused){v.play();} else {v.pause();}
-            return true;
-          })();
-        """)
-    }
-    
-    private func updateNowPlaying(title: String, site: String) {
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = [
-            MPMediaItemPropertyTitle: title,
-            MPMediaItemPropertyArtist: site
-          ]
-    }
-    
-//    private func configureSearchBar() {
-//        searchBar.placeholder = "Enter URL"
-//        searchBar.delegate = self
-//        searchBar.autocapitalizationType = .none
-//        searchBar.keyboardType = .URL
-//        searchBar.returnKeyType = .go
-//        searchBar.showsCancelButton = false
-//        searchBar.translatesAutoresizingMaskIntoConstraints = false
-//        searchBar.backgroundColor = .white
-//        searchBar.searchBarStyle = .minimal
-//        searchBar.backgroundImage = UIImage()
-//        searchBar.searchTextField.leftViewMode = .never
-//        view.addSubview(searchBar)
-//        
-//        progressView.translatesAutoresizingMaskIntoConstraints = false
-//        progressView.trackTintColor = .clear
-//        progressView.progressTintColor = .blue
-//        view.addSubview(progressView)
-//        view.addSubview(backButton)
-//        
-//        // searchBar pinned to bottom safe area
-//        NSLayoutConstraint.activate([
-//            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 38),
-//            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-//            searchBar.heightAnchor.constraint(equalToConstant: 54),
-//            
-//            progressView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-//            progressView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-//            progressView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-//            progressView.heightAnchor.constraint(equalToConstant: 2),
-//            
-//            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 8),
-//            backButton.centerYAnchor.constraint(equalTo: searchBar.centerYAnchor),
-//            backButton.widthAnchor.constraint(equalToConstant: 30),
-//            backButton.heightAnchor.constraint(equalToConstant: 30)
-//        ])
-//
-//        // Keep the searchBar above the keyboard
-//        view.keyboardLayoutGuide.topAnchor.constraint(equalTo: searchBar.bottomAnchor).isActive = true
-//    }
     
     private func downloadMedia(from url: String, mediaType: String, mediaTitle: String) {
-        
-        
+        // FIXME: - ExtractAPI
+        print("Debug: url : \(url)")
+        ExtractAPI.extract(from: url) { [weak self] result in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let error):
+                    self.showAlert(title: "Oop!", message: "Extract Fail \(error)!")
+                    
+                case .success(let resp):
+                    if resp.isTooLong {
+                        self.showAlert(title: "Oop!", message: "Choose no longer than 10 minutes!")
+                        return
+                    }
+                    
+                    guard let safeUrl = URL(string: resp.url) else {
+                        return
+                    }
+                    
+                    print("Debug: extract success , ready to download.")
+                    DownloadManager.shared.enqueue(url: safeUrl, title: resp.title, thumbURL: resp.thumb)
+                    
+                    // create realm record
+//                    let model = MediaModel()
+//                    model.title = resp.title
+//                    model.originalURL = url
+//                    model.mediaType = mediaType
+//                    model.thumbnail = resp.thumb
+//                    RealmService.shared.createOrUpdate(item: model)
+
+                    // start download
+//                    DownloadManager.shared.download(safeUrl, itemID: model.id) { result in
+//                        switch result {
+//                        case.success(let fileURL):
+//                            print("Debug: download success with url : \(fileURL)")
+//                            
+//                        case .failure(let error):
+//                            print("Debug: download failed : \(error.localizedDescription)")
+//                        }
+//                    }
+                    
+                }
+            }
+        }
     }
     
     private func showAlert(title: String, message: String) {
@@ -415,22 +243,14 @@ class BrowserController: UIViewController {
         webView.goBack()
     }
     
-    @objc private func toggleFavorite() {
-        guard let u = webView.url else { return }
-        RealmService.shared.toggleFavorite(url: u, title: webView.title ?? u.absoluteString)
-    }
-    
     //MARK: - Media Download Prompt
     private func promptDownloadOptions(for url: String, mediaType: String, mediaTitle: String) {
         
-        // Show action sheet with Download, Copy Link, Cancel
         let alert = UIAlertController(title: "Download Media?",
                                       message: mediaType,
                                       preferredStyle: .alert)
         
         alert.addAction(UIAlertAction(title: "Download", style: .default, handler: { _ in
-            // FIXME: - Need to implement downloadMedia
-            
             self.downloadMedia(from: url, mediaType: mediaType, mediaTitle: mediaTitle)
         }))
         
@@ -444,6 +264,56 @@ class BrowserController: UIViewController {
         present(alert, animated: true)
     }
     
+    func playVideo(from url: URL) {
+        let player = AVPlayer(url: url)
+        let playerViewController = AVPlayerViewController()
+        playerViewController.player = player
+
+        // Present the video player
+        DispatchQueue.main.async {
+            self.present(playerViewController, animated: true) {
+                player.play()
+            }
+        }
+    }
+    
+    func playInApp(with url: String) {
+        ExtractAPI.extract(from: url) { [weak self] result in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let error):
+                    self.showAlert(title: "Oop!", message: "Extract Fail \(error)!")
+                    
+                case .success(let resp):
+                    if resp.isTooLong {
+                        self.showAlert(title: "Oop!", message: "Video longer than 10 minutes!")
+                        return
+                    }
+                    
+                    guard let url = URL(string: resp.url) else {
+                        return
+                    }
+                    
+                    // 1) Pause the page player to avoid double audio
+                    self.webView.evaluateJavaScript("document.querySelector('video,audio')?.pause()")
+                    
+                    self.playVideo(from: url)
+                    
+//                    self.switchNowPlayingTab()
+
+                }
+            }
+        }
+    }
+    
+    private func switchNowPlayingTab() {
+        if let tab = self.tabBarController {
+            // assume now playing is at index 2, adjust to your order
+            tab.selectedIndex = 2
+        }
+    }
+    
 }
 
 //MARK: - WKUserScriptHandler
@@ -454,14 +324,16 @@ extension BrowserController: WKScriptMessageHandler {
         guard let body = message.body as? [String: Any] else { return }
         
         if message.name == "mediaEvent" {
-//            guard let mediaType = body["type"] as? String else { return }
-//            let mediaTitle = body["title"] as? String ?? "nil"
+            guard let mediaType = body["type"] as? String else { return }
+            let mediaTitle = body["title"] as? String ?? "nil"
             
-//            if let lastWatchURL = lastWatchURL {
-//                DispatchQueue.main.async { [weak self] in
-//                    self?.promptDownloadOptions(for: lastWatchURL, mediaType: mediaType, mediaTitle: mediaTitle)
-//                }
-//            }
+            
+            
+            if let lastWatchURL = lastWatchURL {
+                DispatchQueue.main.async { [weak self] in
+                    self?.promptDownloadOptions(for: lastWatchURL, mediaType: mediaType, mediaTitle: mediaTitle)
+                }
+            }
             
         } else {
             
@@ -480,24 +352,17 @@ extension BrowserController: WKScriptMessageHandler {
 
 // MARK: – WKNavigationDelegate
 extension BrowserController: WKNavigationDelegate {
+    
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        urlField.text = webView.url?.absoluteString
         title = webView.title
         
         // Save to history
-        if let u = webView.url {
+//        if let u = webView.url {
 //            RealmService.shared.addHistory(url: u, title: webView.title ?? u.host ?? "Page")
-            print("Debug: update now : \(webView.title ?? "")")
-            updateNowPlaying(title: webView.title ?? "Playing", site: u.host ?? "")
-        }
+//            print("Debug: update now : \(webView.title ?? "")")
+//        }
     }
     
-//    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void) {
-//        if let url = navigationAction.request.url {
-//            print("Debug: Navigation to actual URL: \(url)")
-//        }
-//        decisionHandler(.allow)
-//    }
 }
 
 //MARK: - UITextFieldDelegate

@@ -178,3 +178,7 @@ extension UIView {
                bottom: view.safeAreaLayoutGuide.bottomAnchor, right: view.safeAreaLayoutGuide.rightAnchor)
     }
 }
+
+extension Notification.Name {
+    static let playbackDidUpdate = Notification.Name("PlaybackManager.didUpdate")
+}

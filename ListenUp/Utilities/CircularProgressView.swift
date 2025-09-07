@@ -14,7 +14,7 @@ class CircularProgressView: UIView {
     private let progressLayer = CAShapeLayer()
     
     // Progress: 0.0 ... 1.0
-    var progress: Float = 0 {
+    var progress: Double = 0 {
         didSet {
             setStroke(to: CGFloat(progress))
         }

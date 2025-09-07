@@ -24,9 +24,10 @@ class HistoryTableViewCell: UITableViewCell {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
         imageView.image = UIImage(systemName: "music.note")
+        imageView.tintColor = .secondaryLabel
+        imageView.backgroundColor = .clear
         imageView.layer.cornerRadius = 8
         imageView.clipsToBounds = true
-//        imageView.isHidden = true
         return imageView
     }()
     
@@ -44,6 +45,7 @@ class HistoryTableViewCell: UITableViewCell {
         button.contentMode = .scaleAspectFit
         button.setImage(UIImage(systemName: "ellipsis"), for: .normal)
         button.isUserInteractionEnabled = true
+        button.addTarget(self, action: #selector(handleOptionButtonTapped), for: .touchUpInside)
         return button
     }()
     
@@ -53,14 +55,7 @@ class HistoryTableViewCell: UITableViewCell {
         return view
     }()
     
-    //MARK: - Properties
     weak var delegate: HistoryTableViewCellDelegate?
-    
-    var item: MediaModel? {
-        didSet {
-            configure()
-        }
-    }
     
     
     //MARK: - Lifecycle
@@ -73,23 +68,13 @@ class HistoryTableViewCell: UITableViewCell {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        albumImageView.isHidden = false
-        albumImageView.image = nil
-        title.text = nil
-        circularProgressView.isHidden = true
-        
-    }
+
     
     private func setupUI() {
         contentView.addSubview(albumImageView)
         contentView.addSubview(title)
         contentView.addSubview(optionButton)
         contentView.addSubview(circularProgressView)
-        
-        optionButton.addTarget(self, action: #selector(handleOptionButtonTapped), for: .touchUpInside)
         
         albumImageView.anchor(left: leftAnchor, paddingLeft: 16, width: 30, height: 30)
         albumImageView.centerY(inView: self)
@@ -101,38 +86,43 @@ class HistoryTableViewCell: UITableViewCell {
         optionButton.anchor(right: rightAnchor, paddingRight: 16, width: 30, height: 30)
         optionButton.centerY(inView: self)
         
-        
         title.centerY(inView: albumImageView)
         title.anchor(left: albumImageView.rightAnchor, right: optionButton.leftAnchor, paddingLeft: 12, paddingRight: 12)
     }
     
-    
-//    private func configureButton(title: String, color: UIColor, enable: Bool) {
-//        optionButton.setTitle(title, for: .normal)
-//        optionButton.setTitleColor(enable ? color : .systemGray3, for: .normal)
-//        optionButton.layer.borderColor = (enable ? color : .systemGray3).cgColor
-//        optionButton.isEnabled = enable
-//        optionButton.backgroundColor = enable ? color.withAlphaComponent(0.1) : .clear
-//    }
-    
     // Bind download tasks, 
-    func configure() {
-        guard let item = item else { return }
+    func configure(with item: DownloadItem) {
         title.text = item.title
         
-        if let path = item.localVideoPath {
-            albumImageView.image = thumbnailForVideo(atPath: path) ?? UIImage(systemName: "film")
-        } else {
-            albumImageView.image = UIImage(systemName: "arrow.down.circle")
+        switch item.status {
+        case.running:
+            circularProgressView.isHidden = false
+            albumImageView.isHidden = true
+            circularProgressView.progress = item.progress
+            
+        case.completed:
+            circularProgressView.isHidden = true
+            albumImageView.isHidden = false
+            // to load thumbNail after complete
+            
+        case.failed:
+            circularProgressView.isHidden = true
+            albumImageView.isHidden = false
+            title.text = "Failed to download!"
+            title.textColor = .red
+            
+        case.queued:
+            circularProgressView.isHidden = false
+            albumImageView.isHidden = true
+            circularProgressView.progress = 0
+            
+        case.canceled:
+            circularProgressView.isHidden = true
+            albumImageView.isHidden = false
+            title.text = "Canceled!"
+            
         }
-        
-        circularProgressView.isHidden = true
-        albumImageView.isHidden = false
-    }
     
-    func setProgress(_ p: Float) {
-        circularProgressView.progress = max(0, min(1, p))
-        circularProgressView.isHidden = (p >= 0.999)
     }
     
     @objc func handleOptionButtonTapped() {
@@ -141,15 +131,6 @@ class HistoryTableViewCell: UITableViewCell {
     }
     
     // MARK: - Helpers
-    private func thumbnailForVideo(atPath path: String) -> UIImage? {
-        let url = URL(fileURLWithPath: path)
-        let asset = AVURLAsset(url: url)
-        let gen = AVAssetImageGenerator(asset: asset)
-        gen.appliesPreferredTrackTransform = true
-        let time = CMTime(seconds: 1, preferredTimescale: 600)
-        if let cg = try? gen.copyCGImage(at: time, actualTime: nil) {
-            return UIImage(cgImage: cg)
-        }
-        return nil
-    }
 }
+
+

@@ -15,35 +15,41 @@ class RealmService {
     
     private init() {}
     
-    func addHistory(url: URL, title: String) {
-        let e = HistoryEntry()
-        e.url = url.absoluteString
-        e.title = title
-        e.site = url.host ?? ""
-        try? realm.write { realm.add(e) }
-    }
-    
-    func toggleFavorite(url: URL, title: String) {
-        let r = realm.objects(FavoriteEntry.self).where { $0.url == url.absoluteString }
+    func createOrUpdate(item: DownloadItem) {
         try? realm.write {
-            if let f = r.first {
-                realm.delete(f)
-            } else {
-                let f = FavoriteEntry()
-                f.url = url.absoluteString
-                f.title = title
-                f.site = url.host ?? ""
-                realm.add(f)
-            }
+            realm.add(item, update: .modified)
         }
     }
-
-    func getFavorites() -> Results<FavoriteEntry> {
-        realm.objects(FavoriteEntry.self).sorted(byKeyPath: "createdAt", ascending: false)
+    
+    func update(_ id: String, _ changes: (DownloadItem) -> Void) {
+        guard let obj = realm.object(ofType: DownloadItem.self, forPrimaryKey: id) else { return }
+        try? realm.write {
+            changes(obj)
+        }
     }
     
-    func getHistory() -> Results<HistoryEntry> {
-        realm.objects(HistoryEntry.self).sorted(byKeyPath: "createdAt", ascending: false)
+    func fetchAllMedia() -> Results<DownloadItem> {
+        realm.objects(DownloadItem.self).sorted(byKeyPath: "createdAt", ascending: false)
     }
+    
+    func delete(_ model: DownloadItem) {
+        try? realm.write {
+            if let videoPath = model.localPath {
+                try? FileManager.default.removeItem(atPath: videoPath)
+            }
+            
+//            if let audioPath = model.localAudioPath {
+//                try? FileManager.default.removeItem(atPath: audioPath)
+//            }
+            realm.delete(model)
+        }
+    }
+    
+    func deleteAll() {
+        try? realm.write {
+            realm.deleteAll()
+        }
+    }
+    
     
 }

@@ -15,7 +15,7 @@ class HistoryController: UIViewController {
     
     //MARK: - Properties
     
-    private var items: Results<MediaModel>!
+    private var results: Results<DownloadItem>!
     private var token: NotificationToken?
     private var progressCache: [ObjectId: Float] = [:]
     
@@ -24,6 +24,7 @@ class HistoryController: UIViewController {
         let tv = UITableView()
         tv.separatorStyle = .singleLine
         tv.rowHeight = 54
+        tv.register(HistoryTableViewCell.self, forCellReuseIdentifier: HistoryTableViewCell.identifier)
         tv.translatesAutoresizingMaskIntoConstraints = false
         return tv
     }()
@@ -48,11 +49,13 @@ class HistoryController: UIViewController {
         super.viewDidLoad()
         
         setupUI()
+        fetchResult()
+//        deleteAll()
+        configureToken()
     }
     
     deinit {
         token?.invalidate()
-        NotificationCenter.default.removeObserver(self)
     }
     
     //MARK: - HelperFunctions
@@ -63,7 +66,6 @@ class HistoryController: UIViewController {
         
         view.addSubview(tableView)
         view.addSubview(emptyStateLabel)
-        
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -74,14 +76,43 @@ class HistoryController: UIViewController {
             emptyStateLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
         
-        tableView.delegate = self
+        
         tableView.dataSource = self
-        tableView.register(HistoryTableViewCell.self, forCellReuseIdentifier: HistoryTableViewCell.identifier)
+        tableView.delegate = self
         
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
         tableView.refreshControl = refreshControl
         
+    }
+    
+    func configureToken() {
+        token = results.observe { [weak self] changes in
+            guard let self = self else { return }
+            switch changes {
+            case .initial:
+                self.tableView.reloadData()
+                
+            case .update(_, let deletions, let insertions, let modifications):
+                self.tableView.performBatchUpdates({
+                    self.tableView.deleteRows(at: deletions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
+                    self.tableView.insertRows(at: insertions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
+                    self.tableView.reloadRows(at: modifications.map { IndexPath(row: $0, section: 0) }, with: .none)
+                })
+                
+            case .error(let error):
+                print("Realm error:", error)
+            }
+        }
+    }
+    
+    func fetchResult() {
+        results = RealmService.shared.fetchAllMedia().sorted(byKeyPath: "createdAt", ascending: false)
+        tableView.reloadData()
+    }
+    
+    func deleteAll() {
+        RealmService.shared.deleteAll()
     }
     
     func playVideo(at fileURL: URL, from presenter: UIViewController) {
@@ -108,24 +139,19 @@ class HistoryController: UIViewController {
         present(actionSheet, animated: true)
     }
     
+    private func documentsURL() -> URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    }
     
+    func getBaseURL(from relativePath: String) -> URL {
+        documentsURL().appendingPathComponent(relativePath, isDirectory: false)
+    }
+
     
     //MARK: - Selector
     
     @objc func refreshData() {
         tableView.refreshControl?.endRefreshing()
-    }
-    
-    @objc private func onProgress(_ note: Notification) {
-        guard let id = note.userInfo?["id"] as? ObjectId,
-              let p  = note.userInfo?["progress"] as? Float else { return }
-        if let row = items.firstIndex(where: { $0.id == id }) {
-            DispatchQueue.main.async {
-                if let cell = self.tableView.cellForRow(at: IndexPath(row: row, section: 0)) as? HistoryTableViewCell {
-                    cell.setProgress(p)
-                }
-            }
-        }
     }
     
     @objc private func onFinished(_ note: Notification) {
@@ -137,21 +163,21 @@ class HistoryController: UIViewController {
 //MARK: - UITableViewDataSource
 extension HistoryController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return items?.count ?? 0
+        return results?.count ?? 0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let item = items[indexPath.row]
+        let item = results[indexPath.row]
         guard let cell = tableView.dequeueReusableCell(withIdentifier: HistoryTableViewCell.identifier, for: indexPath) as? HistoryTableViewCell else {
             return UITableViewCell()
         }
         
-        cell.item = item
+        cell.configure(with: item)
         // Progress: if we have a cached value use it; else 1.0 if file exists; else 0
-        let p = progressCache[item.id] ?? (item.localVideoPath != nil ? 1.0 : 0.0)
-        cell.setProgress(p)
+//        let p = progressCache[item.id] ?? (item.localVideoPath != nil ? 1.0 : 0.0)
+//        cell.setProgress(p)
         
-        cell.delegate = self
+//        cell.delegate = self
         
         return cell
     }
@@ -159,13 +185,14 @@ extension HistoryController: UITableViewDataSource {
 
 //MARK: - UITableViewDelegate
 extension HistoryController: UITableViewDelegate {
+    
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
         tableView.deselectRow(at: indexPath, animated: true)
-        let item = items[indexPath.row]
-        if let path = item.localVideoPath {
-            let url = URL(fileURLWithPath: path)
-            playVideo(at: url, from: self)
-        }
+        
+        let item = results[indexPath.row]
+        guard item.status == .completed, let path = item.localPath else { return }
+        playVideo(at: getBaseURL(from: path), from: self)
     }
 }
 

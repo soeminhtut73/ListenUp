@@ -61,7 +61,5 @@ class MainTabBarController: UITabBarController {
         return navigationController
     }
     
-    
-    //MARK: - Selector
-    
 }
+

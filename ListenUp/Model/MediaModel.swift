@@ -17,4 +17,5 @@ class MediaModel: Object {
     @Persisted var localAudioPath: String?   // saved audio file (m4a)
     @Persisted var fileSizeBytes: Int64      // size of the *video* file
     @Persisted var mediaType: String         // "video" | "audio"
+    @Persisted var thumbnail: String?         // "video" | "audio"
 }

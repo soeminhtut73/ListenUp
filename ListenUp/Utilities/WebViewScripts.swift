@@ -279,27 +279,6 @@ struct WebViewScripts {
       } catch (_) {}
     })();
     """
-    
-    static let autoResumeJS = """
-    (function(){
-      if (window.__autoResumeInstalled) return; window.__autoResumeInstalled = true;
-    
-      function pickMedia(){ return document.querySelector('audio') || document.querySelector('video'); }
-      async function tryPlay(){ const el = pickMedia(); if(!el) return false;
-        try { el.muted = false; el.autoplay = true; el.preload = 'auto'; el.setAttribute('playsinline',''); await el.play(); } catch(e){} }
-    
-      let pending=false; function schedule(){ if(pending) return; pending=true; setTimeout(()=>{pending=false; tryPlay();},120); }
-      window.__forceResumeAudio = function(){ schedule(); return true; };
-      document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') schedule(); }, true);
-      window.addEventListener('pagehide', ()=>schedule(), true);
-      window.addEventListener('freeze',   ()=>schedule(), true);
-      ['pause','suspend','waiting','stalled'].forEach(evt=>{
-        document.addEventListener(evt, e=>{ const t=e.target; if(t && (t.tagName==='AUDIO'||t.tagName==='VIDEO')) schedule(); }, true);
-      });
-    })();
-    """
-    
-    static let autoResumeScript = WKUserScript(source: autoResumeJS, injectionTime: .atDocumentStart, forMainFrameOnly: true)
 
     
 //    static let cssUserScript = WKUserScript(
