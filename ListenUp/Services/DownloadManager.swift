@@ -29,6 +29,11 @@ final class DownloadManager: NSObject, URLSessionDownloadDelegate {
     private var completion: Completion?
     var backgroundCompletionHandler: (() -> Void)?
     
+    private var onProgress: ((Double) -> Void)?
+    private var onComplete: ((URL?) -> Void)?
+    private var lastBucket: Int = -1  // 0…100
+
+    
     // taskID -> itemID
     private var map = [Int: String]()
     private let realm = RealmService.shared
@@ -49,6 +54,8 @@ final class DownloadManager: NSObject, URLSessionDownloadDelegate {
         item.thumbURL = ""
         item.status = .running
         realm.createOrUpdate(item: item)
+        
+        lastBucket = -1
         
         let task = session.downloadTask(with: url)
         map[task.taskIdentifier] = item.id
@@ -135,9 +142,14 @@ final class DownloadManager: NSObject, URLSessionDownloadDelegate {
         
         let p = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
         
-        realm.update(id) {
-//            $0.progress = p
-            $0.progress = max($0.progress, min(max(p, 0), 1))
+        let bucket = Int((p * 100).rounded(.down))
+        guard bucket != lastBucket else { return }
+        lastBucket = bucket
+        
+        self.realm.update(id) {
+            let wr = max($0.progress, min(max(p, 0), 1))
+            print("Debug: progress in delegate : \(wr)")
+            $0.progress = wr
             $0.status = .running
         }
         NotificationCenter.default.post(name: DownloadManager.didUpdate, object: id)

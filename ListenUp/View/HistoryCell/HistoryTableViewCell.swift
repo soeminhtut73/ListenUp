@@ -68,6 +68,11 @@ class HistoryTableViewCell: UITableViewCell {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+//        circularProgressView.setProgress(0, animated: false)
+    }
 
     
     private func setupUI() {
@@ -98,12 +103,20 @@ class HistoryTableViewCell: UITableViewCell {
         case.running:
             circularProgressView.isHidden = false
             albumImageView.isHidden = true
-            circularProgressView.progress = item.progress
+//            circularProgressView.progress = item.progress
+            
+            DispatchQueue.main.async { [weak self] in
+                self?.circularProgressView.isIndeterminate = false
+                self?.circularProgressView.setProgress(item.progress, animated: true)
+            }
             
         case.completed:
             circularProgressView.isHidden = true
             albumImageView.isHidden = false
             // to load thumbNail after complete
+//            circularProgressView.isHidden = false
+//            albumImageView.isHidden = true
+//            simulateProgress()
             
         case.failed:
             circularProgressView.isHidden = true
@@ -123,6 +136,31 @@ class HistoryTableViewCell: UITableViewCell {
             
         }
     
+    }
+    
+    func simulateProgress() {
+        circularProgressView.setProgress(0.1, animated: true)
+        
+        let totalSteps: Float = 100       // number of updates
+        let duration: TimeInterval = 10   // total time in seconds
+        let stepInterval = duration / TimeInterval(totalSteps)
+        let increment = (10.0 - 0.1) / totalSteps
+        
+        var currentValue: Float = 0.1
+        
+        Timer.scheduledTimer(withTimeInterval: stepInterval, repeats: true) { timer in
+            currentValue += Float(increment)
+            
+            if currentValue >= 10.0 {
+                self.circularProgressView.setProgress(1.0, animated: true)   // UIProgressView max is 1.0
+                timer.invalidate()
+                print("Progress finished at 10.0")
+            } else {
+                // Scale to 0.0–1.0 for UIProgressView
+                self.circularProgressView.setProgress(CGFloat(currentValue) / 10.0, animated: true)
+                print("Progress: \(currentValue)")
+            }
+        }
     }
     
     @objc func handleOptionButtonTapped() {

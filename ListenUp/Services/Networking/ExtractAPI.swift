@@ -15,7 +15,7 @@ struct ExtractResponse: Codable {
     let duration: Int
     let thumb: String  // add this because backend returns thumb
     
-    var isTooLong: Bool { duration > 600 }
+    var isTooLong: Bool { duration > 1200 }
 }
 
 enum ExtractAPI {
