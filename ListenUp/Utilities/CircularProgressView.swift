@@ -150,4 +150,16 @@ final class CircularProgressView: UIView {
         spinnerLayer = nil
         progressLayer.isHidden = false
     }
+    
+    func reset() {
+        // Main thread only for layer changes
+        if !Thread.isMainThread { DispatchQueue.main.async { self.reset() }; return }
+        
+        pendingProgress = 0
+        currentProgress = 0
+        lastUpdateTime  = 0
+        progressLayer.removeAllAnimations()
+        progressLayer.strokeEnd = 0
+        isIndeterminate = false
+        }
 }

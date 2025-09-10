@@ -148,7 +148,6 @@ final class DownloadManager: NSObject, URLSessionDownloadDelegate {
         
         self.realm.update(id) {
             let wr = max($0.progress, min(max(p, 0), 1))
-            print("Debug: progress in delegate : \(wr)")
             $0.progress = wr
             $0.status = .running
         }
