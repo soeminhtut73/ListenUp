@@ -29,10 +29,7 @@ final class DownloadManager: NSObject, URLSessionDownloadDelegate {
     private var completion: Completion?
     var backgroundCompletionHandler: (() -> Void)?
     
-    private var onProgress: ((Double) -> Void)?
-    private var onComplete: ((URL?) -> Void)?
     private var lastBucket: Int = -1  // 0…100
-
     
     // taskID -> itemID
     private var map = [Int: String]()
