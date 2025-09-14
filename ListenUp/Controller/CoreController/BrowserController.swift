@@ -1,4 +1,3 @@
-
 //
 //  BrowserController.swift
 //  ListenUp
@@ -60,16 +59,19 @@ class BrowserController: UIViewController {
         
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        view.endEditing(true) // cleanly closes the keyboard
+    }
+    
     //MARK: - HelperFunctions
     
     private func configureUI() {
         title = "Browser"
         
         view.addSubview(webView)
-        view.addSubview(progressView)
         
         webView.translatesAutoresizingMaskIntoConstraints = false
-        progressView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             webView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -149,6 +151,8 @@ class BrowserController: UIViewController {
         
         progressView.trackTintColor = .clear
         progressView.progressTintColor = .blue
+        progressView.translatesAutoresizingMaskIntoConstraints = false
+        
         view.addSubview(progressView)
         view.addSubview(backButton)
         
@@ -195,26 +199,6 @@ class BrowserController: UIViewController {
                     
                     print("Debug: extract success , ready to download.")
                     DownloadManager.shared.enqueue(url: safeUrl, title: resp.title, thumbURL: resp.thumb)
-                    
-                    // create realm record
-//                    let model = MediaModel()
-//                    model.title = resp.title
-//                    model.originalURL = url
-//                    model.mediaType = mediaType
-//                    model.thumbnail = resp.thumb
-//                    RealmService.shared.createOrUpdate(item: model)
-
-                    // start download
-//                    DownloadManager.shared.download(safeUrl, itemID: model.id) { result in
-//                        switch result {
-//                        case.success(let fileURL):
-//                            print("Debug: download success with url : \(fileURL)")
-//                            
-//                        case .failure(let error):
-//                            print("Debug: download failed : \(error.localizedDescription)")
-//                        }
-//                    }
-                    
                 }
             }
         }
@@ -299,8 +283,6 @@ class BrowserController: UIViewController {
                     self.webView.evaluateJavaScript("document.querySelector('video,audio')?.pause()")
                     
                     self.playVideo(from: url)
-                    
-//                    self.switchNowPlayingTab()
 
                 }
             }
