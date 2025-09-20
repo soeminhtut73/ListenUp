@@ -86,6 +86,18 @@ class HistoryController: UIViewController {
         
     }
     
+    private func configureAudioSession() {
+        let s = AVAudioSession.sharedInstance()
+        do {
+            try s.setCategory(.playback, mode: .moviePlayback, options: [.allowBluetooth,
+                                                                         .allowBluetoothA2DP,
+                                                                         .allowAirPlay,
+                                                                         .mixWithOthers])
+            try s.setActive(true)
+        } catch { print("Audio session error:", error) }
+    }
+    
+    
     func configureToken() {
         token = results.observe { [weak self] changes in
             guard let self = self else { return }
@@ -146,6 +158,15 @@ class HistoryController: UIViewController {
     func getBaseURL(from relativePath: String) -> URL {
         documentsURL().appendingPathComponent(relativePath, isDirectory: false)
     }
+    
+    lazy var items: [MediaItem] = results
+        .filter { ($0.localPath?.isEmpty == false) && $0.status == .completed }
+        .compactMap {
+            guard let rel = $0.localPath else { return nil }
+            let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            let url = docs.appendingPathComponent(rel)  // local file URL
+            return MediaItem(title: $0.title, url: url)
+        }
 
     
     //MARK: - Selector
@@ -173,11 +194,6 @@ extension HistoryController: UITableViewDataSource {
         }
         
         cell.configure(with: item)
-        // Progress: if we have a cached value use it; else 1.0 if file exists; else 0
-//        let p = progressCache[item.id] ?? (item.localVideoPath != nil ? 1.0 : 0.0)
-//        cell.setProgress(p)
-        
-//        cell.delegate = self
         
         return cell
     }
@@ -190,9 +206,16 @@ extension HistoryController: UITableViewDelegate {
         
         tableView.deselectRow(at: indexPath, animated: true)
         
-        let item = results[indexPath.row]
-        guard item.status == .completed, let path = item.localPath else { return }
-        playVideo(at: getBaseURL(from: path), from: self)
+        let tapped = results[indexPath.row]
+        guard let rel = tapped.localPath else { return }
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let url = docs.appendingPathComponent(rel)
+        
+        let vc = MediaPlayerViewController()
+        vc.downloadsResults = results
+        vc.startAt(url: url)
+        vc.modalPresentationStyle = .fullScreen
+        present(vc, animated: true)
     }
 }
 

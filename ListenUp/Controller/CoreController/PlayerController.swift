@@ -17,6 +17,8 @@ class PlayerController: UIViewController {
         super.viewDidLoad()
         
         title = "Player"
+        
+        
     }
     
 }

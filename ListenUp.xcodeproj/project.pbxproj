@@ -27,11 +27,13 @@
 		041C4AF72E693EDC005B7DEC /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041C4AF62E693EDC005B7DEC /* DownloadManager.swift */; };
 		041C4AFF2E696B0B005B7DEC /* DownloadItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041C4AFE2E696B0B005B7DEC /* DownloadItem.swift */; };
 		0461FED52E2A9D680052F966 /* WebViewScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0461FED42E2A9D680052F966 /* WebViewScripts.swift */; };
-		0461FED82E2A9D8A0052F966 /* BrowserCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0461FED72E2A9D8A0052F966 /* BrowserCoordinator.swift */; };
 		0461FEED2E2E756A0052F966 /* HistoryTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0461FEEC2E2E756A0052F966 /* HistoryTableViewCell.swift */; };
 		0461FEEF2E2E8C050052F966 /* CircularProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0461FEEE2E2E8C050052F966 /* CircularProgressView.swift */; };
 		046C47EF2DF477CD00986913 /* LibraryTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 046C47EE2DF477CD00986913 /* LibraryTableViewCell.swift */; };
 		0489EB6E2E40F9E800D80FBF /* MediaModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0489EB6D2E40F9E800D80FBF /* MediaModel.swift */; };
+		04C00F502E77B30400104CD9 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C00F4F2E77B30400104CD9 /* PlayerView.swift */; };
+		04C00F522E77B34F00104CD9 /* MediaPlayerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C00F512E77B34F00104CD9 /* MediaPlayerViewController.swift */; };
+		04C00F542E77FD5300104CD9 /* PlayerCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C00F532E77FD5300104CD9 /* PlayerCenter.swift */; };
 		1A79267FE52D4AA81F946C1F /* Pods_ListenUp_ListenUpUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 98B45CE4C930AA7DC2A7EDEA /* Pods_ListenUp_ListenUpUITests.framework */; };
 		373FA2F376D7DE6FDE9DD3D9 /* Pods_ListenUpTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8B08CF20CFB9D34306DFF470 /* Pods_ListenUpTests.framework */; };
 		782E8E9405A7C4F87C0BCAA9 /* Pods_ListenUp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D287BAF4727D984FED3406B2 /* Pods_ListenUp.framework */; };
@@ -79,11 +81,13 @@
 		0440B27F2DF003DE00184BE2 /* ListenUpTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ListenUpTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0440B2892DF003DE00184BE2 /* ListenUpUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ListenUpUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0461FED42E2A9D680052F966 /* WebViewScripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewScripts.swift; sourceTree = "<group>"; };
-		0461FED72E2A9D8A0052F966 /* BrowserCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserCoordinator.swift; sourceTree = "<group>"; };
 		0461FEEC2E2E756A0052F966 /* HistoryTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryTableViewCell.swift; sourceTree = "<group>"; };
 		0461FEEE2E2E8C050052F966 /* CircularProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularProgressView.swift; sourceTree = "<group>"; };
 		046C47EE2DF477CD00986913 /* LibraryTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryTableViewCell.swift; sourceTree = "<group>"; };
 		0489EB6D2E40F9E800D80FBF /* MediaModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaModel.swift; sourceTree = "<group>"; };
+		04C00F4F2E77B30400104CD9 /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
+		04C00F512E77B34F00104CD9 /* MediaPlayerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaPlayerViewController.swift; sourceTree = "<group>"; };
+		04C00F532E77FD5300104CD9 /* PlayerCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCenter.swift; sourceTree = "<group>"; };
 		1BAC74898D7EBA022E5ACBF2 /* Pods-ListenUp-ListenUpUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ListenUp-ListenUpUITests.debug.xcconfig"; path = "Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests.debug.xcconfig"; sourceTree = "<group>"; };
 		58D4D14001917916C871EB08 /* Pods-ListenUp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ListenUp.debug.xcconfig"; path = "Target Support Files/Pods-ListenUp/Pods-ListenUp.debug.xcconfig"; sourceTree = "<group>"; };
 		7F7862B9D5A55553D6A90D41 /* Pods-ListenUp-ListenUpUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ListenUp-ListenUpUITests.release.xcconfig"; path = "Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests.release.xcconfig"; sourceTree = "<group>"; };
@@ -98,15 +102,11 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		0440B2822DF003DE00184BE2 /* ListenUpTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = ListenUpTests;
 			sourceTree = "<group>";
 		};
 		0440B28C2DF003DE00184BE2 /* ListenUpUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = ListenUpUITests;
 			sourceTree = "<group>";
 		};
@@ -145,6 +145,7 @@
 			children = (
 				041469772DF009B0009D6EF9 /* MainTabBarController.swift */,
 				041469892DF3E7A0009D6EF9 /* CoreController */,
+				04C00F512E77B34F00104CD9 /* MediaPlayerViewController.swift */,
 			);
 			path = Controller;
 			sourceTree = "<group>";
@@ -163,6 +164,7 @@
 			children = (
 				0461FEEB2E2E75580052F966 /* HistoryCell */,
 				046C47ED2DF4779800986913 /* LibraryCell */,
+				04C00F4F2E77B30400104CD9 /* PlayerView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -182,7 +184,6 @@
 				041469652DF00978009D6EF9 /* ViewModel */,
 				041469622DF00978009D6EF9 /* Controller */,
 				0414698A2DF414FA009D6EF9 /* Utilities */,
-				0461FED62E2A9D720052F966 /* Coordinators */,
 				0461FECF2E2A9D340052F966 /* Services */,
 				041469672DF00978009D6EF9 /* Assets.xcassets */,
 				041469662DF00978009D6EF9 /* AppDelegate.swift */,
@@ -215,6 +216,7 @@
 				0414698F2DF415A3009D6EF9 /* Extension.swift */,
 				0461FED42E2A9D680052F966 /* WebViewScripts.swift */,
 				0461FEEE2E2E8C050052F966 /* CircularProgressView.swift */,
+				04C00F532E77FD5300104CD9 /* PlayerCenter.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -257,14 +259,6 @@
 				041C4AF62E693EDC005B7DEC /* DownloadManager.swift */,
 			);
 			path = Services;
-			sourceTree = "<group>";
-		};
-		0461FED62E2A9D720052F966 /* Coordinators */ = {
-			isa = PBXGroup;
-			children = (
-				0461FED72E2A9D8A0052F966 /* BrowserCoordinator.swift */,
-			);
-			path = Coordinators;
 			sourceTree = "<group>";
 		};
 		0461FEEB2E2E75580052F966 /* HistoryCell */ = {
@@ -453,9 +447,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -514,9 +512,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ListenUp/Pods-ListenUp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ListenUp/Pods-ListenUp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -553,6 +555,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				041469702DF00978009D6EF9 /* AppDelegate.swift in Sources */,
+				04C00F542E77FD5300104CD9 /* PlayerCenter.swift in Sources */,
 				041C4AF72E693EDC005B7DEC /* DownloadManager.swift in Sources */,
 				0414697E2DF009F0009D6EF9 /* LibraryController.swift in Sources */,
 				0461FED52E2A9D680052F966 /* WebViewScripts.swift in Sources */,
@@ -570,9 +573,10 @@
 				041469722DF00978009D6EF9 /* ViewController.swift in Sources */,
 				0414697C2DF009E4009D6EF9 /* BrowserController.swift in Sources */,
 				041C4AF52E693E91005B7DEC /* RealmService.swift in Sources */,
-				0461FED82E2A9D8A0052F966 /* BrowserCoordinator.swift in Sources */,
+				04C00F502E77B30400104CD9 /* PlayerView.swift in Sources */,
 				0489EB6E2E40F9E800D80FBF /* MediaModel.swift in Sources */,
 				0414698C2DF41537009D6EF9 /* Style.swift in Sources */,
+				04C00F522E77B34F00104CD9 /* MediaPlayerViewController.swift in Sources */,
 				041469822DF00A01009D6EF9 /* ProfileController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -23,7 +23,7 @@ enum ExtractAPI {
 //    static let baseURL = URL(string: "http://192.168.1.101")!
     
     static func extract(from url: String, completion: @escaping (Result<ExtractResponse, Error>) -> Void) {
-        guard let endpoint = URL(string: "http://192.168.1.20:8000/api/yt/extract") else { return }
+        guard let endpoint = URL(string: "http://192.168.10.28:8000/api/yt/extract") else { return }
         
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
