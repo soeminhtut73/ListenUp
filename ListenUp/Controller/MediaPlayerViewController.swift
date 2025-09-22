@@ -52,6 +52,7 @@ final class MediaPlayerViewController: UIViewController {
     private let nextButton = UIButton(type: .system)
     private let shuffleButton = UIButton(type: .system)
     private let loopButton = UIButton(type: .system)
+    private let expandButton = UIButton(type: .system)
 
     // Playback
     private var timeObs: Any?
@@ -179,6 +180,12 @@ final class MediaPlayerViewController: UIViewController {
         totalLabel.font = .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
         currentLabel.text = "00:00"
         totalLabel.text = "00:00"
+        
+        expandButton.setImage(UIImage(systemName: "arrow.up.left.and.arrow.down.right"), for: .normal)
+        expandButton.tintColor = .white
+        expandButton.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        expandButton.layer.cornerRadius = 16
+        expandButton.clipsToBounds = true
 
         configure(button: prevButton, icon: "backward.fill")
         configure(button: playPauseButton, icon: "play.fill")
@@ -188,7 +195,7 @@ final class MediaPlayerViewController: UIViewController {
 
         // Layout
         [closeButton, videoView, titleLabel, slider, currentLabel, totalLabel,
-         prevButton, playPauseButton, nextButton, shuffleButton, loopButton].forEach {
+         prevButton, playPauseButton, nextButton, shuffleButton, loopButton, expandButton].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
@@ -210,6 +217,11 @@ final class MediaPlayerViewController: UIViewController {
         NSLayoutConstraint.activate([
             closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
             closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            
+            expandButton.topAnchor.constraint(equalTo: videoView.topAnchor, constant: 8),
+            expandButton.trailingAnchor.constraint(equalTo: videoView.trailingAnchor, constant: -8),
+            expandButton.widthAnchor.constraint(equalToConstant: 32),
+            expandButton.heightAnchor.constraint(equalToConstant: 32),
 
             // Centered video, 9:16 ratio
             videoView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -249,6 +261,8 @@ final class MediaPlayerViewController: UIViewController {
 
     private func setupActions() {
         closeButton.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
+        
+        expandButton.addTarget(self, action: #selector(expandTapped), for: .touchUpInside)
 
         prevButton.addTarget(self, action: #selector(prevTapped), for: .touchUpInside)
         playPauseButton.addTarget(self, action: #selector(playPauseTapped), for: .touchUpInside)
@@ -328,6 +342,17 @@ final class MediaPlayerViewController: UIViewController {
     }
 
     // MARK: - Controls
+    @objc private func expandTapped() {
+        let full = FullscreenPlayerViewController()
+        full.modalPresentationStyle = .fullScreen
+        // Hide the inline video while fullscreen is up to avoid double-rendering
+//        self.videoView.isHidden = true
+        full.onDismiss = { [weak self] in
+//            self?.videoView.isHidden = false
+        }
+        present(full, animated: true)
+    }
+    
     @objc private func prevTapped() {
         guard !playlist.isEmpty else { return }
         if shuffleOn {

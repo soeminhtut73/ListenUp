@@ -31,6 +31,7 @@
 		0461FEEF2E2E8C050052F966 /* CircularProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0461FEEE2E2E8C050052F966 /* CircularProgressView.swift */; };
 		046C47EF2DF477CD00986913 /* LibraryTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 046C47EE2DF477CD00986913 /* LibraryTableViewCell.swift */; };
 		0489EB6E2E40F9E800D80FBF /* MediaModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0489EB6D2E40F9E800D80FBF /* MediaModel.swift */; };
+		048B50A22E80E808008B5E39 /* FullscreenPlayerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 048B50A12E80E808008B5E39 /* FullscreenPlayerViewController.swift */; };
 		04C00F502E77B30400104CD9 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C00F4F2E77B30400104CD9 /* PlayerView.swift */; };
 		04C00F522E77B34F00104CD9 /* MediaPlayerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C00F512E77B34F00104CD9 /* MediaPlayerViewController.swift */; };
 		04C00F542E77FD5300104CD9 /* PlayerCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C00F532E77FD5300104CD9 /* PlayerCenter.swift */; };
@@ -85,6 +86,7 @@
 		0461FEEE2E2E8C050052F966 /* CircularProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularProgressView.swift; sourceTree = "<group>"; };
 		046C47EE2DF477CD00986913 /* LibraryTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryTableViewCell.swift; sourceTree = "<group>"; };
 		0489EB6D2E40F9E800D80FBF /* MediaModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaModel.swift; sourceTree = "<group>"; };
+		048B50A12E80E808008B5E39 /* FullscreenPlayerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullscreenPlayerViewController.swift; sourceTree = "<group>"; };
 		04C00F4F2E77B30400104CD9 /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
 		04C00F512E77B34F00104CD9 /* MediaPlayerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaPlayerViewController.swift; sourceTree = "<group>"; };
 		04C00F532E77FD5300104CD9 /* PlayerCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCenter.swift; sourceTree = "<group>"; };
@@ -146,6 +148,7 @@
 				041469772DF009B0009D6EF9 /* MainTabBarController.swift */,
 				041469892DF3E7A0009D6EF9 /* CoreController */,
 				04C00F512E77B34F00104CD9 /* MediaPlayerViewController.swift */,
+				048B50A12E80E808008B5E39 /* FullscreenPlayerViewController.swift */,
 			);
 			path = Controller;
 			sourceTree = "<group>";
@@ -578,6 +581,7 @@
 				0414698C2DF41537009D6EF9 /* Style.swift in Sources */,
 				04C00F522E77B34F00104CD9 /* MediaPlayerViewController.swift in Sources */,
 				041469822DF00A01009D6EF9 /* ProfileController.swift in Sources */,
+				048B50A22E80E808008B5E39 /* FullscreenPlayerViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
