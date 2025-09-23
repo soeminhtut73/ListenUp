@@ -211,6 +211,8 @@ extension HistoryController: UITableViewDelegate {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let url = docs.appendingPathComponent(rel)
         
+        MiniPlayerContainerViewController.shared.hide()
+        
         let vc = MediaPlayerViewController()
         vc.downloadsResults = results
         vc.startAt(url: url)

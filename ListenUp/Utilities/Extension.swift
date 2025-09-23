@@ -16,6 +16,39 @@ extension UIViewController {
         present(alert, animated: true, completion: nil)
     }
     
+    /// Returns the nearest tab bar controller in the hierarchy
+    var nearestTabBarController: UITabBarController? {
+        if let tabBar = self as? UITabBarController {
+            return tabBar
+        }
+        
+        if let tabBar = self.tabBarController {
+            return tabBar
+        }
+        
+        if let nav = self as? UINavigationController,
+           let tabBar = nav.viewControllers.first?.tabBarController {
+            return tabBar
+        }
+        
+        if let presented = self.presentingViewController {
+            return presented.nearestTabBarController
+        }
+        
+        return nil
+    }
+    
+//    /// Shows mini player in the current context
+//    func showMiniPlayer() {
+//        if let tabBarController = nearestTabBarController ?? UIApplication.shared.rootTabBarController {
+//            MiniPlayerContainerViewController.shared.show(in: tabBarController)
+//        }
+//    }
+//    
+//    /// Hides mini player in the current context
+//    func hideMiniPlayer(animated: Bool = true) {
+//        MiniPlayerContainerViewController.shared.hide(animated: animated)
+//    }
 }
 
 //MARK: - UIButton
@@ -179,6 +212,100 @@ extension UIView {
     }
 }
 
+//MARK: - Notification
 extension Notification.Name {
     static let playbackDidUpdate = Notification.Name("PlaybackManager.didUpdate")
+}
+
+//MARK: - UIApplication
+extension UIApplication {
+    /// Returns the key window for iOS 15+
+    var currentKeyWindow: UIWindow? {
+        connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }
+    }
+    
+    /// Returns the first active window
+    var firstActiveWindow: UIWindow? {
+        connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first
+    }
+    
+    /// Returns the root tab bar controller if available
+    var rootTabBarController: UITabBarController? {
+        currentKeyWindow?.rootViewController as? UITabBarController
+    }
+    
+    /// Returns the topmost presented view controller
+    var topMostViewController: UIViewController? {
+        guard let rootVC = currentKeyWindow?.rootViewController else { return nil }
+        return topMostViewController(from: rootVC)
+    }
+    
+    private func topMostViewController(from viewController: UIViewController) -> UIViewController {
+        if let presented = viewController.presentedViewController {
+            return topMostViewController(from: presented)
+        }
+        
+        if let nav = viewController as? UINavigationController,
+           let top = nav.topViewController {
+            return topMostViewController(from: top)
+        }
+        
+        if let tab = viewController as? UITabBarController,
+           let selected = tab.selectedViewController {
+            return topMostViewController(from: selected)
+        }
+        
+        return viewController
+    }
+}
+
+// MARK: - Tab Bar Controller Extension
+extension UITabBarController {
+    
+    // Adjust content insets when mini player is showing
+    func adjustForMiniPlayer(height: CGFloat, animated: Bool = true) {
+        viewControllers?.forEach { vc in
+            if let nav = vc as? UINavigationController {
+                nav.viewControllers.forEach { child in
+                    adjustContentInsets(for: child, height: height, animated: animated)
+                }
+            } else {
+                adjustContentInsets(for: vc, height: height, animated: animated)
+            }
+        }
+    }
+    
+    private func adjustContentInsets(for viewController: UIViewController, height: CGFloat, animated: Bool) {
+        guard viewController.isViewLoaded else { return }
+        
+        let update = {
+            // Adjust table views
+            if let tableVC = viewController as? UITableViewController {
+                tableVC.tableView.contentInset.bottom = height
+                tableVC.tableView.scrollIndicatorInsets.bottom = height
+            }
+            // Adjust collection views
+            else if let collectionVC = viewController as? UICollectionViewController {
+                collectionVC.collectionView.contentInset.bottom = height
+                collectionVC.collectionView.scrollIndicatorInsets.bottom = height
+            }
+            // Adjust scroll views
+            else if let scrollView = viewController.view as? UIScrollView {
+                scrollView.contentInset.bottom = height
+                scrollView.scrollIndicatorInsets.bottom = height
+            }
+        }
+        
+        if animated {
+            UIView.animate(withDuration: 0.3, animations: update)
+        } else {
+            update()
+        }
+    }
 }

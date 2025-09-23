@@ -85,6 +85,7 @@ final class MediaPlayerViewController: UIViewController {
         startAudioSessionObservers()
         setupRemoteCommandCenter()
         observeBackgroundEvents()
+        setupGesture()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -261,8 +262,6 @@ final class MediaPlayerViewController: UIViewController {
 
     private func setupActions() {
         closeButton.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
-        
-        expandButton.addTarget(self, action: #selector(expandTapped), for: .touchUpInside)
 
         prevButton.addTarget(self, action: #selector(prevTapped), for: .touchUpInside)
         playPauseButton.addTarget(self, action: #selector(playPauseTapped), for: .touchUpInside)
@@ -308,6 +307,57 @@ final class MediaPlayerViewController: UIViewController {
 //        playerView.isHidden = false
         videoView.player = PlayerCenter.shared.player
     }
+    
+    //MARK: - Setup Gesture
+    private func setupGesture() {
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+        view.addGestureRecognizer(panGesture)
+    }
+    
+    @objc private func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
+        let translation = gesture.translation(in: view)
+        let velocity = gesture.velocity(in: view)
+        
+        switch gesture.state {
+        case .changed:
+            // Only allow downward swipe
+            if translation.y > 0 {
+                view.transform = CGAffineTransform(translationX: 0, y: translation.y)
+                
+                // Add some opacity effect
+                let progress = translation.y / view.frame.height
+                view.alpha = 1.0 - (progress * 0.3)
+            }
+            
+        case .ended, .cancelled:
+            let shouldDismiss = translation.y > 100 || velocity.y > 500
+            
+            if shouldDismiss {
+                // Dismiss and show mini player
+                UIView.animate(withDuration: 0.3, animations: {
+                    self.view.transform = CGAffineTransform(translationX: 0, y: self.view.frame.height)
+                    self.view.alpha = 0
+                }) { _ in
+                    self.dismiss(animated: false) {
+                        // Show mini player after dismissal
+                        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                           let tabBarController = UIApplication.shared.rootTabBarController {
+                            MiniPlayerContainerViewController.shared.show(in: tabBarController)
+                        }
+                    }
+                }
+            } else {
+                // Snap back to original position
+                UIView.animate(withDuration: 0.3) {
+                    self.view.transform = .identity
+                    self.view.alpha = 1.0
+                }
+            }
+            
+        default:
+            break
+        }
+    }
 
     // MARK: - Start / Replace current item
     private func startCurrent(replace: Bool) {
@@ -342,16 +392,6 @@ final class MediaPlayerViewController: UIViewController {
     }
 
     // MARK: - Controls
-    @objc private func expandTapped() {
-        let full = FullscreenPlayerViewController()
-        full.modalPresentationStyle = .fullScreen
-        // Hide the inline video while fullscreen is up to avoid double-rendering
-//        self.videoView.isHidden = true
-        full.onDismiss = { [weak self] in
-//            self?.videoView.isHidden = false
-        }
-        present(full, animated: true)
-    }
     
     @objc private func prevTapped() {
         guard !playlist.isEmpty else { return }

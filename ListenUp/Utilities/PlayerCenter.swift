@@ -89,23 +89,23 @@ final class PlayerCenter {
     }
     
     @objc private func handleInterruption(_ note: Notification) {
-            guard let info = note.userInfo,
-                  let typeVal = info[AVAudioSessionInterruptionTypeKey] as? UInt,
-                  let type = AVAudioSession.InterruptionType(rawValue: typeVal) else { return }
-
-            switch type {
-            case .began:
-                // Don’t force pause in Control Center; system may do it.
-                MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyPlaybackRate] = 0.0
-            case .ended:
-                // Resume if the system suggests
-                let shouldResume = (info[AVAudioSessionInterruptionOptionKey] as? UInt).map {
-                    AVAudioSession.InterruptionOptions(rawValue: $0).contains(.shouldResume)
-                } ?? false
-                if shouldResume { setPlaying(true) }
-            @unknown default: break
-            }
+        guard let info = note.userInfo,
+              let typeVal = info[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeVal) else { return }
+        
+        switch type {
+        case .began:
+            // Don’t force pause in Control Center; system may do it.
+            MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyPlaybackRate] = 0.0
+        case .ended:
+            // Resume if the system suggests
+            let shouldResume = (info[AVAudioSessionInterruptionOptionKey] as? UInt).map {
+                AVAudioSession.InterruptionOptions(rawValue: $0).contains(.shouldResume)
+            } ?? false
+            if shouldResume { setPlaying(true) }
+        @unknown default: break
         }
+    }
 }
 
 
