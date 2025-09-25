@@ -167,7 +167,7 @@ final class MediaPlayerViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .systemBackground
 
-        closeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
+        closeButton.setImage(UIImage(systemName: "chevron.down"), for: .normal)
         closeButton.tintColor = .label
 
         videoView.player = player
@@ -340,8 +340,7 @@ final class MediaPlayerViewController: UIViewController {
                 }) { _ in
                     self.dismiss(animated: false) {
                         // Show mini player after dismissal
-                        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                           let tabBarController = UIApplication.shared.rootTabBarController {
+                        if let tabBarController = UIApplication.shared.rootTabBarController {
                             MiniPlayerContainerViewController.shared.show(in: tabBarController)
                         }
                     }
@@ -492,7 +491,11 @@ final class MediaPlayerViewController: UIViewController {
 
     // MARK: - Close
     @objc private func closeTapped() {
-        dismiss(animated: true)
+        dismiss(animated: true) {
+            if let tabBarController = UIApplication.shared.rootTabBarController {
+                MiniPlayerContainerViewController.shared.show(in: tabBarController)
+            }
+        }
     }
 
     // MARK: - Background Audio Setup (CRITICAL FOR BACKGROUND PLAYBACK)

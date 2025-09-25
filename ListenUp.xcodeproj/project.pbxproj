@@ -173,19 +173,11 @@
 			path = View;
 			sourceTree = "<group>";
 		};
-		041469652DF00978009D6EF9 /* ViewModel */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = ViewModel;
-			sourceTree = "<group>";
-		};
 		0414696F2DF00978009D6EF9 /* ListenUp */ = {
 			isa = PBXGroup;
 			children = (
 				041469632DF00978009D6EF9 /* Model */,
 				041469642DF00978009D6EF9 /* View */,
-				041469652DF00978009D6EF9 /* ViewModel */,
 				041469622DF00978009D6EF9 /* Controller */,
 				0414698A2DF414FA009D6EF9 /* Utilities */,
 				0461FECF2E2A9D340052F966 /* Services */,

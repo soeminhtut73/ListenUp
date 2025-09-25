@@ -216,7 +216,7 @@ extension HistoryController: UITableViewDelegate {
         let vc = MediaPlayerViewController()
         vc.downloadsResults = results
         vc.startAt(url: url)
-        vc.modalPresentationStyle = .fullScreen
+        vc.modalPresentationStyle = .overFullScreen
         present(vc, animated: true)
     }
 }
