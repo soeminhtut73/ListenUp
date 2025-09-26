@@ -120,8 +120,7 @@ final class MediaPlayerViewController: UIViewController {
     }
 
     private func currentURL() -> URL? {
-        guard playlist.indices.contains(currentIndex) else { return nil }
-        return playlist[currentIndex].url
+        return (player.currentItem?.asset as? AVURLAsset)?.url
     }
 
     // MARK: - Observe Realm live changes
@@ -363,16 +362,22 @@ final class MediaPlayerViewController: UIViewController {
         guard playlist.indices.contains(currentIndex) else { return }
         let item = playlist[currentIndex]
         titleLabel.text = item.title
-
+        
         if replace {
-            PlayerCenter.shared.play(url: item.url)
+            let currentAssetURL = (player.currentItem?.asset as? AVURLAsset)?.url
+            if currentAssetURL != item.url {
+                PlayerCenter.shared.play(url: item.url)   // only replace when different
+            }
+            // if it's the same item, keep playing at the same position
         }
+        
         refreshPlayIcon()
         updateLoopUI()
         
-        // Update now playing
         let total = player.currentItem?.asset.duration.seconds ?? 0
-        PlayerCenter.shared.updateNowPlaying(title: item.title, duration: total.isFinite ? total : 0, isPlaying: true)
+        PlayerCenter.shared.updateNowPlaying(title: item.title,
+                                             duration: total.isFinite ? total : 0,
+                                             isPlaying: true)
     }
 
     private func refreshUIForCurrent() {

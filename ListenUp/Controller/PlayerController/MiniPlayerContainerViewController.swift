@@ -153,8 +153,10 @@ class MiniPlayerContainerViewController: UIViewController {
         // FIXME: - To update download result
         let playerVC = MediaPlayerViewController()
         playerVC.downloadsResults = downloadsResults
-        // Pass your downloads results here
-        // playerVC.downloadsResults = yourDownloadsResults
+        
+        if let url = (PlayerCenter.shared.player.currentItem?.asset as? AVURLAsset)?.url {
+            playerVC.startAt(url: url)   // tells the full VC: “attach to this one”
+        }
         
         playerVC.modalPresentationStyle = .fullScreen
         playerVC.modalTransitionStyle = .coverVertical
