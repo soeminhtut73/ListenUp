@@ -17,12 +17,10 @@ final class MiniPlayerView: UIView {
     private let thumbnailImageView = UIImageView()
     private let titleLabel = UILabel()
     private let playPauseButton = UIButton(type: .system)
-    private let nextButton = UIButton(type: .system)
     
     // Callbacks
     var onTap: (() -> Void)?
     var onPlayPause: (() -> Void)?
-    var onNext: (() -> Void)?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -49,7 +47,7 @@ final class MiniPlayerView: UIView {
         progressView.trackTintColor = .systemGray5
         
         // Thumbnail
-        thumbnailImageView.contentMode = .scaleAspectFill
+        thumbnailImageView.contentMode = .scaleAspectFit
         thumbnailImageView.clipsToBounds = true
         thumbnailImageView.tintColor = .secondaryLabel
         thumbnailImageView.layer.cornerRadius = 8
@@ -63,16 +61,13 @@ final class MiniPlayerView: UIView {
         playPauseButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
         playPauseButton.tintColor = .label
         
-        nextButton.setImage(UIImage(systemName: "forward.fill"), for: .normal)
-        nextButton.tintColor = .label
-        
         // Layout
         [containerView].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             addSubview($0)
         }
         
-        [progressView, thumbnailImageView, titleLabel, playPauseButton, nextButton].forEach {
+        [progressView, thumbnailImageView, titleLabel, playPauseButton].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             containerView.addSubview($0)
         }
@@ -97,15 +92,10 @@ final class MiniPlayerView: UIView {
             titleLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
             titleLabel.trailingAnchor.constraint(equalTo: playPauseButton.leadingAnchor, constant: -12),
             
-            playPauseButton.trailingAnchor.constraint(equalTo: nextButton.leadingAnchor, constant: -16),
+            playPauseButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             playPauseButton.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
             playPauseButton.widthAnchor.constraint(equalToConstant: 30),
             playPauseButton.heightAnchor.constraint(equalToConstant: 30),
-            
-            nextButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            nextButton.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            nextButton.widthAnchor.constraint(equalToConstant: 30),
-            nextButton.heightAnchor.constraint(equalToConstant: 30),
         ])
         
         // Actions
@@ -113,7 +103,6 @@ final class MiniPlayerView: UIView {
         containerView.addGestureRecognizer(tapGesture)
         
         playPauseButton.addTarget(self, action: #selector(playPauseTapped), for: .touchUpInside)
-        nextButton.addTarget(self, action: #selector(nextTapped), for: .touchUpInside)
     }
     
     @objc private func handleTap() {
@@ -124,14 +113,10 @@ final class MiniPlayerView: UIView {
         onPlayPause?()
     }
     
-    @objc private func nextTapped() {
-        onNext?()
-    }
-    
     func updateUI(title: String, isPlaying: Bool, progress: Float, thumbnail: UIImage? = nil) {
         titleLabel.text = title
         playPauseButton.setImage(UIImage(systemName: isPlaying ? "pause.fill" : "play.fill"), for: .normal)
         progressView.progress = progress
-        thumbnailImageView.image = UIImage(systemName: "music.quarternote.3")
+        thumbnailImageView.image = UIImage(systemName: "music.note")
     }
 }

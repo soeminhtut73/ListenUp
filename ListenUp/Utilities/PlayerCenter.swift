@@ -18,6 +18,10 @@ final class PlayerCenter {
         (player.currentItem?.asset as? AVURLAsset)?.url
     }
     
+    var isActuallyPlaying: Bool {
+        player.rate > 0 && player.error == nil
+    }
+    
     private init() {
         player = AVPlayer()
         

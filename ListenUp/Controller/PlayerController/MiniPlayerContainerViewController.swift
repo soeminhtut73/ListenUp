@@ -72,10 +72,6 @@ class MiniPlayerContainerViewController: UIViewController {
             self?.togglePlayPause()
         }
         
-        miniPlayer.onNext = { [weak self] in
-            self?.playNext()
-        }
-        
         // Start observing player
         startObservingPlayer()
         
@@ -172,15 +168,6 @@ class MiniPlayerContainerViewController: UIViewController {
         }
         updateMiniPlayerUI()
     }
-    
-    private func playNext() {
-        
-        //        PlayerCente
-        // Implement next track logic based on your playlist
-        // This would typically interact with your playlist management
-    }
-    
-    
 }
 
 extension MiniPlayerContainerViewController {
@@ -218,10 +205,6 @@ extension MiniPlayerContainerViewController {
         
         miniPlayer.onPlayPause = { [weak self] in
             self?.togglePlayPause()
-        }
-        
-        miniPlayer.onNext = { [weak self] in
-            self?.playNext()
         }
         
         // Start observing player

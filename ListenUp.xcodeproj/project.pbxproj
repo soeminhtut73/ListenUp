@@ -28,6 +28,7 @@
 		041C4AFF2E696B0B005B7DEC /* DownloadItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041C4AFE2E696B0B005B7DEC /* DownloadItem.swift */; };
 		04396C692E824EC4002B907A /* MiniPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396C682E824EC4002B907A /* MiniPlayerView.swift */; };
 		04396C6C2E824FA1002B907A /* MiniPlayerContainerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396C6B2E824FA1002B907A /* MiniPlayerContainerViewController.swift */; };
+		04396C912E893B69002B907A /* PlayingIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396C902E893B69002B907A /* PlayingIndicatorView.swift */; };
 		0461FED52E2A9D680052F966 /* WebViewScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0461FED42E2A9D680052F966 /* WebViewScripts.swift */; };
 		0461FEED2E2E756A0052F966 /* HistoryTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0461FEEC2E2E756A0052F966 /* HistoryTableViewCell.swift */; };
 		0461FEEF2E2E8C050052F966 /* CircularProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0461FEEE2E2E8C050052F966 /* CircularProgressView.swift */; };
@@ -81,6 +82,7 @@
 		041C4AFE2E696B0B005B7DEC /* DownloadItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadItem.swift; sourceTree = "<group>"; };
 		04396C682E824EC4002B907A /* MiniPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerView.swift; sourceTree = "<group>"; };
 		04396C6B2E824FA1002B907A /* MiniPlayerContainerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerContainerViewController.swift; sourceTree = "<group>"; };
+		04396C902E893B69002B907A /* PlayingIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayingIndicatorView.swift; sourceTree = "<group>"; };
 		0440B2692DF003DD00184BE2 /* ListenUp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ListenUp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0440B27F2DF003DE00184BE2 /* ListenUpTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ListenUpTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0440B2892DF003DE00184BE2 /* ListenUpUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ListenUpUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -230,6 +232,7 @@
 			children = (
 				04C00F4F2E77B30400104CD9 /* PlayerView.swift */,
 				04396C682E824EC4002B907A /* MiniPlayerView.swift */,
+				04396C902E893B69002B907A /* PlayingIndicatorView.swift */,
 			);
 			path = PlayerView;
 			sourceTree = "<group>";
@@ -581,6 +584,7 @@
 				041469802DF009F9009D6EF9 /* HistoryController.swift in Sources */,
 				041469902DF415A3009D6EF9 /* Extension.swift in Sources */,
 				0461FEED2E2E756A0052F966 /* HistoryTableViewCell.swift in Sources */,
+				04396C912E893B69002B907A /* PlayingIndicatorView.swift in Sources */,
 				041C4AFF2E696B0B005B7DEC /* DownloadItem.swift in Sources */,
 				0461FEEF2E2E8C050052F966 /* CircularProgressView.swift in Sources */,
 				046C47EF2DF477CD00986913 /* LibraryTableViewCell.swift in Sources */,

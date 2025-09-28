@@ -41,8 +41,11 @@ class HistoryController: UIViewController {
     }()
     
     // MARK: - Properties
-    
-    
+    private var lastPlayingIndexPath: IndexPath?
+    private var playerRateKVO: NSKeyValueObservation?
+    private var playerItemKVO: NSKeyValueObservation?
+    private var notiTokens: [NSObjectProtocol] = []
+
     //MARK: - LifeCycle
     
     override func viewDidLoad() {
@@ -52,10 +55,20 @@ class HistoryController: UIViewController {
         fetchResult()
 //        deleteAll()
         configureToken()
+        startObservingPlayer()
+        
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(appDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification, object: nil
+        )
     }
     
     deinit {
         token?.invalidate()
+        playerRateKVO?.invalidate()
+        playerItemKVO?.invalidate()
+        notiTokens.forEach { NotificationCenter.default.removeObserver($0) }
+        NotificationCenter.default.removeObserver(self)
     }
     
     //MARK: - HelperFunctions
@@ -155,8 +168,13 @@ class HistoryController: UIViewController {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }
     
+    private func fileURL(for item: DownloadItem) -> URL? {
+        guard let rel = item.localPath else { return nil }
+        return documentsURL().appendingPathComponent(rel, isDirectory: false).standardizedFileURL
+    }
+
     func getBaseURL(from relativePath: String) -> URL {
-        documentsURL().appendingPathComponent(relativePath, isDirectory: false)
+        documentsURL().appendingPathComponent(relativePath, isDirectory: false).standardizedFileURL
     }
     
     lazy var items: [MediaItem] = results
@@ -167,6 +185,56 @@ class HistoryController: UIViewController {
             let url = docs.appendingPathComponent(rel)  // local file URL
             return MediaItem(title: $0.title, url: url)
         }
+    
+    //MARK: - Playing indicator setup
+    private func isRowCurrentItem(_ item: DownloadItem) -> Bool {
+        guard let playing = PlayerCenter.shared.currentURL?.standardizedFileURL,
+              let url = fileURL(for: item)
+        else { return false }
+        return url == playing
+    }
+    
+    private func currentItemIndexPath() -> IndexPath? {
+        guard let playing = PlayerCenter.shared.currentURL?.standardizedFileURL else { return nil }
+        for (row, item) in results.enumerated() {                // results: Results<DownloadItem>
+            if let url = fileURL(for: item), url == playing {
+                return IndexPath(row: row, section: 0)
+            }
+        }
+        return nil
+    }
+    
+    private func reloadPlayingRows() {
+        let newIdx = currentItemIndexPath()
+        var toReload: [IndexPath] = []
+        if let old = lastPlayingIndexPath { toReload.append(old) }
+        if let new = newIdx { toReload.append(new) }
+        toReload = Array(Set(toReload))
+        lastPlayingIndexPath = newIdx
+        
+        guard !toReload.isEmpty else { return }
+        tableView.reloadRows(at: toReload, with: .none)
+    }
+
+    // MARK: - Observe player state
+
+    private func startObservingPlayer() {
+        // KVO for play/pause
+        playerRateKVO = PlayerCenter.shared.player.observe(\.rate, options: [.new]) { [weak self] _, _ in
+            DispatchQueue.main.async { self?.reloadPlayingRows() }
+        }
+
+        // KVO for item changes (next/prev/restart/expand)
+        playerItemKVO = PlayerCenter.shared.player.observe(\.currentItem, options: [.new]) { [weak self] _, _ in
+            DispatchQueue.main.async { self?.reloadPlayingRows() }
+        }
+
+        // End-of-item → will switch current item (your code may auto-advance)
+        let endTok = NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: nil, queue: .main) { [weak self] _ in
+            self?.reloadPlayingRows()
+        }
+        notiTokens.append(endTok)
+    }
 
     
     //MARK: - Selector
@@ -178,6 +246,10 @@ class HistoryController: UIViewController {
     @objc private func onFinished(_ note: Notification) {
         guard let id = note.userInfo?["id"] as? ObjectId else { return }
         progressCache[id] = 1.0
+    }
+    
+    @objc private func appDidBecomeActive() {
+        reloadPlayingRows()   // your existing method that reloads old/new playing index paths
     }
 }
 
@@ -194,6 +266,10 @@ extension HistoryController: UITableViewDataSource {
         }
         
         cell.configure(with: item)
+        let isCurrent = isRowCurrentItem(item)
+        cell.setPlaying(isCurrent && PlayerCenter.shared.isActuallyPlaying)   // <- no KVC
+        if isCurrent { lastPlayingIndexPath = indexPath }
+
         
         return cell
     }

@@ -20,6 +20,8 @@ class HistoryTableViewCell: UITableViewCell {
     
     //MARK: - UIComponent
     
+    private let playingIndicator = PlayingIndicatorView()
+    
     private let albumImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
@@ -71,6 +73,7 @@ class HistoryTableViewCell: UITableViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         circularProgressView.reset()
+        setPlaying(false)
     }
 
     
@@ -79,9 +82,15 @@ class HistoryTableViewCell: UITableViewCell {
         contentView.addSubview(title)
         contentView.addSubview(optionButton)
         contentView.addSubview(circularProgressView)
+        contentView.addSubview(playingIndicator)
         
         albumImageView.anchor(left: leftAnchor, paddingLeft: 16, width: 30, height: 30)
         albumImageView.centerY(inView: self)
+        
+        playingIndicator.centerX(inView: albumImageView)
+        playingIndicator.centerY(inView: albumImageView)
+        playingIndicator.setDimensions(height: 30, width: 30)
+        playingIndicator.isHidden = true
         
         circularProgressView.centerX(inView: albumImageView)
         circularProgressView.centerY(inView: albumImageView)
@@ -139,7 +148,18 @@ class HistoryTableViewCell: UITableViewCell {
         delegate?.didTapOptionButton(for: self)
     }
     
-    // MARK: - Helpers
+    /// Call from controller to toggle animation on/off
+    func setPlaying(_ isPlaying: Bool) {
+        if isPlaying {
+            playingIndicator.isHidden = false
+            albumImageView.isHidden = true
+            playingIndicator.start()
+        } else {
+            playingIndicator.stop()
+            albumImageView.isHidden = false
+            playingIndicator.isHidden = true
+        }
+    }
 }
 
 
