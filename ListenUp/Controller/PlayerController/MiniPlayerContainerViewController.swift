@@ -158,7 +158,7 @@ class MiniPlayerContainerViewController: UIViewController {
             playerVC.startAt(url: url)   // tells the full VC: “attach to this one”
         }
         
-        playerVC.modalPresentationStyle = .fullScreen
+        playerVC.modalPresentationStyle = .overFullScreen
         playerVC.modalTransitionStyle = .coverVertical
         
         tabBarController.present(playerVC, animated: true)
