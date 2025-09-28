@@ -37,18 +37,6 @@ extension UIViewController {
         
         return nil
     }
-    
-//    /// Shows mini player in the current context
-//    func showMiniPlayer() {
-//        if let tabBarController = nearestTabBarController ?? UIApplication.shared.rootTabBarController {
-//            MiniPlayerContainerViewController.shared.show(in: tabBarController)
-//        }
-//    }
-//    
-//    /// Hides mini player in the current context
-//    func hideMiniPlayer(animated: Bool = true) {
-//        MiniPlayerContainerViewController.shared.hide(animated: animated)
-//    }
 }
 
 //MARK: - UIButton

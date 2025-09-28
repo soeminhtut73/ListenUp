@@ -14,6 +14,10 @@ final class PlayerCenter {
     static let shared = PlayerCenter()
     var player = AVPlayer()
     
+    var currentURL: URL? {
+        (player.currentItem?.asset as? AVURLAsset)?.url
+    }
+    
     private init() {
         player = AVPlayer()
         

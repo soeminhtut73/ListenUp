@@ -364,20 +364,39 @@ final class MediaPlayerViewController: UIViewController {
         titleLabel.text = item.title
         
         if replace {
-            let currentAssetURL = (player.currentItem?.asset as? AVURLAsset)?.url
-            if currentAssetURL != item.url {
-                PlayerCenter.shared.play(url: item.url)   // only replace when different
+            let currentURL = (PlayerCenter.shared.player.currentItem?.asset as? AVURLAsset)?.url
+            if currentURL != item.url {
+                PlayerCenter.shared.play(url: item.url)   // only replace if different
+            } else {
+                // same track already loaded → just ensure playback continues
+                PlayerCenter.shared.player.play()
             }
-            // if it's the same item, keep playing at the same position
         }
         
         refreshPlayIcon()
         updateLoopUI()
+        Task {
+            await updateDuration(item: item)
+        }
+    }
+    
+    func updateDuration(item: MediaItem) async {
+        guard let currentItem = player.currentItem else { return }
         
-        let total = player.currentItem?.asset.duration.seconds ?? 0
-        PlayerCenter.shared.updateNowPlaying(title: item.title,
-                                             duration: total.isFinite ? total : 0,
-                                             isPlaying: true)
+        do {
+            let duration = try await currentItem.asset.load(.duration)
+            let total = duration.seconds
+            
+            PlayerCenter.shared.updateNowPlaying(title: item.title,
+                                                 duration: total.isFinite ? total : 0,
+                                                 isPlaying: true)
+        } catch {
+            print("Failed to load duration: \(error)")
+            // Fallback to 0 duration
+            PlayerCenter.shared.updateNowPlaying(title: item.title,
+                                                 duration: 0,
+                                                 isPlaying: true)
+        }
     }
 
     private func refreshUIForCurrent() {
@@ -421,10 +440,13 @@ final class MediaPlayerViewController: UIViewController {
         if PlayerCenter.shared.isPlaying() {
             PlayerCenter.shared.pause()
         } else {
-            // Resume the current item. If you track the current URL, reuse it:
-            guard playlist.indices.contains(currentIndex) else { return }
-            let item = playlist[currentIndex]
-            PlayerCenter.shared.play(url: item.url)
+            // If there’s already a currentItem, resume without replacing it.
+            if PlayerCenter.shared.player.currentItem != nil {
+                PlayerCenter.shared.player.play()
+            } else {
+                // Cold start (e.g., first time): start the selected item
+                startCurrent(replace: true)
+            }
         }
         refreshPlayIcon()
     }
