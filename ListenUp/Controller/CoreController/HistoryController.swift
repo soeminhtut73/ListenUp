@@ -16,6 +16,9 @@ class HistoryController: UIViewController {
     //MARK: - Properties
     
     private var results: Results<DownloadItem>!
+    private var searchResults: Results<DownloadItem>!
+    private let searchController = UISearchController(searchResultsController: nil)
+    
     private var token: NotificationToken?
     private var progressCache: [ObjectId: Float] = [:]
     
@@ -53,6 +56,7 @@ class HistoryController: UIViewController {
         
         setupUI()
         fetchResult()
+        setupSearch()
 //        deleteAll()
         configureToken()
         startObservingPlayer()
@@ -133,18 +137,12 @@ class HistoryController: UIViewController {
     
     func fetchResult() {
         results = RealmService.shared.fetchAllMedia().sorted(byKeyPath: "createdAt", ascending: false)
+        searchResults = results
         tableView.reloadData()
     }
     
     func deleteAll() {
         RealmService.shared.deleteAll()
-    }
-    
-    func playVideo(at fileURL: URL, from presenter: UIViewController) {
-        let player = AVPlayer(url: fileURL)
-        let vc = AVPlayerViewController()
-        vc.player = player
-        presenter.present(vc, animated: true) { player.play() }
     }
     
     private func showActionSheet(for indexPath: IndexPath) {
@@ -172,19 +170,6 @@ class HistoryController: UIViewController {
         guard let rel = item.localPath else { return nil }
         return documentsURL().appendingPathComponent(rel, isDirectory: false).standardizedFileURL
     }
-
-    func getBaseURL(from relativePath: String) -> URL {
-        documentsURL().appendingPathComponent(relativePath, isDirectory: false).standardizedFileURL
-    }
-    
-    lazy var items: [MediaItem] = results
-        .filter { ($0.localPath?.isEmpty == false) && $0.status == .completed }
-        .compactMap {
-            guard let rel = $0.localPath else { return nil }
-            let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            let url = docs.appendingPathComponent(rel)  // local file URL
-            return MediaItem(title: $0.title, url: url)
-        }
     
     //MARK: - Playing indicator setup
     private func isRowCurrentItem(_ item: DownloadItem) -> Bool {
@@ -256,11 +241,11 @@ class HistoryController: UIViewController {
 //MARK: - UITableViewDataSource
 extension HistoryController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return results?.count ?? 0
+        return searchResults?.count ?? 0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let item = results[indexPath.row]
+        let item = searchResults[indexPath.row]
         guard let cell = tableView.dequeueReusableCell(withIdentifier: HistoryTableViewCell.identifier, for: indexPath) as? HistoryTableViewCell else {
             return UITableViewCell()
         }
@@ -302,5 +287,59 @@ extension HistoryController: HistoryTableViewCellDelegate {
     func didTapOptionButton(for cell: HistoryTableViewCell) {
         guard let indexPath = tableView.indexPath(for: cell) else { return }
         showActionSheet(for: indexPath)
+    }
+}
+
+//MARK: - Setup SearchBar
+extension HistoryController: UISearchResultsUpdating, UISearchBarDelegate {
+    private func setupSearch() {
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.hidesNavigationBarDuringPresentation = false
+        searchController.searchBar.placeholder = "Search..."
+        searchController.searchBar.delegate = self
+        
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
+        definesPresentationContext = true
+    }
+    
+    func updateSearchResults(for searchController: UISearchController) {
+        applySearch(text: searchController.searchBar.text)
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        applySearch(text: nil)
+    }
+    
+    private func applySearch(text: String?) {
+        let raw = (text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else {
+            searchResults = results
+            tableView.reloadData()
+            return
+        }
+        
+        // Split into tokens by spaces; ignore empties
+        let tokens = raw
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+        
+        // Build (AND over tokens) of (OR over fields) predicates
+        var andSubpredicates: [NSPredicate] = []
+        for tok in tokens {
+            // search across title and localPath (add more fields if you have them)
+            let orForToken = NSCompoundPredicate(orPredicateWithSubpredicates: [
+                NSPredicate(format: "title CONTAINS[c] %@", tok)
+            ])
+            andSubpredicates.append(orForToken)
+        }
+        
+        let compound = NSCompoundPredicate(andPredicateWithSubpredicates: andSubpredicates)
+        
+        // Filter from the full, already-sorted Results
+        searchResults = results.filter(compound)
+        
+        tableView.reloadData()
     }
 }
