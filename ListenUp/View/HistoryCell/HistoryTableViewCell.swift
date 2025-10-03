@@ -30,6 +30,7 @@ class HistoryTableViewCell: UITableViewCell {
         imageView.backgroundColor = .clear
         imageView.layer.cornerRadius = 8
         imageView.clipsToBounds = true
+        imageView.isHidden = true
         return imageView
     }()
     
@@ -64,6 +65,10 @@ class HistoryTableViewCell: UITableViewCell {
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
+        
+        preservesSuperviewLayoutMargins = false
+        contentView.preservesSuperviewLayoutMargins = false
+        shouldIndentWhileEditing = true 
     }
     
     required init?(coder: NSCoder) {
@@ -76,31 +81,53 @@ class HistoryTableViewCell: UITableViewCell {
         setPlaying(false)
     }
 
+    override func setEditing(_ editing: Bool, animated: Bool) {
+        super.setEditing(editing, animated: animated)
+
+        if animated {
+            UIView.animate(withDuration: 0.25) { self.layoutIfNeeded() }
+        } else {
+            setNeedsLayout()
+        }
+    }
     
     private func setupUI() {
-        contentView.addSubview(albumImageView)
-        contentView.addSubview(title)
-        contentView.addSubview(optionButton)
-        contentView.addSubview(circularProgressView)
-        contentView.addSubview(playingIndicator)
+        [albumImageView, title, optionButton, circularProgressView, playingIndicator].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            contentView.addSubview($0)
+        }
         
-        albumImageView.anchor(left: leftAnchor, paddingLeft: 16, width: 30, height: 30)
-        albumImageView.centerY(inView: self)
-        
-        playingIndicator.centerX(inView: albumImageView)
-        playingIndicator.centerY(inView: albumImageView)
-        playingIndicator.setDimensions(height: 30, width: 30)
+        NSLayoutConstraint.activate([
+            // Album image
+            albumImageView.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
+            albumImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            albumImageView.widthAnchor.constraint(equalToConstant: 30),
+            albumImageView.heightAnchor.constraint(equalToConstant: 30), // square
+            
+            // Playing indicator (over album)
+            playingIndicator.centerXAnchor.constraint(equalTo: albumImageView.centerXAnchor),
+            playingIndicator.centerYAnchor.constraint(equalTo: albumImageView.centerYAnchor),
+            playingIndicator.widthAnchor.constraint(equalToConstant: 30),
+            playingIndicator.heightAnchor.constraint(equalToConstant: 30),
+            
+            // Circular progress (over album)
+            circularProgressView.centerXAnchor.constraint(equalTo: albumImageView.centerXAnchor),
+            circularProgressView.centerYAnchor.constraint(equalTo: albumImageView.centerYAnchor),
+            circularProgressView.widthAnchor.constraint(equalToConstant: 30),
+            circularProgressView.heightAnchor.constraint(equalToConstant: 30),
+            
+            // Option button
+            optionButton.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
+            optionButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            optionButton.widthAnchor.constraint(equalToConstant: 30),
+            optionButton.heightAnchor.constraint(equalToConstant: 30),
+            
+            // Title label
+            title.leadingAnchor.constraint(equalTo: albumImageView.trailingAnchor, constant: 12),
+            title.trailingAnchor.constraint(equalTo: optionButton.leadingAnchor, constant: -12),
+            title.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
+        ])
         playingIndicator.isHidden = true
-        
-        circularProgressView.centerX(inView: albumImageView)
-        circularProgressView.centerY(inView: albumImageView)
-        circularProgressView.setDimensions(height: 30, width: 30)
-        
-        optionButton.anchor(right: rightAnchor, paddingRight: 16, width: 30, height: 30)
-        optionButton.centerY(inView: self)
-        
-        title.centerY(inView: albumImageView)
-        title.anchor(left: albumImageView.rightAnchor, right: optionButton.leftAnchor, paddingLeft: 12, paddingRight: 12)
     }
     
     // Bind download tasks, 

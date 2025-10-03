@@ -45,6 +45,30 @@ class RealmService {
         }
     }
     
+    func deleteItems(with items: [DownloadItem], completion: @escaping (Result<Void, Error>) -> Void) {
+        
+        let fileURLs: [URL] = items.compactMap { FileHelper.fileURL(for: $0.localPath) }
+    
+        do {
+            try realm.write {
+                realm.delete(items)
+            }
+            
+            for url in fileURLs {
+                try? FileManager.default.removeItem(at: url)
+            }
+            
+            DispatchQueue.main.async {
+                completion(.success(()))
+            }
+            
+        } catch {
+            DispatchQueue.main.async {
+                completion(.failure(error))
+            }
+        }
+    }
+    
     func deleteAll() {
         try? realm.write {
             realm.deleteAll()

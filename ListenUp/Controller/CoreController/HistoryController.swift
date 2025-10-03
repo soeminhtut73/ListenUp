@@ -22,6 +22,10 @@ class HistoryController: UIViewController {
     private var token: NotificationToken?
     private var progressCache: [ObjectId: Float] = [:]
     
+    private var deleteButton: UIBarButtonItem!
+    private var selectAllButton: UIBarButtonItem!
+    private var cancelButton: UIBarButtonItem!
+    
     // MARK: - UI Components
     private let tableView: UITableView = {
         let tv = UITableView()
@@ -96,6 +100,15 @@ class HistoryController: UIViewController {
         
         tableView.dataSource = self
         tableView.delegate = self
+        tableView.allowsMultipleSelectionDuringEditing = true
+        
+        deleteButton = UIBarButtonItem(title: "Select", style: .done, target: self, action: #selector(deleteButtonTapped))
+        navigationItem.rightBarButtonItem = deleteButton
+        
+        selectAllButton = UIBarButtonItem(title: "Select All", style: .plain, target: self, action: #selector(selectAllTapped))
+        
+        cancelButton = UIBarButtonItem(title: "Cancel", style: .done,
+                                       target: self, action: #selector(cancelTapped))
         
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
@@ -162,19 +175,10 @@ class HistoryController: UIViewController {
         present(actionSheet, animated: true)
     }
     
-    private func documentsURL() -> URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-    }
-    
-    private func fileURL(for item: DownloadItem) -> URL? {
-        guard let rel = item.localPath else { return nil }
-        return documentsURL().appendingPathComponent(rel, isDirectory: false).standardizedFileURL
-    }
-    
     //MARK: - Playing indicator setup
     private func isRowCurrentItem(_ item: DownloadItem) -> Bool {
         guard let playing = PlayerCenter.shared.currentURL?.standardizedFileURL,
-              let url = fileURL(for: item)
+              let url = FileHelper.fileURL(for: item.localPath)
         else { return false }
         return url == playing
     }
@@ -182,7 +186,7 @@ class HistoryController: UIViewController {
     private func currentItemIndexPath() -> IndexPath? {
         guard let playing = PlayerCenter.shared.currentURL?.standardizedFileURL else { return nil }
         for (row, item) in results.enumerated() {                // results: Results<DownloadItem>
-            if let url = fileURL(for: item), url == playing {
+            if let url = FileHelper.fileURL(for: item.localPath), url == playing {
                 return IndexPath(row: row, section: 0)
             }
         }
@@ -265,6 +269,12 @@ extension HistoryController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
+        if tableView.isEditing {
+            updateDeleteButtonTitle()
+            updateSelectAllButtonTitle()
+            return
+        }
+        
         tableView.deselectRow(at: indexPath, animated: true)
         
         let tapped = results[indexPath.row]
@@ -275,10 +285,17 @@ extension HistoryController: UITableViewDelegate {
         MiniPlayerContainerViewController.shared.hide()
         
         let vc = MediaPlayerViewController()
-        vc.downloadsResults = results
+        vc.downloadsResults = searchResults
         vc.startAt(url: url)
         vc.modalPresentationStyle = .overFullScreen
         present(vc, animated: true)
+    }
+    
+    func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
+        if tableView.isEditing {
+            updateDeleteButtonTitle()
+            updateSelectAllButtonTitle()
+        }
     }
 }
 
@@ -341,5 +358,114 @@ extension HistoryController: UISearchResultsUpdating, UISearchBarDelegate {
         searchResults = results.filter(compound)
         
         tableView.reloadData()
+    }
+}
+
+//MARK: - Delete Action
+extension HistoryController {
+    private var selectionCount: Int {
+        tableView.indexPathsForSelectedRows?.count ?? 0
+    }
+    
+    private func enterSelectionMode() {
+        tableView.setEditing(true, animated: true)
+        navigationItem.leftBarButtonItems = [cancelButton]
+        updateDeleteButtonTitle()
+        updateSelectAllButtonTitle()
+    }
+    
+    private func exitSelectionMode() {
+        // Clear visual selections
+        if let selected = tableView.indexPathsForSelectedRows {
+            for ip in selected {
+                tableView.deselectRow(at: ip, animated: false)
+            }
+        }
+        tableView.setEditing(false, animated: true)
+        navigationItem.leftBarButtonItem = nil
+        deleteButton.title = "Select"
+    }
+    
+    private func updateDeleteButtonTitle() {
+        guard tableView.isEditing else { deleteButton.title = "Select"; return }
+        deleteButton.title = "Delete (\(selectionCount))"
+    }
+    
+    private func updateSelectAllButtonTitle() {
+        guard tableView.isEditing else { return }
+        let allSelected = selectionCount == results.count && results.count > 0
+        selectAllButton.title = allSelected ? "Deselect All" : "Select All"
+        selectAllButton.isEnabled = results.count > 0
+    }
+    
+    @objc private func deleteButtonTapped() {
+        if !tableView.isEditing {
+            // First press → enter selection mode
+            enterSelectionMode()
+            return
+        }
+        
+        // Second press → confirm & delete selected rows
+        let count = selectionCount
+        guard count > 0 else {
+            // nothing selected; you can vibrate or simply ignore
+            return
+        }
+        
+        let title = count == 1 ? "Delete 1 item?" : "Delete \(count) items?"
+        let alert = UIAlertController(title: title,
+                                      message: "This will remove them from history.",
+                                      preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { [weak self] _ in
+            // FIXME: - handle to delete
+            self?.performDeleteSelected()
+        }))
+        present(alert, animated: true)
+    }
+    
+    @objc private func selectAllTapped() {
+        guard tableView.isEditing else { return }
+        let allSelected = selectionCount == results.count && results.count > 0
+        
+        if allSelected {
+            // Deselect all
+            if let selected = tableView.indexPathsForSelectedRows {
+                for ip in selected {
+                    tableView.deselectRow(at: ip, animated: false)
+                }
+            }
+        } else {
+            // Select all visible in current filter
+            for row in 0..<results.count {
+                let ip = IndexPath(row: row, section: 0)
+                tableView.selectRow(at: ip, animated: false, scrollPosition: .none)
+            }
+        }
+        updateDeleteButtonTitle()
+        updateSelectAllButtonTitle()
+    }
+    
+    private func performDeleteSelected() {
+        guard let selected = tableView.indexPathsForSelectedRows else { return }
+        
+        // Snapshot the objects to delete (Realm Results are live)
+        let items: [DownloadItem] = selected
+            .map { searchResults[$0.row] }
+        
+        RealmService.shared.deleteItems(with: items) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success:
+                self.exitSelectionMode()
+            case .failure:
+                self.showMessage(withTitle: "Oop!", message: "Faield to delete!")
+                self.exitSelectionMode()
+            }
+        }
+    }
+    
+    @objc private func cancelTapped() {
+        exitSelectionMode()
     }
 }
