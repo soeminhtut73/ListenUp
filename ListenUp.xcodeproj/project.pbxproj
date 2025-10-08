@@ -30,6 +30,7 @@
 		04396C6C2E824FA1002B907A /* MiniPlayerContainerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396C6B2E824FA1002B907A /* MiniPlayerContainerViewController.swift */; };
 		04396C912E893B69002B907A /* PlayingIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396C902E893B69002B907A /* PlayingIndicatorView.swift */; };
 		04396C9F2E8D0833002B907A /* FileHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396C9E2E8D0833002B907A /* FileHelper.swift */; };
+		04396CCA2E961CAA002B907A /* SettingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396CC92E961CAA002B907A /* SettingController.swift */; };
 		0461FED52E2A9D680052F966 /* WebViewScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0461FED42E2A9D680052F966 /* WebViewScripts.swift */; };
 		0461FEED2E2E756A0052F966 /* HistoryTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0461FEEC2E2E756A0052F966 /* HistoryTableViewCell.swift */; };
 		0461FEEF2E2E8C050052F966 /* CircularProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0461FEEE2E2E8C050052F966 /* CircularProgressView.swift */; };
@@ -85,6 +86,7 @@
 		04396C6B2E824FA1002B907A /* MiniPlayerContainerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerContainerViewController.swift; sourceTree = "<group>"; };
 		04396C902E893B69002B907A /* PlayingIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayingIndicatorView.swift; sourceTree = "<group>"; };
 		04396C9E2E8D0833002B907A /* FileHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileHelper.swift; sourceTree = "<group>"; };
+		04396CC92E961CAA002B907A /* SettingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingController.swift; sourceTree = "<group>"; };
 		0440B2692DF003DD00184BE2 /* ListenUp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ListenUp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0440B27F2DF003DE00184BE2 /* ListenUpTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ListenUpTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0440B2892DF003DE00184BE2 /* ListenUpUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ListenUpUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -204,6 +206,7 @@
 				0414697F2DF009F9009D6EF9 /* HistoryController.swift */,
 				041469812DF00A01009D6EF9 /* ProfileController.swift */,
 				041C4AC52E658442005B7DEC /* PlayerController.swift */,
+				04396CC92E961CAA002B907A /* SettingController.swift */,
 			);
 			path = CoreController;
 			sourceTree = "<group>";
@@ -581,6 +584,7 @@
 				04396C692E824EC4002B907A /* MiniPlayerView.swift in Sources */,
 				0461FED52E2A9D680052F966 /* WebViewScripts.swift in Sources */,
 				04396C6C2E824FA1002B907A /* MiniPlayerContainerViewController.swift in Sources */,
+				04396CCA2E961CAA002B907A /* SettingController.swift in Sources */,
 				041C4AC62E658442005B7DEC /* PlayerController.swift in Sources */,
 				041469712DF00978009D6EF9 /* SceneDelegate.swift in Sources */,
 				041C4AC42E655C22005B7DEC /* ExtractAPI.swift in Sources */,

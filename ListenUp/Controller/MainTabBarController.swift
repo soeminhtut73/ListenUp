@@ -24,13 +24,13 @@ class MainTabBarController: UITabBarController {
     
     private func configureTabController() {
         
-        let browserController = configureNavigationController(tabImage: UIImage(systemName: "globe")!, rootViewController: BrowserController())
+        let browserController = configureNavigationController(tabImage: UIImage(systemName: "globe")!, rootViewController: BrowserController(), title: "Browser")
         
-        let LibraryController = configureNavigationController(tabImage: UIImage(systemName: "star")!, rootViewController: LibraryController())
+        let LibraryController = configureNavigationController(tabImage: UIImage(systemName: "star")!, rootViewController: LibraryController(), title: "Favourites")
         
-        let HistoryController = configureNavigationController(tabImage: UIImage(systemName: "clock")!, rootViewController: HistoryController())
+        let HistoryController = configureNavigationController(tabImage: UIImage(systemName: "clock")!, rootViewController: HistoryController(), title: "History")
         
-        let ProfileController = configureNavigationController(tabImage: UIImage(systemName: "person")!, rootViewController: ProfileController())
+        let ProfileController = configureNavigationController(tabImage: UIImage(systemName: "gear")!, rootViewController: SettingController(), title: "Setting")
         
         viewControllers = [browserController, LibraryController, HistoryController, ProfileController]
         
@@ -52,10 +52,11 @@ class MainTabBarController: UITabBarController {
         
     }
     
-    private func configureNavigationController(tabImage: UIImage, rootViewController: UIViewController) -> UINavigationController {
+    private func configureNavigationController(tabImage: UIImage, rootViewController: UIViewController, title: String? = nil) -> UINavigationController {
         
         let navigationController = UINavigationController(rootViewController: rootViewController)
         navigationController.tabBarItem.image = tabImage
+        navigationController.tabBarItem.title = title
         navigationController.navigationBar.isTranslucent = false
         
         return navigationController

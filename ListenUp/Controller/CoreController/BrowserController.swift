@@ -67,8 +67,6 @@ class BrowserController: UIViewController {
     //MARK: - HelperFunctions
     
     private func configureUI() {
-        title = "Browser"
-        
         view.addSubview(webView)
         
         webView.translatesAutoresizingMaskIntoConstraints = false

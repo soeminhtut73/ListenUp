@@ -82,7 +82,6 @@ class HistoryController: UIViewController {
     //MARK: - HelperFunctions
     
     private func setupUI() {
-        title = "History"
         view.backgroundColor = Style.viewBackgroundColor
         
         view.addSubview(tableView)
