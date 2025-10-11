@@ -39,14 +39,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneWillResignActive(_ scene: UIScene) {
-        
-        // Optional: refresh lock screen info
-//            if let player = PlayerCenter.shared.player.currentItem {
-//                let time = player.currentTime().seconds
-//                var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
-//                info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = time
-//                MPNowPlayingInfoCenter.default().nowPlayingInfo = info
-//            }
     }
 
     func sceneWillEnterForeground(_ scene: UIScene) {

@@ -105,6 +105,11 @@ final class DownloadManager: NSObject, URLSessionDownloadDelegate {
                 $0.status    = .completed
                 $0.errorMessage = nil
             }
+            
+            DispatchQueue.main.async {
+                DownloadNotificationManager.shared.showSystemNotification()
+            }
+            
             NotificationCenter.default.post(name: DownloadManager.didFinish, object: id)
             
             completion?(.success(dest))

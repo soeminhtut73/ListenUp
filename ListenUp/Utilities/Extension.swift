@@ -227,30 +227,6 @@ extension UIApplication {
     var rootTabBarController: UITabBarController? {
         currentKeyWindow?.rootViewController as? UITabBarController
     }
-    
-    /// Returns the topmost presented view controller
-    var topMostViewController: UIViewController? {
-        guard let rootVC = currentKeyWindow?.rootViewController else { return nil }
-        return topMostViewController(from: rootVC)
-    }
-    
-    private func topMostViewController(from viewController: UIViewController) -> UIViewController {
-        if let presented = viewController.presentedViewController {
-            return topMostViewController(from: presented)
-        }
-        
-        if let nav = viewController as? UINavigationController,
-           let top = nav.topViewController {
-            return topMostViewController(from: top)
-        }
-        
-        if let tab = viewController as? UITabBarController,
-           let selected = tab.selectedViewController {
-            return topMostViewController(from: selected)
-        }
-        
-        return viewController
-    }
 }
 
 // MARK: - Tab Bar Controller Extension

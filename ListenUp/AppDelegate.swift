@@ -7,6 +7,7 @@
 
 import UIKit
 import AVFoundation
+import UserNotifications
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -14,6 +15,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
         _ = NetworkMonitor.shared
+        
+        // Request notification permission
+        DownloadNotificationManager.shared.requestNotificationPermission { granted in
+            if granted {
+                AppSettingsManager.shared.isDownloadCompleteNotificationEnabled = true
+            } else {
+                AppSettingsManager.shared.isDownloadCompleteNotificationEnabled = false
+            }
+        }
+        
+        // Set notification delegate
+        UNUserNotificationCenter.current().delegate = self
         
         return true
     }
@@ -31,8 +44,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) {
         DownloadManager.shared.backgroundCompletionHandler = completionHandler
+        
     }
+}
 
-
+extension AppDelegate: UNUserNotificationCenterDelegate {
+    // Called when user taps on notification
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
+        
+        if response.actionIdentifier == "OPEN_ACTION" {
+            // Navigate to downloads screen
+            // NotificationCenter.default.post(name: .openDownloads, object: nil)
+        }
+        
+        completionHandler()
+    }
 }
 
