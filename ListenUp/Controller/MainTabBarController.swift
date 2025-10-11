@@ -30,7 +30,7 @@ class MainTabBarController: UITabBarController {
         
         let HistoryController = configureNavigationController(tabImage: UIImage(systemName: "clock")!, rootViewController: HistoryController(), title: "History")
         
-        let ProfileController = configureNavigationController(tabImage: UIImage(systemName: "gear")!, rootViewController: SettingController(), title: "Setting")
+        let ProfileController = configureNavigationController(tabImage: UIImage(systemName: "gear")!, rootViewController: SettingsController(), title: "Setting")
         
         viewControllers = [browserController, LibraryController, HistoryController, ProfileController]
         

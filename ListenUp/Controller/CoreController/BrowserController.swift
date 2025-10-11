@@ -175,26 +175,37 @@ class BrowserController: UIViewController {
         view.keyboardLayoutGuide.topAnchor.constraint(equalTo: searchBar.bottomAnchor).isActive = true
     }
     
-    private func downloadMedia(from url: String, mediaType: String, mediaTitle: String) {
+    private func downloadMedia(from url: String) {
+        
+        DownloadGuard.checkAndProceed(from: self) { [weak self] decision in
+            guard let self = self else { return }
+            
+            switch decision {
+            case .proceed: performDownload(with: url)
+            case .cancelled: showMessage(withTitle: "Oop!", message: "Download failed!")
+            }
+        }
+    }
+    
+    private func performDownload(with url: String) {
         // FIXME: - ExtractAPI
-        print("Debug: url : \(url)")
         ExtractAPI.extract(from: url) { [weak self] result in
             guard let self = self else { return }
             DispatchQueue.main.async {
                 switch result {
                 case .failure(let error):
                     self.showAlert(title: "Oop!", message: "Extract Fail \(error)!")
-                    
+
                 case .success(let resp):
                     if resp.isTooLong {
                         self.showAlert(title: "Oop!", message: "Choose no longer than 10 minutes!")
                         return
                     }
-                    
+
                     guard let safeUrl = URL(string: resp.url) else {
                         return
                     }
-                    
+
                     print("Debug: extract success , ready to download.")
                     DownloadManager.shared.enqueue(url: safeUrl, title: resp.title, thumbURL: resp.thumb)
                 }
@@ -233,7 +244,7 @@ class BrowserController: UIViewController {
                                       preferredStyle: .alert)
         
         alert.addAction(UIAlertAction(title: "Download", style: .default, handler: { _ in
-            self.downloadMedia(from: url, mediaType: mediaType, mediaTitle: mediaTitle)
+            self.downloadMedia(from: url)
         }))
         
         alert.addAction(UIAlertAction(title: "Copy Link", style: .default, handler: { _ in
