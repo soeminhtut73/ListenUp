@@ -96,6 +96,7 @@ class HistoryTableViewCell: UITableViewCell {
             $0.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview($0)
         }
+        contentView.isUserInteractionEnabled = true
         
         NSLayoutConstraint.activate([
             // Album image
