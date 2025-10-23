@@ -19,6 +19,8 @@ protocol HistoryTableViewCellDelegate: AnyObject {
 class HistoryTableViewCell: UITableViewCell {
     static let identifier = "HistoryTableViewCell"
     
+    private var currentItemId: String?
+    
     //MARK: - UIComponent
     
     private let playingIndicator = PlayingIndicatorView()
@@ -51,7 +53,7 @@ class HistoryTableViewCell: UITableViewCell {
         return button
     }()
     
-    private let fileSizeLabel: UILabel = {
+    private var fileSizeLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 12, weight: .regular)
         label.textColor = .tertiaryLabel
@@ -60,7 +62,7 @@ class HistoryTableViewCell: UITableViewCell {
     }()
     
     private let circularProgressView: CircularProgressView = {
-        let view = CircularProgressView()
+        let view = CircularProgressView.appStoreStyle(size: 40)
         view.isHidden = true
         return view
     }()
@@ -85,7 +87,10 @@ class HistoryTableViewCell: UITableViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        circularProgressView.reset()
+        currentItemId = nil
+        albumImageView.image = nil
+        circularProgressView.reset(animated: false)
+        fileSizeLabel.text = nil
         setPlaying(false)
     }
 
@@ -116,8 +121,8 @@ class HistoryTableViewCell: UITableViewCell {
             // Album image
             albumImageView.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
             albumImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            albumImageView.widthAnchor.constraint(equalToConstant: 54),
-            albumImageView.heightAnchor.constraint(equalToConstant: 54), // square
+            albumImageView.widthAnchor.constraint(equalToConstant: 46),
+            albumImageView.heightAnchor.constraint(equalToConstant: 46), // square
             
             // Playing indicator (over album)
             playingIndicator.centerXAnchor.constraint(equalTo: albumImageView.centerXAnchor),
@@ -128,8 +133,8 @@ class HistoryTableViewCell: UITableViewCell {
             // Circular progress (over album)
             circularProgressView.centerXAnchor.constraint(equalTo: albumImageView.centerXAnchor),
             circularProgressView.centerYAnchor.constraint(equalTo: albumImageView.centerYAnchor),
-            circularProgressView.widthAnchor.constraint(equalToConstant: 30),
-            circularProgressView.heightAnchor.constraint(equalToConstant: 30),
+            circularProgressView.widthAnchor.constraint(equalToConstant: 40),
+            circularProgressView.heightAnchor.constraint(equalToConstant: 40),
             
             // Option button
             optionButton.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
@@ -147,31 +152,42 @@ class HistoryTableViewCell: UITableViewCell {
     // Bind download tasks, 
     func configure(with item: DownloadItem) {
         title.text = item.title
-        configureThumbnail(for: item)
-        circularProgressView.reset()
+        albumImageView.isHidden = true
         
-        if item.fileSize > 0 {
-            fileSizeLabel.text = formatFileSize(item.fileSize)
-        } else if item.fileSize > 0 {
-            fileSizeLabel.text = formatFileSize(item.fileSize)
-        } else {
-            fileSizeLabel.text = "Unknown size"
-        }
+        let isDifferentItem = currentItemId != item.id
+        currentItemId = item.id
         
         switch item.status {
         case.running:
             circularProgressView.isHidden = false
-            albumImageView.isHidden = true
             
-            DispatchQueue.main.async { [weak self] in
-                self?.circularProgressView.isIndeterminate = false
-                self?.circularProgressView.setProgress(item.progress, animated: true)
-            }
+            circularProgressView.setProgress(item.progress, for: item.id, animated: !isDifferentItem)
+//            DispatchQueue.main.async { [weak self] in
+//                self?.circularProgressView.isIndeterminate = false
+//                self?.circularProgressView.setProgress(item.progress, animated: true)
+//                self?.circularProgressView.setProgress(item.progress, for: item.id, animated: !isDifferentItem)
+//
+//            }
             
         case.completed:
-            circularProgressView.isHidden = true
             albumImageView.isHidden = false
+            circularProgressView.setCompleted(for: item.id)
+            
+            if item.fileSize > 0 {
+                fileSizeLabel.text = formatFileSize(item.fileSize)
+            } else if item.fileSize > 0 {
+                fileSizeLabel.text = formatFileSize(item.fileSize)
+            } else {
+                fileSizeLabel.text = "Unknown size"
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                if self.currentItemId == item.id {
+                    self.circularProgressView.isHidden = true
+                }
+            }
             // to load thumbNail after complete
+            configureThumbnail(for: item)
             
         case.failed:
             circularProgressView.isHidden = true
@@ -182,7 +198,7 @@ class HistoryTableViewCell: UITableViewCell {
         case.queued:
             circularProgressView.isHidden = false
             albumImageView.isHidden = true
-            circularProgressView.progress = 0
+//            circularProgressView.progress = 0
             
         case.canceled:
             circularProgressView.isHidden = true
