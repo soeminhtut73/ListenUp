@@ -61,9 +61,9 @@ class HistoryController: UIViewController {
         setupUI()
         fetchResult()
         setupSearch()
-//        deleteAll()
         configureToken()
         startObservingPlayer()
+        setupNavigationBar()
         
         NotificationCenter.default.addObserver(
             self, selector: #selector(appDidBecomeActive),
@@ -100,14 +100,6 @@ class HistoryController: UIViewController {
         tableView.dataSource = self
         tableView.delegate = self
         tableView.allowsMultipleSelectionDuringEditing = true
-        
-        deleteButton = UIBarButtonItem(title: "Select", style: .done, target: self, action: #selector(deleteButtonTapped))
-        navigationItem.rightBarButtonItem = deleteButton
-        
-        selectAllButton = UIBarButtonItem(title: "Select All", style: .plain, target: self, action: #selector(selectAllTapped))
-        
-        cancelButton = UIBarButtonItem(title: "Cancel", style: .done,
-                                       target: self, action: #selector(cancelTapped))
         
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
@@ -146,6 +138,42 @@ class HistoryController: UIViewController {
             }
         }
     }
+    
+    private func setupNavigationBar() {
+        let sortButton = UIBarButtonItem(
+            image: UIImage(systemName: "arrow.up.arrow.down"),
+            style: .plain,
+            target: self,
+            action: #selector(sortButtonTapped)
+        )
+        
+        deleteButton = UIBarButtonItem(
+            image: UIImage(systemName: "trash"),
+            style: .done,
+            target: self,
+            action: #selector(deleteButtonTapped))
+        navigationItem.rightBarButtonItems = [deleteButton, sortButton]
+        
+        selectAllButton = UIBarButtonItem(
+            title: "Select All",
+            style: .plain,
+            target: self,
+            action: #selector(selectAllTapped))
+        
+        cancelButton = UIBarButtonItem(
+            image: UIImage(systemName: "xmark"),
+            style: .done,
+            target: self,
+            action: #selector(cancelTapped))
+    }
+    
+    private func sortAudioFiles(by keyPath: String, ascending: Bool) {
+        searchResults  = searchResults
+            .sorted(byKeyPath: keyPath, ascending: ascending)
+        
+        tableView.reloadData()
+    }
+
     
     func fetchResult() {
         results = RealmService.shared.fetchAllMedia().sorted(byKeyPath: "createdAt", ascending: false)
@@ -238,6 +266,30 @@ class HistoryController: UIViewController {
     
     @objc private func appDidBecomeActive() {
         reloadPlayingRows()   // your existing method that reloads old/new playing index paths
+    }
+    
+    @objc private func sortButtonTapped() {
+        let alert = UIAlertController(title: "Sort By", message: nil, preferredStyle: .actionSheet)
+        
+        alert.addAction(UIAlertAction(title: "Newest First", style: .default) { [weak self] _ in
+            self?.sortAudioFiles(by: "createdAt", ascending: false)
+        })
+        
+        alert.addAction(UIAlertAction(title: "Oldest First", style: .default) { [weak self] _ in
+            self?.sortAudioFiles(by: "createdAt", ascending: true)
+        })
+        
+        alert.addAction(UIAlertAction(title: "Name (A-Z)", style: .default) { [weak self] _ in
+            self?.sortAudioFiles(by: "title", ascending: true)
+        })
+        
+        alert.addAction(UIAlertAction(title: "Name (Z-A)", style: .default) { [weak self] _ in
+            self?.sortAudioFiles(by: "title", ascending: false)
+        })
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        present(alert, animated: true)
     }
 }
 
