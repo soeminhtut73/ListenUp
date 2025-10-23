@@ -9,6 +9,7 @@ import Foundation
 import UIKit
 import Combine
 import AVFoundation
+import SDWebImage
 
 protocol HistoryTableViewCellDelegate: AnyObject {
     func didTapOptionButton(for cell: HistoryTableViewCell)
@@ -24,10 +25,8 @@ class HistoryTableViewCell: UITableViewCell {
     
     private let albumImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFit
-        imageView.image = UIImage(systemName: "music.note")
-        imageView.tintColor = .secondaryLabel
-        imageView.backgroundColor = .clear
+        imageView.contentMode = .scaleAspectFill
+        imageView.backgroundColor = .systemGray5
         imageView.layer.cornerRadius = 8
         imageView.clipsToBounds = true
         imageView.isHidden = true
@@ -44,11 +43,20 @@ class HistoryTableViewCell: UITableViewCell {
     
     lazy var optionButton: UIButton = {
         let button = UIButton(type: .system)
-        button.contentMode = .scaleAspectFit
-        button.setImage(UIImage(systemName: "ellipsis"), for: .normal)
-        button.isUserInteractionEnabled = true
+        let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .medium)
+        let image = UIImage(systemName: "ellipsis.circle", withConfiguration: config)
+        button.setImage(image, for: .normal)
         button.addTarget(self, action: #selector(handleOptionButtonTapped), for: .touchUpInside)
+        button.isUserInteractionEnabled = true
         return button
+    }()
+    
+    private let fileSizeLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 12, weight: .regular)
+        label.textColor = .tertiaryLabel
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
     }()
     
     private let circularProgressView: CircularProgressView = {
@@ -92,7 +100,13 @@ class HistoryTableViewCell: UITableViewCell {
     }
     
     private func setupUI() {
-        [albumImageView, title, optionButton, circularProgressView, playingIndicator].forEach {
+        
+        let stackView = UIStackView(arrangedSubviews: [title, fileSizeLabel])
+        stackView.axis = .vertical
+        stackView.spacing = 3
+        stackView.distribution = .fillProportionally
+        
+        [albumImageView, stackView, optionButton, circularProgressView, playingIndicator].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview($0)
         }
@@ -102,8 +116,8 @@ class HistoryTableViewCell: UITableViewCell {
             // Album image
             albumImageView.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
             albumImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            albumImageView.widthAnchor.constraint(equalToConstant: 30),
-            albumImageView.heightAnchor.constraint(equalToConstant: 30), // square
+            albumImageView.widthAnchor.constraint(equalToConstant: 54),
+            albumImageView.heightAnchor.constraint(equalToConstant: 54), // square
             
             // Playing indicator (over album)
             playingIndicator.centerXAnchor.constraint(equalTo: albumImageView.centerXAnchor),
@@ -123,10 +137,9 @@ class HistoryTableViewCell: UITableViewCell {
             optionButton.widthAnchor.constraint(equalToConstant: 30),
             optionButton.heightAnchor.constraint(equalToConstant: 30),
             
-            // Title label
-            title.leadingAnchor.constraint(equalTo: albumImageView.trailingAnchor, constant: 12),
-            title.trailingAnchor.constraint(equalTo: optionButton.leadingAnchor, constant: -12),
-            title.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
+            stackView.leadingAnchor.constraint(equalTo: albumImageView.trailingAnchor, constant: 12),
+            stackView.trailingAnchor.constraint(equalTo: optionButton.leadingAnchor, constant: -12),
+            stackView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
         ])
         playingIndicator.isHidden = true
     }
@@ -134,8 +147,16 @@ class HistoryTableViewCell: UITableViewCell {
     // Bind download tasks, 
     func configure(with item: DownloadItem) {
         title.text = item.title
-        
+        configureThumbnail(for: item)
         circularProgressView.reset()
+        
+        if item.fileSize > 0 {
+            fileSizeLabel.text = formatFileSize(item.fileSize)
+        } else if item.fileSize > 0 {
+            fileSizeLabel.text = formatFileSize(item.fileSize)
+        } else {
+            fileSizeLabel.text = "Unknown size"
+        }
         
         switch item.status {
         case.running:
@@ -171,6 +192,13 @@ class HistoryTableViewCell: UITableViewCell {
     
     }
     
+    private func formatFileSize(_ bytes: Int64) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useKB, .useMB, .useGB]
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: bytes)
+    }
+    
     @objc func handleOptionButtonTapped() {
         print("Debug: got tap")
         delegate?.didTapOptionButton(for: self)
@@ -186,6 +214,19 @@ class HistoryTableViewCell: UITableViewCell {
             playingIndicator.stop()
             albumImageView.isHidden = false
             playingIndicator.isHidden = true
+        }
+    }
+    
+    private func configureThumbnail(for item: DownloadItem) {
+        if let url = URL(string: item.thumbURL) {
+            // SDWebImage handles caching automatically
+                albumImageView.sd_setImage(
+                with: url,
+                placeholderImage: UIImage(named: "placeholder"),
+                options: [.retryFailed, .continueInBackground]
+            )
+        } else {
+            albumImageView.image = UIImage(named: "placeholder")
         }
     }
 }

@@ -48,7 +48,7 @@ final class DownloadManager: NSObject, URLSessionDownloadDelegate {
         let item = DownloadItem()
         item.title = title
         item.sourceURL = ""
-        item.thumbURL = ""
+        item.thumbURL = thumbURL ?? ""
         item.status = .running
         realm.createOrUpdate(item: item)
         

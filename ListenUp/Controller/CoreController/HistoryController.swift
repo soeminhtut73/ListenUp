@@ -30,7 +30,7 @@ class HistoryController: UIViewController {
     private let tableView: UITableView = {
         let tv = UITableView()
         tv.separatorStyle = .singleLine
-        tv.rowHeight = 54
+        tv.rowHeight = 64
         tv.register(HistoryTableViewCell.self, forCellReuseIdentifier: HistoryTableViewCell.identifier)
         tv.translatesAutoresizingMaskIntoConstraints = false
         return tv
