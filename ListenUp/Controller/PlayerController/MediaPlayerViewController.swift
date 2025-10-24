@@ -15,6 +15,7 @@ import MediaPlayer
 struct MediaItem {
     let title: String
     let url: URL   // local file URL (Documents/… or elsewhere)
+    let duration: TimeInterval
 }
 
 enum LoopMode { case off, one, all }
@@ -134,7 +135,7 @@ final class MediaPlayerViewController: UIViewController {
         return results.compactMap { d -> MediaItem? in
             guard let rel = d.localPath, !rel.isEmpty else { return nil }
             guard d.status == .completed else { return nil }
-            return MediaItem(title: d.title, url: docs.appendingPathComponent(rel))
+            return MediaItem(title: d.title, url: docs.appendingPathComponent(rel), duration: d.duration)
         }
     }
     
@@ -506,30 +507,14 @@ final class MediaPlayerViewController: UIViewController {
             }
         }
         
+        let duration = Double(item.duration)
+        
         refreshPlayIcon()
         updateLoopUI()
-        Task {
-            await updateDuration(item: item)
-        }
-    }
-    
-    func updateDuration(item: MediaItem) async {
-        guard let currentItem = player.currentItem else { return }
         
-        do {
-            let duration = try await currentItem.asset.load(.duration)
-            let total = duration.seconds
-            
-            PlayerCenter.shared.updateNowPlaying(title: item.title,
-                                                 duration: total.isFinite ? total : 0,
-                                                 isPlaying: true)
-        } catch {
-            print("Failed to load duration: \(error)")
-            // Fallback to 0 duration
-            PlayerCenter.shared.updateNowPlaying(title: item.title,
-                                                 duration: 0,
-                                                 isPlaying: true)
-        }
+        PlayerCenter.shared.updateNowPlaying(title: item.title,
+                                             duration: duration,
+                                             isPlaying: true)
     }
     
     private func refreshUIForCurrent() {

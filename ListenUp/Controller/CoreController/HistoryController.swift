@@ -188,7 +188,6 @@ class HistoryController: UIViewController {
     private func showActionSheet(for indexPath: IndexPath) {
         let actionSheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         let item = searchResults[indexPath.row]
-        print("Debug: selected item : \(item)")
         
         /// convert action
         let convertAction = UIAlertAction(title: "Convert", style: .default) { _ in
