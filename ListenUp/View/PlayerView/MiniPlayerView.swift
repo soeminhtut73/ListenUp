@@ -51,7 +51,7 @@ final class MiniPlayerView: UIView {
         thumbnailImageView.clipsToBounds = true
         thumbnailImageView.tintColor = .secondaryLabel
         thumbnailImageView.layer.cornerRadius = 8
-        thumbnailImageView.backgroundColor = .systemGray5
+//        thumbnailImageView.backgroundColor = .systemGray5
         
         // Title
         titleLabel.font = .systemFont(ofSize: 14, weight: .medium)
@@ -85,8 +85,8 @@ final class MiniPlayerView: UIView {
             
             thumbnailImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
             thumbnailImageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            thumbnailImageView.widthAnchor.constraint(equalToConstant: 30),
-            thumbnailImageView.heightAnchor.constraint(equalToConstant: 30),
+            thumbnailImageView.widthAnchor.constraint(equalToConstant: 34),
+            thumbnailImageView.heightAnchor.constraint(equalToConstant: 34),
             
             titleLabel.leadingAnchor.constraint(equalTo: thumbnailImageView.trailingAnchor, constant: 12),
             titleLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
@@ -113,7 +113,7 @@ final class MiniPlayerView: UIView {
         onPlayPause?()
     }
     
-    func updateUI(title: String, isPlaying: Bool, progress: Float, thumbnail: UIImage? = nil) {
+    func updateUI(title: String, isPlaying: Bool, progress: Float) {
         titleLabel.text = title
         playPauseButton.setImage(UIImage(systemName: isPlaying ? "pause.fill" : "play.fill"), for: .normal)
         progressView.progress = progress

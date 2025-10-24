@@ -162,12 +162,6 @@ class HistoryTableViewCell: UITableViewCell {
             circularProgressView.isHidden = false
             
             circularProgressView.setProgress(item.progress, for: item.id, animated: !isDifferentItem)
-//            DispatchQueue.main.async { [weak self] in
-//                self?.circularProgressView.isIndeterminate = false
-//                self?.circularProgressView.setProgress(item.progress, animated: true)
-//                self?.circularProgressView.setProgress(item.progress, for: item.id, animated: !isDifferentItem)
-//
-//            }
             
         case.completed:
             albumImageView.isHidden = false

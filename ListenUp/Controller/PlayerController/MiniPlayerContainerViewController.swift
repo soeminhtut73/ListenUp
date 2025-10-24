@@ -131,6 +131,7 @@ class MiniPlayerContainerViewController: UIViewController {
         let duration = currentItem.duration.seconds
         let progress = duration > 0 ? Float(currentTime / duration) : 0
         let isPlaying = player.timeControlStatus == .playing
+        let thumURL = player.currentItem?.asset
         
         // Get title from Now Playing info if available
         let title = MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPMediaItemPropertyTitle] as? String ?? "Unknown"
