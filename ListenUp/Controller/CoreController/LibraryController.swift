@@ -6,51 +6,120 @@
 //
 
 import UIKit
+import RealmSwift
+
 
 private let reuseIdentifier = "LibraryTableViewCell"
 
-class LibraryController: UITableViewController {
+class LibraryController: UIViewController {
     
     //MARK: - Properties
+    private var results: Results<DownloadItem>!
+    private var searchResults: Results<DownloadItem>!
     
+    //MARK: - UI Component
+    private let tableView: UITableView = {
+        let tv = UITableView()
+        tv.separatorStyle = .singleLine
+        tv.rowHeight = 64
+        tv.register(DownloadTableViewCell.self, forCellReuseIdentifier: DownloadTableViewCell.identifier)
+        tv.translatesAutoresizingMaskIntoConstraints = false
+        return tv
+    }()
+    
+    private let emptyStateLabel: UILabel = {
+        let label = UILabel()
+        label.text = "No downloads yet"
+        label.textColor = .secondaryLabel
+        label.font = .systemFont(ofSize: 18)
+        label.textAlignment = .center
+        label.isHidden = true
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
     
     //MARK: - LifeCycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
         configureUI()
+        fetchResult()
     }
     
     //MARK: - HelperFunctions
     private func configureUI() {
         view.backgroundColor = Style.viewBackgroundColor
-        title = "Favourites"
         
-        tableView.register(LibraryTableViewCell.self, forCellReuseIdentifier: reuseIdentifier)
-        tableView.rowHeight = 54
+        view.addSubview(tableView)
+//        view.addSubview(emptyStateLabel)
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+//            emptyStateLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+//            emptyStateLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
+        
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.allowsMultipleSelectionDuringEditing = true
+        
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
+        tableView.refreshControl = refreshControl
+    }
+    
+    private func fetchResult() {
+        results = RealmService.shared.fetchAudioItems().sorted(byKeyPath: "createdAt", ascending: false)
+        searchResults = results
+        tableView.reloadData()
     }
     
     //MARK: - Selector
+    
+    @objc private func refreshData() {
+        fetchResult()
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+        }
+        
+        tableView.refreshControl?.endRefreshing()
+    }
     
 
 }
 
 //MARK: - UITableView Delegate
-extension LibraryController {
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 5
+extension LibraryController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+    }
+}
+
+//MARK: - UITableView DataSource
+extension LibraryController: UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return searchResults.count
     }
     
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath) as! LibraryTableViewCell
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(
+            withIdentifier: DownloadTableViewCell.identifier,
+            for: indexPath
+        ) as! DownloadTableViewCell
+        
+        let item = searchResults[indexPath.row]
+        cell.configure(with: item, mode: .audio)
+        cell.delegate = self
         
         return cell
     }
 }
 
-//MARK: - UITableView DataSource
-extension LibraryController {
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        print("Debug: row selected : \(indexPath.row)")
+extension LibraryController: DownloadTableViewCellDelegate {
+    func cell(_ cell: DownloadTableViewCell, didTapOptionFor item: DownloadItem) {
+        print("Debug: didTapOptionFor : \(item)")
     }
 }

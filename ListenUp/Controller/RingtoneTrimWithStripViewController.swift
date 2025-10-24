@@ -192,14 +192,14 @@ public final class RingtoneTrimWithStripViewController: UIViewController, Thumbn
         exportButton.isEnabled = false
         exportButton.alpha = 0.6
         
-        AudioConverter.shared.convertToAudio(from: videoURL, startTime: startTime) { [weak self] result in
+        AudioConverter.shared.convertToAudio(with: item.title, from: videoURL, startTime: startTime) { [weak self] result in
             guard let self = self else { return }
             DispatchQueue.main.async {
                 self.exportButton.isHidden = true
                 self.exportButton.alpha = 1.0
                 
                 switch result {
-                case .success(let outputURL):s
+                case .success(let outputURL):
                     let av = UIActivityViewController(activityItems: [outputURL], applicationActivities: nil)
                     self.present(av, animated: true)
                     

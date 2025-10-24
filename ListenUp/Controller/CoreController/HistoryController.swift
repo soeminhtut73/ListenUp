@@ -175,20 +175,19 @@ class HistoryController: UIViewController {
     }
 
     
-    func fetchResult() {
-        results = RealmService.shared.fetchAllMedia().sorted(byKeyPath: "createdAt", ascending: false)
+    private func fetchResult() {
+        results = RealmService.shared.fetchVideoItems().sorted(byKeyPath: "createdAt", ascending: false)
         searchResults = results
         tableView.reloadData()
     }
     
-    func deleteAll() {
+    private func deleteAll() {
         RealmService.shared.deleteAll()
     }
     
     private func showActionSheet(for indexPath: IndexPath) {
         let actionSheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         let item = searchResults[indexPath.row]
-        
         /// convert action
         let convertAction = UIAlertAction(title: "Convert", style: .default) { _ in
             guard let localPath = item.localPath as String? else { return }

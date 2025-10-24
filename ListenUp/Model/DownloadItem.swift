@@ -9,9 +9,8 @@ import Foundation
 import RealmSwift
 
 enum MediaType: Int, PersistableEnum {
-    case video = 0
-    case audio = 1
-    case ringtone = 2   // your 30s tone
+    case video = 0 // video
+    case audio = 1 // ringtone
 }
 
 

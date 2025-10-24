@@ -41,14 +41,14 @@ class RealmService {
     // Fetch only video items (for HistoryViewController)
     func fetchVideoItems() -> Results<DownloadItem> {
         realm.objects(DownloadItem.self)
-            .filter("mediaType == %@ OR mediaType == %@", MediaType.video.rawValue)
+            .filter("mediaType == %d", MediaType.video.rawValue)
             .sorted(byKeyPath: "createdAt", ascending: false)
     }
     
     // Fetch only audio items (for AudioViewController)
     func fetchAudioItems() -> Results<DownloadItem> {
         realm.objects(DownloadItem.self)
-            .filter("mediaType == %@ OR mediaType == %@", MediaType.audio.rawValue)
+            .filter("mediaType == %d", MediaType.audio.rawValue)
             .sorted(byKeyPath: "createdAt", ascending: false)
     }
     
