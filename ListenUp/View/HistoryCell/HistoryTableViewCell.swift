@@ -57,7 +57,6 @@ class HistoryTableViewCell: UITableViewCell {
         let label = UILabel()
         label.font = .systemFont(ofSize: 12, weight: .regular)
         label.textColor = .tertiaryLabel
-        label.textAlignment = .right
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()

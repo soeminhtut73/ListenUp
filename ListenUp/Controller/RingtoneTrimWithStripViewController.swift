@@ -191,8 +191,6 @@ public final class RingtoneTrimWithStripViewController: UIViewController, Thumbn
     @objc private func tapExport() {
         exportButton.isEnabled = false
         exportButton.alpha = 0.6
-        print("Debug: videoURL : \(videoURL)")
-        print("Debug: startTime : \(startTime)")
         
         AudioConverter.shared.convertToAudio(from: videoURL, startTime: startTime) { [weak self] result in
             guard let self = self else { return }
@@ -201,7 +199,7 @@ public final class RingtoneTrimWithStripViewController: UIViewController, Thumbn
                 self.exportButton.alpha = 1.0
                 
                 switch result {
-                case .success(let outputURL):
+                case .success(let outputURL):s
                     let av = UIActivityViewController(activityItems: [outputURL], applicationActivities: nil)
                     self.present(av, animated: true)
                     

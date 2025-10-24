@@ -34,19 +34,18 @@ class AudioConverter {
                 
                 // Compute file info
                 let fileSize = FileHelper.fileSize(at: outputURL)
-                let asset = AVURLAsset(url: outputURL)
-                let duration = try await asset.load(.duration)
-                let seconds = duration.seconds
-                
+//                let asset = AVURLAsset(url: outputURL)
+//                let duration = try await asset.load(.duration)
+//                let seconds = duration.seconds
                 await MainActor.run {
                     do {
                         let realm = try Realm()
-                        let newItem = AudioItem()
-                        newItem.localAudioPath = "audios/" + outputURL.lastPathComponent
-                        newItem.audioFileSize = fileSize
-                        newItem.duration = seconds
-                        newItem.audioConversionDate = Date()
-//                        newItem.mediaType = .audio
+                        let newItem = DownloadItem()
+                        newItem.localPath = "audios/" + outputURL.lastPathComponent
+                        newItem.fileSize = fileSize
+                        newItem.duration = 30
+                        newItem.createdAt = Date()
+                        newItem.mediaType = .audio
                         
                         try realm.write {
                             realm.add(newItem)

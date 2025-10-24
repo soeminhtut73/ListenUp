@@ -1,13 +1,5 @@
-//
-//  ThumbnailStripView.swift
-//  ListenUp
-//
-//  Created by S M H  on 21/10/2025.
-//
-
 import UIKit
 import AVFoundation
-
 
 public protocol ThumbnailStripViewDelegate: AnyObject {
     func strip(_ strip: ThumbnailStripView, didChangeStartTime start: TimeInterval)
@@ -16,18 +8,25 @@ public protocol ThumbnailStripViewDelegate: AnyObject {
 public final class ThumbnailStripView: UIView, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     public weak var delegate: ThumbnailStripViewDelegate?
 
+    // Public config
     public var clipLength: TimeInterval = 30
     public var numberOfThumbs: Int = 20
 
+    // Asset state
     private var asset: AVAsset?
     private var duration: TimeInterval = 0
     private var generator: AVAssetImageGenerator?
     private var images: [UIImage?] = []
     private var times: [NSValue] = []
 
+    // Selection UI
     private let selectionView = UIView()
+    private let leftHandle = UIView()
+    private let rightHandle = UIView()
+
     private var pan: UIPanGestureRecognizer!
 
+    // Collection
     private let layout = UICollectionViewFlowLayout()
     private lazy var collection: UICollectionView = {
         layout.scrollDirection = .horizontal
@@ -44,6 +43,15 @@ public final class ThumbnailStripView: UIView, UICollectionViewDataSource, UICol
 
     private(set) var startTime: TimeInterval = 0
 
+    // MARK: - Sizing helpers
+    private var minimumSelectionWidth: CGFloat {
+        // Always keep at least ~56pt; scale with height for comfort
+        return max(56, bounds.height * 0.6)
+    }
+    private let handleWidth: CGFloat = 10
+    private let handleInsetY: CGFloat = 8
+
+    // MARK: - Init
     public override init(frame: CGRect) {
         super.init(frame: frame); commonInit()
     }
@@ -70,8 +78,17 @@ public final class ThumbnailStripView: UIView, UICollectionViewDataSource, UICol
         selectionView.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.08)
         addSubview(selectionView)
 
+        // Grab handles (visual affordance; we still drag the whole strip)
+        for h in [leftHandle, rightHandle] {
+            h.backgroundColor = .systemBlue
+            h.layer.cornerRadius = 4
+            h.isUserInteractionEnabled = false
+            selectionView.addSubview(h)
+        }
+
+        // Drag anywhere on the strip, not just the selection
         pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
-        selectionView.addGestureRecognizer(pan)
+        addGestureRecognizer(pan)
     }
 
     public override func layoutSubviews() {
@@ -80,7 +97,7 @@ public final class ThumbnailStripView: UIView, UICollectionViewDataSource, UICol
         updateSelectionFrame()
     }
 
-    // Public API
+    // MARK: - Public API
     public func setAsset(_ asset: AVAsset, clipLength seconds: TimeInterval = 30) {
         self.asset = asset
         self.clipLength = seconds
@@ -125,11 +142,13 @@ public final class ThumbnailStripView: UIView, UICollectionViewDataSource, UICol
         if notify { delegate?.strip(self, didChangeStartTime: startTime) }
     }
 
-    // Selection geometry
+    // MARK: - Geometry
     private func selectionWidth() -> CGFloat {
         guard duration > 0 else { return bounds.width }
         let ratio = clipLength / duration
-        return bounds.width * CGFloat(min(max(ratio, 0), 1))
+        // Keep selection always grabbable
+        let proportional = bounds.width * CGFloat(min(max(ratio, 0), 1))
+        return min(bounds.width, max(minimumSelectionWidth, proportional))
     }
 
     private func xForStart(_ t: TimeInterval) -> CGFloat {
@@ -150,12 +169,26 @@ public final class ThumbnailStripView: UIView, UICollectionViewDataSource, UICol
 
     private func updateSelectionFrame() {
         let w = selectionWidth()
-        let x = xForStart(startTime)
+        var x = xForStart(startTime)
+        x = max(0, min(x, bounds.width - w))
         selectionView.frame = CGRect(x: x, y: 0, width: w, height: bounds.height)
+
+        // Handles (sit just inside edges)
+        let handleHeight = max(0, bounds.height - 2 * handleInsetY)
+        leftHandle.frame  = CGRect(x: max(0, 0 - handleWidth * 0.5),
+                                   y: handleInsetY,
+                                   width: handleWidth,
+                                   height: handleHeight)
+        rightHandle.frame = CGRect(x: max(0, selectionView.bounds.width - handleWidth * 0.5),
+                                   y: handleInsetY,
+                                   width: handleWidth,
+                                   height: handleHeight)
+
+        // Enable drag only if there is space to move
         selectionView.isUserInteractionEnabled = (w < bounds.width - 0.5)
     }
 
-    // Pan
+    // MARK: - Pan
     @objc private func handlePan(_ g: UIPanGestureRecognizer) {
         let t = g.translation(in: self)
         g.setTranslation(.zero, in: self)
@@ -169,15 +202,23 @@ public final class ThumbnailStripView: UIView, UICollectionViewDataSource, UICol
         delegate?.strip(self, didChangeStartTime: startTime)
     }
 
-    // Collection
+    // MARK: - Collection
     public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         images.count
     }
+
     public func collectionView(_ collectionView: UICollectionView,
                                cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! ThumbCell
         cell.imageView.image = images[indexPath.item] ?? cell.placeholder
         return cell
+    }
+
+    public func collectionView(_ collectionView: UICollectionView,
+                               layout collectionViewLayout: UICollectionViewLayout,
+                               sizeForItemAt indexPath: IndexPath) -> CGSize {
+        // Keep thumbs tall, narrow—already set in layoutSubviews, but harmless to return here
+        return layout.itemSize
     }
 }
 
