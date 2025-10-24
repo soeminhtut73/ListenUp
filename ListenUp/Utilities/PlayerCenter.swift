@@ -38,6 +38,38 @@ final class PlayerCenter {
         )
     }
     
+    func seek(by delta: Double) {
+        guard let item = player.currentItem else { return }
+        
+        let cur = player.currentTime().seconds
+        let dur = item.duration.seconds
+        var target = cur + delta
+        
+        if dur.isFinite {                      // VOD / local files
+            target = max(0, min(target, max(0, dur - 0.01)))
+        } else {                               // Live / indefinite
+            target = max(0, target)
+        }
+        
+        let wasPlaying = (player.timeControlStatus == .playing)
+        let t = CMTime(seconds: target, preferredTimescale: 600)
+        
+        player.seek(to: t, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
+            guard let self else { return }
+            if wasPlaying { self.player.play() } // resume if it was playing
+            self.updateElapsedTimeForNowPlaying()
+        }
+    }
+    
+    func skipForward15() { seek(by: 15) }
+    func skipBackward15() { seek(by: -15) }
+    
+    private func updateElapsedTimeForNowPlaying() {
+        var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
+        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = player.currentTime().seconds
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+    }
+    
     private func configureAudioSession() {
         let s = AVAudioSession.sharedInstance()
         do {
@@ -55,6 +87,11 @@ final class PlayerCenter {
             self?.setPlaying(p.timeControlStatus != .playing)
             return .success
         }
+        
+        cmd.skipForwardCommand.preferredIntervals = [15]
+        cmd.skipBackwardCommand.preferredIntervals = [15]
+        cmd.skipForwardCommand.addTarget { [weak self] _ in self?.skipForward15();  return .success }
+        cmd.skipBackwardCommand.addTarget { [weak self] _ in self?.skipBackward15(); return .success }
     }
     
     func play(url: URL) {
