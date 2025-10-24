@@ -187,6 +187,15 @@ class HistoryController: UIViewController {
     
     private func showActionSheet(for indexPath: IndexPath) {
         let actionSheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        let item = searchResults[indexPath.row]
+        
+        let convertAction = UIAlertAction(title: "Convert", style: .default) { _ in
+            guard let localPath = item.localPath as String? else { return }
+            
+            guard let fileURL = FileHelper.fileURL(for: localPath) else { return }
+            
+            
+        }
         
         // Delete Action
         let deleteAction = UIAlertAction(title: "Delete", style: .destructive) {  _ in
@@ -305,6 +314,7 @@ extension HistoryController: UITableViewDataSource {
             return UITableViewCell()
         }
         
+        cell.delegate = self
         cell.configure(with: item)
         let isCurrent = isRowCurrentItem(item)
         cell.setPlaying(isCurrent && PlayerCenter.shared.isActuallyPlaying)   // <- no KVC

@@ -32,6 +32,7 @@ final class MediaPlayerViewController: UIViewController {
     private let controlsStack = UIStackView()
     private let timeRowStack = UIStackView()
     private let transportStack = UIStackView()
+    private let optionButtonStack = UIStackView()
 
     private var controlsOverlayConstraints: [NSLayoutConstraint] = []
     private var controlsBelowConstraints: [NSLayoutConstraint] = []
@@ -182,13 +183,7 @@ final class MediaPlayerViewController: UIViewController {
     
     // MARK: - UI
     private func setupUI() {
-        view.backgroundColor = .systemBackground
-        
-        // Close Button
-//        closeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
-//        closeButton.tintColor = .white
-//        closeButton.contentHorizontalAlignment = .fill
-//        closeButton.contentVerticalAlignment = .fill
+        view.backgroundColor = Style.viewBackgroundColor
         
         // Video View - Fullscreen
         videoView.backgroundColor = .black
@@ -205,7 +200,7 @@ final class MediaPlayerViewController: UIViewController {
         // Title Label
         titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
         titleLabel.textColor = .white
-        titleLabel.numberOfLines = 1
+        titleLabel.numberOfLines = 3
         titleLabel.textAlignment = .center
         
         // Slider
@@ -251,12 +246,12 @@ final class MediaPlayerViewController: UIViewController {
         
         // Option Buttons
         shuffleButton.setImage(UIImage(systemName: "shuffle"), for: .normal)
-        shuffleButton.tintColor = .white
+        shuffleButton.tintColor = .secondaryLabel
         shuffleButton.contentHorizontalAlignment = .fill
         shuffleButton.contentVerticalAlignment = .fill
         
         loopButton.setImage(UIImage(systemName: "repeat"), for: .normal)
-        loopButton.tintColor = .white
+        loopButton.tintColor = .secondaryLabel
         loopButton.contentHorizontalAlignment = .fill
         loopButton.contentVerticalAlignment = .fill
         
@@ -267,37 +262,52 @@ final class MediaPlayerViewController: UIViewController {
             view.addSubview($0)
         }
         
-        let leftSpacer = UIView()
-        let rightSpacer = UIView()
-        
         transportStack.axis = .horizontal
         transportStack.alignment = .center
         transportStack.distribution = .equalSpacing
         transportStack.spacing = 0
         transportStack.translatesAutoresizingMaskIntoConstraints = false
-        transportStack.addArrangedSubview(leftSpacer)
         transportStack.addArrangedSubview(skipBackwardButton)
         transportStack.addArrangedSubview(prevButton)
         transportStack.addArrangedSubview(playPauseButton)
         transportStack.addArrangedSubview(nextButton)
         transportStack.addArrangedSubview(skipForwardButton)
-        transportStack.addArrangedSubview(rightSpacer)
         
         transportStack.setContentHuggingPriority(.required, for: .horizontal)
         transportStack.setContentCompressionResistancePriority(.required, for: .horizontal)
         NSLayoutConstraint.activate([
-            prevButton.widthAnchor.constraint(equalToConstant: 32),
-            prevButton.heightAnchor.constraint(equalToConstant: 32),
-            playPauseButton.widthAnchor.constraint(equalToConstant: 44),
-            playPauseButton.heightAnchor.constraint(equalToConstant: 44),
-            nextButton.widthAnchor.constraint(equalToConstant: 32),
-            nextButton.heightAnchor.constraint(equalToConstant: 32),
+            prevButton.widthAnchor.constraint(equalToConstant: 34),
+            prevButton.heightAnchor.constraint(equalToConstant: 34),
+            playPauseButton.widthAnchor.constraint(equalToConstant: 50),
+            playPauseButton.heightAnchor.constraint(equalToConstant: 50),
+            nextButton.widthAnchor.constraint(equalToConstant: 34),
+            nextButton.heightAnchor.constraint(equalToConstant: 34),
             
-            skipBackwardButton.widthAnchor.constraint(equalToConstant: 32),
-            skipForwardButton.widthAnchor.constraint(equalToConstant: 32),
+            skipBackwardButton.widthAnchor.constraint(equalToConstant: 34),
+            skipBackwardButton.heightAnchor.constraint(equalToConstant: 34),
+            skipForwardButton.widthAnchor.constraint(equalToConstant: 34),
+            skipForwardButton.heightAnchor.constraint(equalToConstant: 34),
+        ])
+        
+        let leftSpacer = UIView()
+        let rightSpacer = UIView()
+        optionButtonStack.axis = .horizontal
+        optionButtonStack.alignment = .center
+        optionButtonStack.distribution = .equalSpacing
+        optionButtonStack.spacing = 0
+        optionButtonStack.translatesAutoresizingMaskIntoConstraints = false
+        optionButtonStack.addArrangedSubview(leftSpacer)
+        optionButtonStack.addArrangedSubview(shuffleButton)
+        optionButtonStack.addArrangedSubview(loopButton)
+        optionButtonStack.addArrangedSubview(rightSpacer)
+        NSLayoutConstraint.activate([
+            shuffleButton.widthAnchor.constraint(equalToConstant: 32),
+            shuffleButton.heightAnchor.constraint(equalToConstant: 32),
+            loopButton.widthAnchor.constraint(equalToConstant: 32),
+            loopButton.heightAnchor.constraint(equalToConstant: 32),
             
-            leftSpacer.widthAnchor.constraint(equalToConstant: 10),
-            rightSpacer.widthAnchor.constraint(equalToConstant: 10),
+            leftSpacer.widthAnchor.constraint(equalToConstant: 30),
+            rightSpacer.widthAnchor.constraint(equalToConstant: 30),
         ])
         
         timeRowStack.axis = .horizontal
@@ -322,12 +332,13 @@ final class MediaPlayerViewController: UIViewController {
         controlsStack.addArrangedSubview(titleLabel)
         controlsStack.addArrangedSubview(timeRowStack)
         controlsStack.addArrangedSubview(transportStack)
+        controlsStack.addArrangedSubview(optionButtonStack)
         view.addSubview(controlsStack)
         
         controlsOverlayConstraints = [
             controlsStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             controlsStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            controlsStack.bottomAnchor.constraint(equalTo: shuffleButton.topAnchor, constant: -24)
+            controlsStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24)
         ]
         
         videoFullConstraints = [
@@ -352,25 +363,12 @@ final class MediaPlayerViewController: UIViewController {
         ]
         
         NSLayoutConstraint.activate([
-//            closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
-//            closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-//            closeButton.widthAnchor.constraint(equalToConstant: 32),
-//            closeButton.heightAnchor.constraint(equalToConstant: 32),
+            titleLabel.heightAnchor.constraint(equalToConstant: 64),
             
             expandButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
             expandButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             expandButton.widthAnchor.constraint(equalToConstant: 36),
-            expandButton.heightAnchor.constraint(equalToConstant: 36),
-            
-            shuffleButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            shuffleButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            shuffleButton.widthAnchor.constraint(equalToConstant: 28),
-            shuffleButton.heightAnchor.constraint(equalToConstant: 28),
-            
-            loopButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            loopButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            loopButton.widthAnchor.constraint(equalToConstant: 28),
-            loopButton.heightAnchor.constraint(equalToConstant: 28)
+            expandButton.heightAnchor.constraint(equalToConstant: 36)
         ])
         
         NSLayoutConstraint.activate(videoFullConstraints)
@@ -504,7 +502,6 @@ final class MediaPlayerViewController: UIViewController {
             if currentURL != item.url {
                 PlayerCenter.shared.play(url: item.url)   // only replace if different
             } else {
-                // same track already loaded → just ensure playback continues
                 PlayerCenter.shared.player.play()
             }
         }
@@ -538,7 +535,6 @@ final class MediaPlayerViewController: UIViewController {
     private func refreshUIForCurrent() {
         guard playlist.indices.contains(currentIndex) else { return }
         titleLabel.text = playlist[currentIndex].title
-        // slider/time labels will update as periodic time observer fires
     }
     
     private func updateUIEmpty() {
@@ -626,7 +622,7 @@ final class MediaPlayerViewController: UIViewController {
         if full {
             // White UI over video
             [titleLabel, currentLabel, totalLabel].forEach { $0.textColor = .white }
-            [prevButton, skipForwardButton, skipBackwardButton, playPauseButton, nextButton, shuffleButton, loopButton, closeButton, expandButton]
+            [prevButton, skipForwardButton, skipBackwardButton, playPauseButton, nextButton, closeButton, expandButton]
                 .forEach { $0.tintColor = .white }
             
             slider.minimumTrackTintColor = .white
@@ -634,7 +630,7 @@ final class MediaPlayerViewController: UIViewController {
         } else {
             // Normal UI below video — use system colors
             [titleLabel, currentLabel, totalLabel].forEach { $0.textColor = .label }
-            [prevButton, skipForwardButton, skipBackwardButton, playPauseButton, nextButton, shuffleButton, loopButton, closeButton, expandButton]
+            [prevButton, skipForwardButton, skipBackwardButton, playPauseButton, nextButton, closeButton, expandButton]
                 .forEach { $0.tintColor = .label }
             
             slider.minimumTrackTintColor = .systemBlue // or .label if you prefer monochrome
@@ -700,7 +696,7 @@ final class MediaPlayerViewController: UIViewController {
     
     // MARK: - Shuffle / Loop
     @objc private func shuffleTapped() { shuffleOn.toggle() }
-    private func updateShuffleUI() { shuffleButton.tintColor = shuffleOn ? .systemBlue : .label }
+    private func updateShuffleUI() { shuffleButton.tintColor = shuffleOn ? .systemBlue : .secondaryLabel }
     
     @objc private func loopTapped() {
         switch loopMode {
@@ -712,7 +708,7 @@ final class MediaPlayerViewController: UIViewController {
     private func updateLoopUI() {
         let icon = (loopMode == .one) ? "repeat.1" : "repeat"
         loopButton.setImage(UIImage(systemName: icon), for: .normal)
-        loopButton.tintColor = (loopMode == .off) ? .label : .systemBlue
+        loopButton.tintColor = (loopMode == .off) ? .secondaryLabel : .systemBlue
     }
     
     // MARK: - End-of-item handling
