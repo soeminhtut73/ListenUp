@@ -57,6 +57,7 @@ class HistoryTableViewCell: UITableViewCell {
         let label = UILabel()
         label.font = .systemFont(ofSize: 12, weight: .regular)
         label.textColor = .tertiaryLabel
+        label.textAlignment = .right
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -108,7 +109,7 @@ class HistoryTableViewCell: UITableViewCell {
         
         let stackView = UIStackView(arrangedSubviews: [title, fileSizeLabel])
         stackView.axis = .vertical
-        stackView.spacing = 3
+        stackView.spacing = 6
         stackView.distribution = .fillProportionally
         
         [albumImageView, stackView, optionButton, circularProgressView, playingIndicator].forEach {

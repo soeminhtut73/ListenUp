@@ -56,7 +56,7 @@ public final class RingtoneTrimWithStripViewController: UIViewController, Thumbn
         view.backgroundColor = .systemBackground
         title = "Trim"
 
-//        setupAV()
+        setupAV()
         setupUI()
         layoutUI()
         configureObservers()
@@ -70,21 +70,22 @@ public final class RingtoneTrimWithStripViewController: UIViewController, Thumbn
     deinit { cleanupObservers() }
 
     // Setup
-//    private func setupAV() {
-//        let duration = CMTime(seconds: item.duration, preferredTimescale: 600)
-//        
-//        asset = AVURLAsset(url: videoURL, options: [AVURLAssetPreferPreciseDurationAndTimingKey: true])
-//        assetDuration = max(0, CMTimeGetSeconds(duration))
-//
-//        let item = AVPlayerItem(asset: asset)
-//        player = AVPlayer(playerItem: item)
-//        playerLayer = AVPlayerLayer(player: player)
-//        playerLayer.videoGravity = .resizeAspect
-//        videoContainer.layer.addSublayer(playerLayer)
-//    }
+    private func setupAV() {
+        let duration = CMTime(seconds: item.duration, preferredTimescale: 600)
+        
+        asset = AVURLAsset(url: videoURL, options: [AVURLAssetPreferPreciseDurationAndTimingKey: true])
+        assetDuration = max(0, CMTimeGetSeconds(duration))
+
+        let item = AVPlayerItem(asset: asset)
+        player = AVPlayer(playerItem: item)
+        playerLayer = AVPlayerLayer(player: player)
+        playerLayer.videoGravity = .resizeAspect
+        videoContainer.layer.addSublayer(playerLayer)
+    }
 
     private func setupUI() {
         videoContainer.backgroundColor = .black
+        videoContainer.layer.cornerRadius = 20
         view.addSubview(videoContainer)
 
         strip.delegate = self
@@ -173,7 +174,7 @@ public final class RingtoneTrimWithStripViewController: UIViewController, Thumbn
     }
 
     private func updateTimesLabel() {
-        timesLabel.text = "Start: \(format(startTime))   End: \(format(endTime))"
+        timesLabel.text = "Start At: \(format(startTime))     |     End At: \(format(endTime))"
     }
 
     private func format(_ t: TimeInterval) -> String {
