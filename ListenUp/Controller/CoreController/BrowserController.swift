@@ -207,7 +207,7 @@ class BrowserController: UIViewController {
                     }
 
                     print("Debug: extract success , ready to download.")
-                    DownloadManager.shared.enqueue(url: safeUrl, title: resp.title, thumbURL: resp.thumb)
+                    DownloadManager.shared.enqueue(url: safeUrl, title: resp.title, thumbURL: resp.thumb, duration: resp.duration)
                 }
             }
         }

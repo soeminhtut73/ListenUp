@@ -188,23 +188,29 @@ class HistoryController: UIViewController {
     private func showActionSheet(for indexPath: IndexPath) {
         let actionSheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         let item = searchResults[indexPath.row]
+        print("Debug: selected item : \(item)")
         
+        /// convert action
         let convertAction = UIAlertAction(title: "Convert", style: .default) { _ in
             guard let localPath = item.localPath as String? else { return }
             
             guard let fileURL = FileHelper.fileURL(for: localPath) else { return }
             
-            
+            let vc = RingtoneTrimWithStripViewController(videoURL: fileURL, item: item)
+            let nav = UINavigationController(rootViewController: vc)
+            self.present(nav, animated: true)
         }
         
-        // Delete Action
+        /// Delete Action
         let deleteAction = UIAlertAction(title: "Delete", style: .destructive) {  _ in
-            
+            self.showDeleteAlert {
+                RealmService.shared.delete(item)
+            }
         }
         
-        // Cancel Action
+        /// Cancel Action
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
-        
+        actionSheet.addAction(convertAction)
         actionSheet.addAction(deleteAction)
         actionSheet.addAction(cancelAction)
         

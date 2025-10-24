@@ -8,6 +8,13 @@
 import Foundation
 import RealmSwift
 
+enum MediaType: Int, PersistableEnum {
+    case video = 0
+    case audio = 1
+    case ringtone = 2   // your 30s tone
+}
+
+
 enum DLStatus: Int, PersistableEnum {
     case queued = 0, running, completed, failed, canceled
 }
@@ -23,4 +30,8 @@ final class DownloadItem: Object, ObjectKeyIdentifiable {
     @Persisted var fileSize: Int64 = 0
     @Persisted var createdAt: Date = Date()
     @Persisted var errorMessage: String?
+    
+    @Persisted var mediaType: MediaType = .video
+    @Persisted var duration: TimeInterval = 0       // For displaying length
+    @Persisted var format: String = ""
 }

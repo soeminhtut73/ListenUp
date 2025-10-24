@@ -44,12 +44,14 @@ final class DownloadManager: NSObject, URLSessionDownloadDelegate {
     
     //MARK: - Enqueue
     @discardableResult
-    func enqueue(url: URL, title: String, thumbURL: String?) -> String {
+    func enqueue(url: URL, title: String, thumbURL: String?, duration: Int? = 0) -> String {
         let item = DownloadItem()
         item.title = title
         item.sourceURL = ""
         item.thumbURL = thumbURL ?? ""
         item.status = .running
+        item.duration = TimeInterval(duration ?? 0)
+        item.mediaType = .video
         realm.createOrUpdate(item: item)
         
         lastBucket = -1
@@ -85,8 +87,8 @@ final class DownloadManager: NSObject, URLSessionDownloadDelegate {
         
         
         // 2) Destination: Documents/videos/<unique name>
-        let videosDir = videosDir()
-        let dest = uniqueURL(in: videosDir, base: baseName, ext: finalExt)
+        let videosDir = FileHelper.videosDir()
+        let dest = FileHelper.uniqueURL(in: videosDir, base: baseName, ext: finalExt)
         
         do {
             try FileManager.default.moveItem(at: location, to: dest)
@@ -162,29 +164,5 @@ final class DownloadManager: NSObject, URLSessionDownloadDelegate {
     }
     
     //MARK: - Helper functions
-    private func documentsURL() -> URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-    }
-
-    private func videosDir() -> URL {
-        let dir = documentsURL().appendingPathComponent("videos", isDirectory: true)
-        if !FileManager.default.fileExists(atPath: dir.path) {
-            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        }
-        return dir
-    }
     
-    private func uniqueURL(in dir: URL, base: String, ext: String) -> URL {
-        var url = dir.appendingPathComponent("\(base).\(ext)")
-        var i = 1
-        while FileManager.default.fileExists(atPath: url.path) {
-            url = dir.appendingPathComponent("\(base)-\(i).\(ext)")
-            i += 1
-        }
-        return url
-    }
-    
-    private func fileSize(at url: URL) -> Int64 {
-        (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init) ?? 0
-    }
 }

@@ -11,7 +11,13 @@ import RealmSwift
 class RealmService {
     
     static let shared = RealmService()
-    private var realm: Realm { try! Realm() }
+    var realm: Realm {
+        do {
+            return try Realm()
+        } catch {
+            fatalError("Failed to open main Realm: \(error)")
+        }
+    }
     
     private init() {}
     
@@ -32,23 +38,45 @@ class RealmService {
         realm.objects(DownloadItem.self).sorted(byKeyPath: "createdAt", ascending: false)
     }
     
+    // Fetch only video items (for HistoryViewController)
+    func fetchVideoItems() -> Results<DownloadItem> {
+        realm.objects(DownloadItem.self)
+            .filter("mediaType == %@ OR mediaType == %@", MediaType.video.rawValue)
+            .sorted(byKeyPath: "createdAt", ascending: false)
+    }
+    
+    // Fetch only audio items (for AudioViewController)
+    func fetchAudioItems() -> Results<DownloadItem> {
+        realm.objects(DownloadItem.self)
+            .filter("mediaType == %@ OR mediaType == %@", MediaType.audio.rawValue)
+            .sorted(byKeyPath: "createdAt", ascending: false)
+    }
+    
     func delete(_ model: DownloadItem) {
         try? realm.write {
             if let videoPath = model.localPath {
-                try? FileManager.default.removeItem(atPath: videoPath)
+                let videoURL = FileHelper.fileURL(for: videoPath)
+                if let url = videoURL {
+                    try? FileManager.default.removeItem(at: url)
+                }
             }
-            
-//            if let audioPath = model.localAudioPath {
-//                try? FileManager.default.removeItem(atPath: audioPath)
-//            }
+            print("Debug: Delete successfully.")
             realm.delete(model)
         }
     }
     
     func deleteItems(with items: [DownloadItem], completion: @escaping (Result<Void, Error>) -> Void) {
         
-        let fileURLs: [URL] = items.compactMap { FileHelper.fileURL(for: $0.localPath) }
-    
+        // Collect both video and audio file URLs
+        var fileURLs: [URL] = []
+        
+        for item in items {
+            if let videoPath = item.localPath,
+               let videoURL = FileHelper.fileURL(for: videoPath) {
+                fileURLs.append(videoURL)
+            }
+        }
+        
         do {
             try realm.write {
                 realm.delete(items)
@@ -68,6 +96,22 @@ class RealmService {
             }
         }
     }
+    
+    // Delete only video file but keep the audio
+    func deleteVideoOnly(for id: String) {
+        update(id) { item in
+            if let videoPath = item.localPath {
+                let videoURL = FileHelper.fileURL(for: videoPath)
+                if let url = videoURL {
+                    try? FileManager.default.removeItem(at: url)
+                }
+            }
+            item.localPath = nil
+            item.fileSize = 0
+        }
+    }
+    
+    
     
     func deleteAll() {
         try? realm.write {

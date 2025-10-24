@@ -16,6 +16,15 @@ extension UIViewController {
         present(alert, animated: true, completion: nil)
     }
     
+    func showDeleteAlert(deleteHandler: @escaping () -> Void) {
+        let alert = UIAlertController(title: "Delete Items", message: "This will remove!", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { _ in
+            deleteHandler()
+        }))
+        present(alert, animated: true)
+    }
+    
     /// Returns the nearest tab bar controller in the hierarchy
     var nearestTabBarController: UITabBarController? {
         if let tabBar = self as? UITabBarController {
