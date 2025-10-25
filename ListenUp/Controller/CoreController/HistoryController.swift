@@ -25,6 +25,7 @@ class HistoryController: UIViewController {
     private var deleteButton: UIBarButtonItem!
     private var selectAllButton: UIBarButtonItem!
     private var cancelButton: UIBarButtonItem!
+    private var sortButton: UIBarButtonItem!
     
     // MARK: - UI Components
     private let tableView: UITableView = {
@@ -140,19 +141,20 @@ class HistoryController: UIViewController {
     }
     
     private func setupNavigationBar() {
-        let sortButton = UIBarButtonItem(
+        sortButton = UIBarButtonItem(
             image: UIImage(systemName: "arrow.up.arrow.down"),
             style: .plain,
             target: self,
             action: #selector(sortButtonTapped)
         )
+        navigationItem.leftBarButtonItem = sortButton
         
         deleteButton = UIBarButtonItem(
             image: UIImage(systemName: "trash"),
             style: .done,
             target: self,
             action: #selector(deleteButtonTapped))
-        navigationItem.rightBarButtonItems = [deleteButton, sortButton]
+        navigationItem.rightBarButtonItem = deleteButton
         
         selectAllButton = UIBarButtonItem(
             title: "Select All",
@@ -425,7 +427,7 @@ extension HistoryController {
     
     private func enterSelectionMode() {
         tableView.setEditing(true, animated: true)
-        navigationItem.leftBarButtonItems = [cancelButton]
+        navigationItem.leftBarButtonItems = [cancelButton, selectAllButton]
         updateDeleteButtonTitle()
         updateSelectAllButtonTitle()
     }
@@ -439,7 +441,8 @@ extension HistoryController {
         }
         tableView.setEditing(false, animated: true)
         navigationItem.leftBarButtonItem = nil
-        deleteButton.title = "Select"
+        navigationItem.leftBarButtonItem = sortButton
+//        deleteButton.title = "Select"
     }
     
     private func updateDeleteButtonTitle() {

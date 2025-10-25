@@ -1,17 +1,15 @@
 //
-//  LibraryController.swift
+//  AudioController.swift
 //  ListenUp
 //
-//  Created by S M H  on 04/06/2025.
+//  Created by S M H  on 25/10/2025.
 //
 
 import UIKit
 import RealmSwift
 
 
-private let reuseIdentifier = "LibraryTableViewCell"
-
-class LibraryController: UIViewController {
+class AudioController: UIViewController {
     
     //MARK: - Properties
     private var results: Results<DownloadItem>!
@@ -92,7 +90,7 @@ class LibraryController: UIViewController {
 }
 
 //MARK: - UITableView Delegate
-extension LibraryController: UITableViewDelegate {
+extension AudioController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         print("Debug: selected item : \(searchResults[indexPath.row])")
         tableView.deselectRow(at: indexPath, animated: true)
@@ -100,7 +98,7 @@ extension LibraryController: UITableViewDelegate {
 }
 
 //MARK: - UITableView DataSource
-extension LibraryController: UITableViewDataSource {
+extension AudioController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return searchResults.count
     }
@@ -119,7 +117,7 @@ extension LibraryController: UITableViewDataSource {
     }
 }
 
-extension LibraryController: DownloadTableViewCellDelegate {
+extension AudioController: DownloadTableViewCellDelegate {
     func cell(_ cell: DownloadTableViewCell, didTapOptionFor item: DownloadItem) {
         print("Debug: didTapOptionFor : \(item)")
     }

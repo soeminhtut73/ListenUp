@@ -28,7 +28,7 @@ class MainTabBarController: UITabBarController {
         
 //        let browserController = configureNavigationController(tabImage: UIImage(systemName: "magnifyingglass")!, rootViewController: CategoriesViewController(), title: "Search")
         
-        let LibraryController = configureNavigationController(tabImage: UIImage(systemName: "music.note.house")!, rootViewController: LibraryController(), title: "Tone")
+        let LibraryController = configureNavigationController(tabImage: UIImage(systemName: "music.note.house")!, rootViewController: AudioController(), title: "Tone")
         
         let HistoryController = configureNavigationController(tabImage: UIImage(systemName: "clock")!, rootViewController: HistoryController(), title: "History")
         
