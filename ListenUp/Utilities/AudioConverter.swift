@@ -47,6 +47,7 @@ class AudioConverter {
                         newItem.duration = seconds
                         newItem.createdAt = Date()
                         newItem.mediaType = .audio
+                        newItem.status = .completed
                         
                         try realm.write {
                             realm.add(newItem)

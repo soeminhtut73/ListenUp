@@ -136,8 +136,8 @@ class DownloadTableViewCell: UITableViewCell {
             // Playing indicator (over album)
             playingIndicator.centerXAnchor.constraint(equalTo: albumImageView.centerXAnchor),
             playingIndicator.centerYAnchor.constraint(equalTo: albumImageView.centerYAnchor),
-            playingIndicator.widthAnchor.constraint(equalToConstant: 30),
-            playingIndicator.heightAnchor.constraint(equalToConstant: 30),
+            playingIndicator.widthAnchor.constraint(equalToConstant: 36),
+            playingIndicator.heightAnchor.constraint(equalToConstant: 36),
             
             // Circular progress (over album)
             circularProgressView.centerXAnchor.constraint(equalTo: albumImageView.centerXAnchor),
@@ -188,8 +188,9 @@ class DownloadTableViewCell: UITableViewCell {
         switch item.status {
         case .running:
             circularProgressView.isHidden = false
-            albumImageView.isHidden = true
+//            albumImageView.isHidden = true
             circularProgressView.setProgress(item.progress, for: item.id, animated: !isDifferentItem)
+//            circularProgressView.setProgress(item.progress, for: item.id)
             
         case .completed:
             albumImageView.isHidden = false
@@ -247,7 +248,7 @@ class DownloadTableViewCell: UITableViewCell {
             break
         }
         
-        detailLabel.text = detailComponents.isEmpty ? "Unknown size" : detailComponents.joined(separator: " • ")
+        detailLabel.text = detailComponents.isEmpty ? "Unknown size" : detailComponents.joined(separator: " | ")
     }
     
     // MARK: - Thumbnail Configuration
@@ -263,53 +264,15 @@ class DownloadTableViewCell: UITableViewCell {
                 )
             } else {
                 // Generate thumbnail from local video file
-                generateVideoThumbnail(for: item)
+                albumImageView.image = UIImage(systemName: "questionmark.video")
             }
             
         case .audio:
             // Audio: Show music note icon or album art if available
-            if let url = URL(string: item.thumbURL), !item.thumbURL.isEmpty {
-                albumImageView.sd_setImage(
-                    with: url,
-                    placeholderImage: UIImage(systemName: "music.note"),
-                    options: [.retryFailed, .continueInBackground]
-                )
-            } else {
-                albumImageView.image = UIImage(systemName: "music.note")
-                albumImageView.tintColor = .systemBlue
-                albumImageView.contentMode = .center
-            }
-        }
-    }
-    
-    // MARK: - Video Thumbnail Generation
-    private func generateVideoThumbnail(for item: DownloadItem) {
-        guard let localPath = item.localPath else {
-            albumImageView.image = UIImage(systemName: "play.rectangle.fill")
-            return
-        }
-        
-        let url = URL(fileURLWithPath: localPath)
-        let asset = AVAsset(url: url)
-        let imageGenerator = AVAssetImageGenerator(asset: asset)
-        imageGenerator.appliesPreferredTrackTransform = true
-        
-        let time = CMTime(seconds: 1.0, preferredTimescale: 600)
-        
-        DispatchQueue.global(qos: .utility).async { [weak self] in
-            do {
-                let cgImage = try imageGenerator.copyCGImage(at: time, actualTime: nil)
-                let thumbnail = UIImage(cgImage: cgImage)
-                
-                DispatchQueue.main.async {
-                    guard let self = self, self.currentItemId == item.id else { return }
-                    self.albumImageView.image = thumbnail
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self?.albumImageView.image = UIImage(systemName: "play.rectangle.fill")
-                }
-            }
+            albumImageView.image = UIImage(systemName: "music.note")
+            albumImageView.backgroundColor = .clear
+            albumImageView.tintColor = .secondaryLabel
+            albumImageView.contentMode = .scaleAspectFit
         }
     }
     

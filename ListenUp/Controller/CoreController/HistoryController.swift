@@ -31,7 +31,7 @@ class HistoryController: UIViewController {
         let tv = UITableView()
         tv.separatorStyle = .singleLine
         tv.rowHeight = 64
-        tv.register(HistoryTableViewCell.self, forCellReuseIdentifier: HistoryTableViewCell.identifier)
+        tv.register(DownloadTableViewCell.self, forCellReuseIdentifier: DownloadTableViewCell.identifier)
         tv.translatesAutoresizingMaskIntoConstraints = false
         return tv
     }()
@@ -185,9 +185,8 @@ class HistoryController: UIViewController {
         RealmService.shared.deleteAll()
     }
     
-    private func showActionSheet(for indexPath: IndexPath) {
+    private func showActionSheet(for item: DownloadItem) {
         let actionSheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        let item = searchResults[indexPath.row]
         /// convert action
         let convertAction = UIAlertAction(title: "Convert", style: .default) { _ in
             guard let localPath = item.localPath as String? else { return }
@@ -314,12 +313,12 @@ extension HistoryController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let item = searchResults[indexPath.row]
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: HistoryTableViewCell.identifier, for: indexPath) as? HistoryTableViewCell else {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: DownloadTableViewCell.identifier, for: indexPath) as? DownloadTableViewCell else {
             return UITableViewCell()
         }
         
         cell.delegate = self
-        cell.configure(with: item)
+        cell.configure(with: item, mode: .video)
         let isCurrent = isRowCurrentItem(item)
         cell.setPlaying(isCurrent && PlayerCenter.shared.isActuallyPlaying)   // <- no KVC
         if isCurrent { lastPlayingIndexPath = indexPath }
@@ -361,14 +360,6 @@ extension HistoryController: UITableViewDelegate {
             updateDeleteButtonTitle()
             updateSelectAllButtonTitle()
         }
-    }
-}
-
-// MARK: - HistoryTableViewCellDelegate
-extension HistoryController: HistoryTableViewCellDelegate {
-    func didTapOptionButton(for cell: HistoryTableViewCell) {
-        guard let indexPath = tableView.indexPath(for: cell) else { return }
-        showActionSheet(for: indexPath)
     }
 }
 
@@ -532,5 +523,12 @@ extension HistoryController {
     
     @objc private func cancelTapped() {
         exitSelectionMode()
+    }
+}
+
+//MARK: - DownloadTableViewCellDelegate
+extension HistoryController: DownloadTableViewCellDelegate {
+    func cell(_ cell: DownloadTableViewCell, didTapOptionFor item: DownloadItem) {
+        showActionSheet(for: item)
     }
 }

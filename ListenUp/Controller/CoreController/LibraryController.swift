@@ -94,6 +94,7 @@ class LibraryController: UIViewController {
 //MARK: - UITableView Delegate
 extension LibraryController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        print("Debug: selected item : \(searchResults[indexPath.row])")
         tableView.deselectRow(at: indexPath, animated: true)
     }
 }
