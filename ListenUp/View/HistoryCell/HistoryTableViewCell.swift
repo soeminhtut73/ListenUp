@@ -192,7 +192,6 @@ class HistoryTableViewCell: UITableViewCell {
         case.queued:
             circularProgressView.isHidden = false
             albumImageView.isHidden = true
-//            circularProgressView.progress = 0
             
         case.canceled:
             circularProgressView.isHidden = true

@@ -442,7 +442,6 @@ extension HistoryController {
         tableView.setEditing(false, animated: true)
         navigationItem.leftBarButtonItem = nil
         navigationItem.leftBarButtonItem = sortButton
-//        deleteButton.title = "Select"
     }
     
     private func updateDeleteButtonTitle() {

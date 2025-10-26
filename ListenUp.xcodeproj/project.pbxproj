@@ -26,6 +26,8 @@
 		041BB0BA2EAB645C004BC0D8 /* AudioItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BB0B92EAB645C004BC0D8 /* AudioItem.swift */; };
 		041BB0BC2EABC7B7004BC0D8 /* DownloadTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BB0BB2EABC7B7004BC0D8 /* DownloadTableViewCell.swift */; };
 		041BB0BE2EACD60A004BC0D8 /* AudioController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BB0BD2EACD60A004BC0D8 /* AudioController.swift */; };
+		041BB0C62EAE0D33004BC0D8 /* SelectionModeCapable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BB0C52EAE0D33004BC0D8 /* SelectionModeCapable.swift */; };
+		041BB0C82EAE120A004BC0D8 /* ActionSheetConfigurable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BB0C72EAE120A004BC0D8 /* ActionSheetConfigurable.swift */; };
 		041C4AC42E655C22005B7DEC /* ExtractAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041C4AC32E655C22005B7DEC /* ExtractAPI.swift */; };
 		041C4AC62E658442005B7DEC /* PlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041C4AC52E658442005B7DEC /* PlayerController.swift */; };
 		041C4AF52E693E91005B7DEC /* RealmService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041C4AF42E693E90005B7DEC /* RealmService.swift */; };
@@ -96,6 +98,8 @@
 		041BB0B92EAB645C004BC0D8 /* AudioItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioItem.swift; sourceTree = "<group>"; };
 		041BB0BB2EABC7B7004BC0D8 /* DownloadTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadTableViewCell.swift; sourceTree = "<group>"; };
 		041BB0BD2EACD60A004BC0D8 /* AudioController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioController.swift; sourceTree = "<group>"; };
+		041BB0C52EAE0D33004BC0D8 /* SelectionModeCapable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionModeCapable.swift; sourceTree = "<group>"; };
+		041BB0C72EAE120A004BC0D8 /* ActionSheetConfigurable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionSheetConfigurable.swift; sourceTree = "<group>"; };
 		041C4AC32E655C22005B7DEC /* ExtractAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtractAPI.swift; sourceTree = "<group>"; };
 		041C4AC52E658442005B7DEC /* PlayerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerController.swift; sourceTree = "<group>"; };
 		041C4AF42E693E90005B7DEC /* RealmService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealmService.swift; sourceTree = "<group>"; };
@@ -260,6 +264,8 @@
 				04396CCF2E99E509002B907A /* NetworkMonitor.swift */,
 				04396CCD2E993D90002B907A /* DownloadGuard.swift */,
 				041BB0B72EAB643C004BC0D8 /* AudioConverter.swift */,
+				041BB0C52EAE0D33004BC0D8 /* SelectionModeCapable.swift */,
+				041BB0C72EAE120A004BC0D8 /* ActionSheetConfigurable.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -629,6 +635,7 @@
 			files = (
 				041469702DF00978009D6EF9 /* AppDelegate.swift in Sources */,
 				04396CD02E99E509002B907A /* NetworkMonitor.swift in Sources */,
+				041BB0C82EAE120A004BC0D8 /* ActionSheetConfigurable.swift in Sources */,
 				04C00F542E77FD5300104CD9 /* PlayerCenter.swift in Sources */,
 				041C4AF72E693EDC005B7DEC /* DownloadManager.swift in Sources */,
 				04396CD22E9A129D002B907A /* DownloadNotificationManager.swift in Sources */,
@@ -667,6 +674,7 @@
 				041C4AF52E693E91005B7DEC /* RealmService.swift in Sources */,
 				04C00F502E77B30400104CD9 /* PlayerView.swift in Sources */,
 				0414698C2DF41537009D6EF9 /* Style.swift in Sources */,
+				041BB0C62EAE0D33004BC0D8 /* SelectionModeCapable.swift in Sources */,
 				04C00F522E77B34F00104CD9 /* MediaPlayerViewController.swift in Sources */,
 				04B16AC22EA0F21F00332961 /* APIService.swift in Sources */,
 				041469822DF00A01009D6EF9 /* ProfileController.swift in Sources */,

@@ -272,7 +272,7 @@ class DownloadTableViewCell: UITableViewCell {
             albumImageView.image = UIImage(systemName: "music.note")
             albumImageView.backgroundColor = .clear
             albumImageView.tintColor = .secondaryLabel
-            albumImageView.contentMode = .scaleAspectFit
+            albumImageView.contentMode = .center
         }
     }
     
