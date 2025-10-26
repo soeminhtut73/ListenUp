@@ -15,6 +15,7 @@ class AudioController: UIViewController {
     private var results: Results<DownloadItem>!
     private var searchResults: Results<DownloadItem>!
     private var notificationToken: NotificationToken?
+    private let searchController = UISearchController(searchResultsController: nil)
     
     lazy var sortButton = UIBarButtonItem(
         image: UIImage(systemName: "arrow.up.arrow.down"),
@@ -70,6 +71,7 @@ class AudioController: UIViewController {
         configureUI()
         fetchResult()
         observeRealmChanges()
+        setupSearch()
     }
     
     //MARK: - HelperFunctions
@@ -319,5 +321,59 @@ extension AudioController: ActionSheetConfigurable {
             RealmService.shared.delete(item)
         })
         present(alert, animated: true)
+    }
+}
+
+//MARK: - UISearchBarDelegate
+extension AudioController: UISearchResultsUpdating, UISearchBarDelegate {
+    private func setupSearch() {
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.hidesNavigationBarDuringPresentation = false
+        searchController.searchBar.placeholder = "Search Tone..."
+        searchController.searchBar.delegate = self
+        
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
+        definesPresentationContext = true
+    }
+    
+    func updateSearchResults(for searchController: UISearchController) {
+        applySearch(text: searchController.searchBar.text)
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        applySearch(text: nil)
+    }
+    
+    private func applySearch(text: String?) {
+        let raw = (text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else {
+            searchResults = results
+            tableView.reloadData()
+            return
+        }
+        
+        // Split into tokens by spaces; ignore empties
+        let tokens = raw
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+        
+        // Build (AND over tokens) of (OR over fields) predicates
+        var andSubpredicates: [NSPredicate] = []
+        for tok in tokens {
+            // search across title and localPath (add more fields if you have them)
+            let orForToken = NSCompoundPredicate(orPredicateWithSubpredicates: [
+                NSPredicate(format: "title CONTAINS[c] %@", tok)
+            ])
+            andSubpredicates.append(orForToken)
+        }
+        
+        let compound = NSCompoundPredicate(andPredicateWithSubpredicates: andSubpredicates)
+        
+        // Filter from the full, already-sorted Results
+        searchResults = results.filter(compound)
+        
+        tableView.reloadData()
     }
 }

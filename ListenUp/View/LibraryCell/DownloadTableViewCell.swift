@@ -269,7 +269,8 @@ class DownloadTableViewCell: UITableViewCell {
             
         case .audio:
             // Audio: Show music note icon or album art if available
-            albumImageView.image = UIImage(systemName: "music.note")
+            let config = UIImage.SymbolConfiguration(pointSize: 24, weight: .medium)
+            albumImageView.image = UIImage(systemName: "music.note", withConfiguration: config)
             albumImageView.backgroundColor = .clear
             albumImageView.tintColor = .secondaryLabel
             albumImageView.contentMode = .center
