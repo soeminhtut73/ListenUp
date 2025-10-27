@@ -68,14 +68,15 @@ class AudioController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        configureUI()
+        setupUI()
         fetchResult()
         observeRealmChanges()
         setupSearch()
     }
     
     //MARK: - HelperFunctions
-    private func configureUI() {
+    private func setupUI() {
+        title = "Tones"
         view.backgroundColor = Style.viewBackgroundColor
         
         view.addSubview(tableView)

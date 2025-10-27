@@ -23,7 +23,6 @@
 		041BB0B42EAB6180004BC0D8 /* RingtoneTrimWithStripViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BB0B32EAB6180004BC0D8 /* RingtoneTrimWithStripViewController.swift */; };
 		041BB0B62EAB6413004BC0D8 /* ThumbnailStripView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BB0B52EAB6413004BC0D8 /* ThumbnailStripView.swift */; };
 		041BB0B82EAB643C004BC0D8 /* AudioConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BB0B72EAB643C004BC0D8 /* AudioConverter.swift */; };
-		041BB0BA2EAB645C004BC0D8 /* AudioItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BB0B92EAB645C004BC0D8 /* AudioItem.swift */; };
 		041BB0BC2EABC7B7004BC0D8 /* DownloadTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BB0BB2EABC7B7004BC0D8 /* DownloadTableViewCell.swift */; };
 		041BB0BE2EACD60A004BC0D8 /* AudioController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BB0BD2EACD60A004BC0D8 /* AudioController.swift */; };
 		041BB0C62EAE0D33004BC0D8 /* SelectionModeCapable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BB0C52EAE0D33004BC0D8 /* SelectionModeCapable.swift */; };
@@ -95,7 +94,6 @@
 		041BB0B32EAB6180004BC0D8 /* RingtoneTrimWithStripViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RingtoneTrimWithStripViewController.swift; sourceTree = "<group>"; };
 		041BB0B52EAB6413004BC0D8 /* ThumbnailStripView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailStripView.swift; sourceTree = "<group>"; };
 		041BB0B72EAB643C004BC0D8 /* AudioConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioConverter.swift; sourceTree = "<group>"; };
-		041BB0B92EAB645C004BC0D8 /* AudioItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioItem.swift; sourceTree = "<group>"; };
 		041BB0BB2EABC7B7004BC0D8 /* DownloadTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadTableViewCell.swift; sourceTree = "<group>"; };
 		041BB0BD2EACD60A004BC0D8 /* AudioController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioController.swift; sourceTree = "<group>"; };
 		041BB0C52EAE0D33004BC0D8 /* SelectionModeCapable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionModeCapable.swift; sourceTree = "<group>"; };
@@ -202,7 +200,6 @@
 				041C4AFE2E696B0B005B7DEC /* DownloadItem.swift */,
 				04B16ABD2EA0E7F500332961 /* MusicCategory.swift */,
 				04B16ABF2EA0E90300332961 /* Ringtone.swift */,
-				041BB0B92EAB645C004BC0D8 /* AudioItem.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -653,7 +650,6 @@
 				041469802DF009F9009D6EF9 /* HistoryController.swift in Sources */,
 				041BB0B42EAB6180004BC0D8 /* RingtoneTrimWithStripViewController.swift in Sources */,
 				041469902DF415A3009D6EF9 /* Extension.swift in Sources */,
-				041BB0BA2EAB645C004BC0D8 /* AudioItem.swift in Sources */,
 				041BB0B82EAB643C004BC0D8 /* AudioConverter.swift in Sources */,
 				04B16ACB2EA125B300332961 /* RingtoneDetailViewController.swift in Sources */,
 				0461FEED2E2E756A0052F966 /* HistoryTableViewCell.swift in Sources */,
