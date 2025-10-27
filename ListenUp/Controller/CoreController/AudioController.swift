@@ -200,7 +200,7 @@ extension AudioController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if tableView.isEditing {
             updateSelectAllButtonTitle()
-            return  // Don't deselect or play
+            return
         }
         
         tableView.deselectRow(at: indexPath, animated: true)
@@ -213,6 +213,18 @@ extension AudioController: UITableViewDelegate {
         guard item.status == .completed else { return }
         
         /// need to implement play audio
+        let tapped = searchResults[indexPath.row]
+        guard let rel = tapped.localPath else { return }
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let url = docs.appendingPathComponent(rel)
+        
+        MiniPlayerContainerViewController.shared.hide()
+        
+        let vc = MediaPlayerViewController()
+        vc.downloadsResults = searchResults
+        vc.startAt(url: url)
+        vc.modalPresentationStyle = .overFullScreen
+        present(vc, animated: true)
     }
     
     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {

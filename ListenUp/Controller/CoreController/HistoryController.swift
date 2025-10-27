@@ -343,7 +343,7 @@ extension HistoryController: UITableViewDelegate {
         
         tableView.deselectRow(at: indexPath, animated: true)
         
-        let tapped = results[indexPath.row]
+        let tapped = searchResults[indexPath.row]
         guard let rel = tapped.localPath else { return }
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let url = docs.appendingPathComponent(rel)
