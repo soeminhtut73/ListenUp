@@ -139,6 +139,44 @@ final class MediaPlayerViewController: UIViewController {
         return (player.currentItem?.asset as? AVURLAsset)?.url
     }
     
+    //MARK: - VideoFull Implementation
+    @objc private func openLandscapeQuickControls() {
+        guard let window = view.window ?? UIApplication.shared.windows.first else {
+            // Fallback: present directly
+            let vc = QuickLandscapePlayerViewController(player: PlayerCenter.shared.player) { [weak self] in
+                guard let self else { return }
+                self.videoView.player = PlayerCenter.shared.player
+                self.videoView.playerLayer.videoGravity = .resizeAspectFill
+            }
+            present(vc, animated: true)
+            return
+        }
+        
+        // Snapshot animation from inline video to fullscreen
+        let origin = videoView.convert(videoView.bounds, to: window)
+        let snap = videoView.snapshotView(afterScreenUpdates: false) ?? UIView(frame: origin)
+        snap.frame = origin
+        snap.backgroundColor = .black
+        window.addSubview(snap)
+        
+        // Detach inline player so only one layer renders
+        videoView.player = nil
+        
+        let target = window.bounds
+        UIView.animate(withDuration: 0.28, delay: 0, options: [.curveEaseInOut]) {
+            snap.frame = target
+        } completion: { [weak self] _ in
+            guard let self else { return }
+            let vc = QuickLandscapePlayerViewController(player: PlayerCenter.shared.player) { [weak self] in
+                guard let self else { return }
+                self.videoView.player = PlayerCenter.shared.player
+                self.videoView.playerLayer.videoGravity = .resizeAspectFill
+            }
+            snap.removeFromSuperview()
+            self.present(vc, animated: false)
+        }
+    }
+    
     // MARK: - Observe Realm live changes
     private func startObservingDownloads() {
         guard downloadsResults != nil else {
@@ -188,12 +226,12 @@ final class MediaPlayerViewController: UIViewController {
         videoView.isUserInteractionEnabled = true
         
         // Expand Button
-//        expandButton.setImage(UIImage(systemName: "arrow.down.right.and.arrow.up.left"), for: .normal)
-//        expandButton.tintColor = .white
-//        expandButton.backgroundColor = UIColor.black.withAlphaComponent(0.3)
-//        expandButton.layer.cornerRadius = 18
-//        expandButton.addTarget(self, action: #selector(toggleVideoLayout), for: .touchUpInside)
-//        expandButton.clipsToBounds = true
+        expandButton.setImage(UIImage(systemName: "arrow.down.left.and.arrow.up.right"), for: .normal)
+        expandButton.tintColor = .white
+        expandButton.backgroundColor = UIColor.black.withAlphaComponent(0.3)
+        expandButton.layer.cornerRadius = 18
+        expandButton.addTarget(self, action: #selector(openLandscapeQuickControls), for: .touchUpInside)
+        expandButton.clipsToBounds = true
         
         // Title Label
         titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
@@ -336,10 +374,10 @@ final class MediaPlayerViewController: UIViewController {
         NSLayoutConstraint.activate([
             titleLabel.heightAnchor.constraint(equalToConstant: 64),
             
-//            expandButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
-//            expandButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-//            expandButton.widthAnchor.constraint(equalToConstant: 36),
-//            expandButton.heightAnchor.constraint(equalToConstant: 36),
+            expandButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+            expandButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            expandButton.widthAnchor.constraint(equalToConstant: 36),
+            expandButton.heightAnchor.constraint(equalToConstant: 36),
             
             videoView.bottomAnchor.constraint(equalTo: view.centerYAnchor, constant: -20),
             videoView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
