@@ -26,10 +26,6 @@ final class MediaPlayerViewController: UIViewController {
     private let playerView = PlayerView()
     private var player = PlayerCenter.shared.player
     
-    private var isVideoFullScreen = true
-    private var videoFullConstraints: [NSLayoutConstraint] = []
-    private var videoNormalConstraints: [NSLayoutConstraint] = []
-    
     private let controlsStack = UIStackView()
     private let timeRowStack = UIStackView()
     private let transportStack = UIStackView()
@@ -189,59 +185,60 @@ final class MediaPlayerViewController: UIViewController {
         // Video View - Fullscreen
         videoView.backgroundColor = .black
         videoView.playerLayer.videoGravity = .resizeAspectFill
+        videoView.isUserInteractionEnabled = true
         
         // Expand Button
-        expandButton.setImage(UIImage(systemName: "arrow.down.right.and.arrow.up.left"), for: .normal)
-        expandButton.tintColor = .white
-        expandButton.backgroundColor = UIColor.black.withAlphaComponent(0.3)
-        expandButton.layer.cornerRadius = 18
-        expandButton.addTarget(self, action: #selector(toggleVideoLayout), for: .touchUpInside)
-        expandButton.clipsToBounds = true
+//        expandButton.setImage(UIImage(systemName: "arrow.down.right.and.arrow.up.left"), for: .normal)
+//        expandButton.tintColor = .white
+//        expandButton.backgroundColor = UIColor.black.withAlphaComponent(0.3)
+//        expandButton.layer.cornerRadius = 18
+//        expandButton.addTarget(self, action: #selector(toggleVideoLayout), for: .touchUpInside)
+//        expandButton.clipsToBounds = true
         
         // Title Label
         titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
-        titleLabel.textColor = .white
+        titleLabel.textColor = .label
         titleLabel.numberOfLines = 3
         titleLabel.textAlignment = .center
         
         // Slider
-        slider.minimumTrackTintColor = .white
-        slider.maximumTrackTintColor = UIColor.white.withAlphaComponent(0.3)
+        slider.minimumTrackTintColor = UIColor.label
+        slider.maximumTrackTintColor = UIColor.black.withAlphaComponent(0.1)
         slider.setThumbImage(createThumbImage(), for: .normal)
         
         // Time Labels
         currentLabel.font = .monospacedDigitSystemFont(ofSize: 12, weight: .medium)
-        currentLabel.textColor = .white
+        currentLabel.textColor = .label
         currentLabel.text = "0:00"
         
         totalLabel.font = .monospacedDigitSystemFont(ofSize: 12, weight: .medium)
-        totalLabel.textColor = .white
+        totalLabel.textColor = .label
         totalLabel.textAlignment = .right
         totalLabel.text = "0:00"
         
         // Transport Buttons - Smaller sizes
         prevButton.setImage(UIImage(systemName: "backward.fill"), for: .normal)
-        prevButton.tintColor = .white
+        prevButton.tintColor = .label
         prevButton.contentHorizontalAlignment = .fill
         prevButton.contentVerticalAlignment = .fill
         
         playPauseButton.setImage(UIImage(systemName: "play.circle.fill"), for: .normal)
-        playPauseButton.tintColor = .white
+        playPauseButton.tintColor = .label
         playPauseButton.contentHorizontalAlignment = .fill
         playPauseButton.contentVerticalAlignment = .fill
         
         nextButton.setImage(UIImage(systemName: "forward.fill"), for: .normal)
-        nextButton.tintColor = .white
+        nextButton.tintColor = .label
         nextButton.contentHorizontalAlignment = .fill
         nextButton.contentVerticalAlignment = .fill
         
         skipForwardButton.setImage(UIImage(systemName: "goforward.15"), for: .normal)
-        skipForwardButton.tintColor = .white
+        skipForwardButton.tintColor = .label
         skipForwardButton.contentHorizontalAlignment = .fill
         skipForwardButton.contentVerticalAlignment = .fill
         
         skipBackwardButton.setImage(UIImage(systemName: "gobackward.15"), for: .normal)
-        skipBackwardButton.tintColor = .white
+        skipBackwardButton.tintColor = .label
         skipBackwardButton.contentHorizontalAlignment = .fill
         skipBackwardButton.contentVerticalAlignment = .fill
         
@@ -336,44 +333,23 @@ final class MediaPlayerViewController: UIViewController {
         controlsStack.addArrangedSubview(optionButtonStack)
         view.addSubview(controlsStack)
         
-        controlsOverlayConstraints = [
-            controlsStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            controlsStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            controlsStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24)
-        ]
-        
-        videoFullConstraints = [
-            videoView.topAnchor.constraint(equalTo: view.topAnchor),
-            videoView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            videoView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            videoView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ]
-        
-        videoNormalConstraints = [
-            videoView.bottomAnchor.constraint(equalTo: view.centerYAnchor, constant: -20),
-            videoView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            videoView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            videoView.heightAnchor.constraint(equalTo: videoView.widthAnchor, multiplier: 9.0/16.0)
-        ]
-        
-        // Controls below video (normal): place under videoView
-        controlsBelowConstraints = [
-            controlsStack.topAnchor.constraint(equalTo: view.centerYAnchor, constant: 20),
-            controlsStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            controlsStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
-        ]
-        
         NSLayoutConstraint.activate([
             titleLabel.heightAnchor.constraint(equalToConstant: 64),
             
-            expandButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
-            expandButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            expandButton.widthAnchor.constraint(equalToConstant: 36),
-            expandButton.heightAnchor.constraint(equalToConstant: 36)
+//            expandButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+//            expandButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+//            expandButton.widthAnchor.constraint(equalToConstant: 36),
+//            expandButton.heightAnchor.constraint(equalToConstant: 36),
+            
+            videoView.bottomAnchor.constraint(equalTo: view.centerYAnchor, constant: -20),
+            videoView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            videoView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            videoView.heightAnchor.constraint(equalTo: videoView.widthAnchor, multiplier: 9.0/16.0),
+            
+            controlsStack.topAnchor.constraint(equalTo: view.centerYAnchor, constant: 20),
+            controlsStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            controlsStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
         ])
-        
-        NSLayoutConstraint.activate(videoFullConstraints)
-        NSLayoutConstraint.activate(controlsOverlayConstraints)
     }
     
     private func createThumbImage() -> UIImage? {
@@ -572,77 +548,6 @@ final class MediaPlayerViewController: UIViewController {
 
     @objc private func skipForward15Tapped() {
         PlayerCenter.shared.skipForward15()
-    }
-    
-    @objc private func toggleVideoLayout() {
-        // Flip state
-        isVideoFullScreen.toggle()
-        
-        if isVideoFullScreen {
-            // Video: fullscreen
-            NSLayoutConstraint.deactivate(videoNormalConstraints + controlsBelowConstraints)
-            NSLayoutConstraint.activate(videoFullConstraints + controlsOverlayConstraints)
-            videoView.playerLayer.videoGravity = .resizeAspectFill
-            expandButton.setImage(UIImage(systemName: "arrow.down.right.and.arrow.up.left"), for: .normal)
-            
-            applyStyle(forFullScreen: true)
-            addFullscreenGradientIfNeeded()
-        } else {
-            // Video: 16:9 header (normal)
-            NSLayoutConstraint.deactivate(videoFullConstraints + controlsOverlayConstraints)
-            NSLayoutConstraint.activate(videoNormalConstraints + controlsBelowConstraints)
-            videoView.playerLayer.videoGravity = .resizeAspect
-            expandButton.setImage(UIImage(systemName: "arrow.up.left.and.arrow.down.right"), for: .normal)
-            
-            applyStyle(forFullScreen: false)
-            removeFullscreenGradientIfNeeded()
-        }
-        
-        UIView.animate(withDuration: 0.5, delay: 0, options: [.curveEaseInOut]) {
-            self.view.layoutIfNeeded()
-        }
-    }
-    
-    private func applyStyle(forFullScreen full: Bool) {
-        if full {
-            // White UI over video
-            [titleLabel, currentLabel, totalLabel].forEach { $0.textColor = .white }
-            [prevButton, skipForwardButton, skipBackwardButton, playPauseButton, nextButton, closeButton, expandButton]
-                .forEach { $0.tintColor = .white }
-            
-            slider.minimumTrackTintColor = .white
-            slider.maximumTrackTintColor = UIColor.white.withAlphaComponent(0.3)
-        } else {
-            // Normal UI below video — use system colors
-            [titleLabel, currentLabel, totalLabel].forEach { $0.textColor = .label }
-            [prevButton, skipForwardButton, skipBackwardButton, playPauseButton, nextButton, closeButton, expandButton]
-                .forEach { $0.tintColor = .label }
-            
-            slider.minimumTrackTintColor = .systemBlue // or .label if you prefer monochrome
-            slider.maximumTrackTintColor = UIColor.label.withAlphaComponent(0.25)
-        }
-    }
-    
-    private func addFullscreenGradientIfNeeded() {
-        guard fullscreenGradient == nil else { return }
-        let g = CAGradientLayer()
-        g.colors = [
-            UIColor.clear.cgColor,
-            UIColor.black.withAlphaComponent(0.4).cgColor,
-            UIColor.black.withAlphaComponent(0.6).cgColor
-        ]
-        g.locations = [0.0, 0.5, 1.0]
-        g.startPoint = CGPoint(x: 0.5, y: 0.0)
-        g.endPoint = CGPoint(x: 0.5, y: 1.0)
-        g.frame = videoView.bounds
-        g.name = "fullscreenGradient"
-        videoView.layer.addSublayer(g)
-        fullscreenGradient = g
-    }
-    
-    private func removeFullscreenGradientIfNeeded() {
-        fullscreenGradient?.removeFromSuperlayer()
-        fullscreenGradient = nil
     }
     
     private func refreshPlayIcon() {
