@@ -6,11 +6,14 @@
 //
 
 import UIKit
+import PhotosUI
 
 class CategoriesViewController: UIViewController {
     
     private let tableView = UITableView()
     private var categories: [MusicCategory] = []
+    
+    private let kMaxDuration: TimeInterval = 20 * 60
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -18,8 +21,10 @@ class CategoriesViewController: UIViewController {
         title = "Categories"
         setupTableView()
         fetchCategories()
+        setupNavigationMenu()
     }
     
+    //MARK: - UISetup
     private func setupTableView() {
         view.addSubview(tableView)
         
@@ -47,6 +52,28 @@ class CategoriesViewController: UIViewController {
                 showMessage(withTitle: "Error!", message: error.localizedDescription)
             }
         }
+    }
+    
+    //MARK: - Setup Navigation
+    private func setupNavigationMenu() {
+        // Define actions
+        let browseAction = UIAction(title: "Browse", image: UIImage(systemName: "globe")) { _ in
+            self.openBrowserController()
+        }
+        
+        // Combine into menu
+        let menu = UIMenu(title: "", children: [browseAction])
+        
+        // Create bar button
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            image: UIImage(systemName: "plus"),
+            menu: menu
+        )
+    }
+    
+    private func openBrowserController() {
+        let vc = BrowserController()
+        navigationController?.pushViewController(vc, animated: true)
     }
 }
 
