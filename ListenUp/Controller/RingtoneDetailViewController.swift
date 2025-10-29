@@ -198,8 +198,12 @@ class RingtoneDetailViewController: UIViewController {
     // Helper function to create info rows
     private func createInfoRow(icon: String, title: String, value: String) -> UIView {
         let containerView = UIView()
-        containerView.backgroundColor = .systemGray6
-        containerView.layer.cornerRadius = 10
+        
+        let separatorView = UIView()
+        separatorView.backgroundColor = .black
+        separatorView.translatesAutoresizingMaskIntoConstraints = false
+//        containerView.backgroundColor = .systemGray6
+//        containerView.layer.cornerRadius = 10
         
         let iconImageView = UIImageView()
         iconImageView.image = UIImage(systemName: icon)
@@ -223,6 +227,7 @@ class RingtoneDetailViewController: UIViewController {
         containerView.addSubview(iconImageView)
         containerView.addSubview(titleLabel)
         containerView.addSubview(valueLabel)
+        containerView.addSubview(separatorView)
         
         NSLayoutConstraint.activate([
             iconImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
@@ -236,6 +241,11 @@ class RingtoneDetailViewController: UIViewController {
             valueLabel.leadingAnchor.constraint(greaterThanOrEqualTo: titleLabel.trailingAnchor, constant: 12),
             valueLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
             valueLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            
+            separatorView.heightAnchor.constraint(equalToConstant: 0.5),
+            separatorView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
+            separatorView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
+            separatorView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
         ])
         
         return containerView
@@ -252,14 +262,14 @@ class RingtoneDetailViewController: UIViewController {
         if player == nil {
             player = AVPlayer(url: url)
             player?.play()
-            playButton.setTitle("⏸ Pause", for: .normal)
+            playButton.setTitle("Pause", for: .normal)
         } else {
             if player?.timeControlStatus == .playing {
                 player?.pause()
-                playButton.setTitle("▶️ Play", for: .normal)
+                playButton.setTitle("Play", for: .normal)
             } else {
                 player?.play()
-                playButton.setTitle("⏸ Pause", for: .normal)
+                playButton.setTitle("Pause", for: .normal)
             }
         }
     }
@@ -283,23 +293,7 @@ class RingtoneDetailViewController: UIViewController {
                 let relativePath = "audios/" + finalURL.lastPathComponent
                 
                 await MainActor.run {
-                    do {
-                        let realm = try Realm()
-                        let newItem = DownloadItem()
-                        newItem.title = ringtone.title
-                        newItem.localPath = relativePath
-                        newItem.fileSize = ringtone.fileSize
-                        newItem.duration = TimeInterval(ringtone.duration)
-                        newItem.createdAt = Date()
-                        newItem.mediaType = .audio
-                        newItem.status = .completed
-                        
-                        try realm.write {
-                            realm.add(newItem)
-                        }
-                    } catch {
-                        print("Debug: cannot download ringtone to local storage : \(error)")
-                    }
+                    RealmService.shared.createRingtone(with: ringtone, relativePath: relativePath)
                     
                     downloadButton.setTitle("✅ Downloaded", for: .normal)
                     downloadButton.isEnabled = true
@@ -315,7 +309,7 @@ class RingtoneDetailViewController: UIViewController {
                     
                     // Reset button after 2 seconds
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        self.downloadButton.setTitle("⬇️ Download", for: .normal)
+                        self.downloadButton.setTitle("Download", for: .normal)
                     }
                 }
                 

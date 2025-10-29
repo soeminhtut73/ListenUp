@@ -21,6 +21,7 @@ class RealmService {
     
     private init() {}
     
+    //MARK: - DownloadItem CRUD
     func createOrUpdate(item: DownloadItem) {
         try? realm.write {
             realm.add(item, update: .modified)
@@ -111,13 +112,25 @@ class RealmService {
         }
     }
     
-    
-    
     func deleteAll() {
         try? realm.write {
             realm.deleteAll()
         }
     }
     
-    
+    //MARK: - Ringtone Services
+    func createRingtone(with ringtone: Ringtone, relativePath: String) {
+        let newItem = DownloadItem()
+        newItem.title = ringtone.title
+        newItem.localPath = relativePath
+        newItem.fileSize = ringtone.fileSize
+        newItem.duration = TimeInterval(ringtone.duration)
+        newItem.createdAt = Date()
+        newItem.mediaType = .audio
+        newItem.status = .completed
+        
+        try? realm.write {
+            realm.add(newItem)
+        }
+    }
 }
