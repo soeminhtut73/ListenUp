@@ -7,6 +7,7 @@
 
 import UIKit
 import AVFoundation
+import RealmSwift
 
 class RingtoneDetailViewController: UIViewController {
     
@@ -242,7 +243,7 @@ class RingtoneDetailViewController: UIViewController {
     
     @objc private func playTapped() {
 //        guard let url = URL(string: ringtone.fileUrl!) else { return }
-        guard let url = URL(string: "http://192.168.10.65:8000/storage/ringtones/1dee5636-7a81-4148-816b-655bf8199fa2.mp3") else { return }
+        guard let url = URL(string: "http://192.168.10.7:8000/storage/ringtones/1dee5636-7a81-4148-816b-655bf8199fa2.mp3") else { return }
         
         Task {
             try? await APIService.shared.trackPlay(ringtoneId: ringtone.id)
@@ -270,25 +271,36 @@ class RingtoneDetailViewController: UIViewController {
         
         Task {
             do {
-                // Track download
+                // Track download count increase
                 try await APIService.shared.trackDownload(ringtoneId: ringtone.id)
                 
                 // Download file
 //                guard let url = URL(string: ringtone.fileUrl!) else { return }
-                guard let url = URL(string: "http://192.168.10.65:8000/storage/ringtones/1dee5636-7a81-4148-816b-655bf8199fa2.mp3") else { return }
-                let (localURL, _) = try await URLSession.shared.download(from: url)
+                guard let url = URL(string: "http://192.168.10.7:8000/storage/ringtones/1dee5636-7a81-4148-816b-655bf8199fa2.mp3") else { return }
                 
-                // Save to Documents directory
-                let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                let destinationURL = documentsPath.appendingPathComponent(ringtone.fileName ?? "Unknown")
-                
-                // Remove existing file if any
-                try? FileManager.default.removeItem(at: destinationURL)
-                
-                // Move downloaded file
-                try FileManager.default.moveItem(at: localURL, to: destinationURL)
+                let finalURL = try await DownloadManager.shared.downloadToAudiosDir(from: url, suggestedFileName: ringtone.fileName)
+
+                let relativePath = "audios/" + finalURL.lastPathComponent
                 
                 await MainActor.run {
+                    do {
+                        let realm = try Realm()
+                        let newItem = DownloadItem()
+                        newItem.title = ringtone.title
+                        newItem.localPath = relativePath
+                        newItem.fileSize = ringtone.fileSize
+                        newItem.duration = TimeInterval(ringtone.duration)
+                        newItem.createdAt = Date()
+                        newItem.mediaType = .audio
+                        newItem.status = .completed
+                        
+                        try realm.write {
+                            realm.add(newItem)
+                        }
+                    } catch {
+                        print("Debug: cannot download ringtone to local storage : \(error)")
+                    }
+                    
                     downloadButton.setTitle("✅ Downloaded", for: .normal)
                     downloadButton.isEnabled = true
                     

@@ -16,9 +16,9 @@ struct Ringtone: Codable, Identifiable {
     let fileUrl: String?
     let fileName: String?
     let fileFormat: String?
-    let fileSize: Int?
+    let fileSize: Int64
     let fileSizeFormatted: String?
-    let duration: Int?
+    let duration: Int
     let durationFormatted: String?
     let thumbnailUrl: String?
     let downloadCount: Int

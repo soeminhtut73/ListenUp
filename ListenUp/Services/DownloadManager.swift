@@ -163,6 +163,30 @@ final class DownloadManager: NSObject, URLSessionDownloadDelegate {
         backgroundCompletionHandler = nil
     }
     
+    func downloadToAudiosDir(from remoteURL: URL, suggestedFileName: String?) async throws -> URL {
+        let (tempURL, response) = try await URLSession.shared.download(from: remoteURL)
+
+        let http = response as? HTTPURLResponse
+        let serverName = (response.suggestedFilename ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let candidate = serverName.isEmpty ? (suggestedFileName ?? remoteURL.lastPathComponent) : serverName
+        
+        let base = (candidate as NSString).deletingPathExtension.isEmpty
+        ? "audio" : (candidate as NSString).deletingPathExtension
+        let ext = (candidate as NSString).pathExtension.isEmpty
+        ? (remoteURL.pathExtension.isEmpty ? "mp3" : remoteURL.pathExtension)
+        : (candidate as NSString).pathExtension
+        
+        let dir = FileHelper.audiosDir()
+        let destURL = FileHelper.uniqueURL(in: dir, base: base, ext: ext)
+
+        try? FileManager.default.removeItem(at: destURL)
+        try FileManager.default.moveItem(at: tempURL, to: destURL)
+        
+        
+        
+        return destURL
+    }
+    
     //MARK: - Helper functions
     
 }

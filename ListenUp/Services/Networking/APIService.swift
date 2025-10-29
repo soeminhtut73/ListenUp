@@ -11,7 +11,7 @@ class APIService {
     static let shared = APIService()
     
 //    private let baseURL = "https://your-api.com/api/v1"
-    private let baseURL = "http://192.168.10.65:8000/api/v1"
+    private let baseURL = "http://192.168.10.7:8000/api/v1"
     
     // MARK: - Categories
     

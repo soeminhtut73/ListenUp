@@ -24,9 +24,9 @@ class MainTabBarController: UITabBarController {
     
     private func configureTabController() {
         
-        let browserController = configureNavigationController(tabImage: UIImage(systemName: "globe")!, rootViewController: BrowserController(), title: "Browser")
+//        let browserController = configureNavigationController(tabImage: UIImage(systemName: "globe")!, rootViewController: BrowserController(), title: "Browser")
         
-//        let browserController = configureNavigationController(tabImage: UIImage(systemName: "magnifyingglass")!, rootViewController: CategoriesViewController(), title: "Search")
+        let browserController = configureNavigationController(tabImage: UIImage(systemName: "magnifyingglass")!, rootViewController: CategoriesViewController(), title: "Search")
         
         let LibraryController = configureNavigationController(tabImage: UIImage(systemName: "music.note.house")!, rootViewController: AudioController(), title: "Tone")
         
