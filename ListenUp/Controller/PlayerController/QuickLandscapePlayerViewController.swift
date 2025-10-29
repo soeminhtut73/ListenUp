@@ -65,7 +65,7 @@ final class QuickLandscapePlayerViewController: UIViewController {
         skipFwd.setImage(UIImage(systemName: "goforward.15",  withConfiguration: iconCfg), for: .normal)
         [skipBack, skipFwd].forEach { btn in
             btn.tintColor = .white
-            btn.backgroundColor = UIColor.black.withAlphaComponent(0.35)
+//            btn.backgroundColor = UIColor.black.withAlphaComponent(0.35)
             btn.layer.cornerRadius = 24
             btn.translatesAutoresizingMaskIntoConstraints = false
         }
@@ -80,8 +80,7 @@ final class QuickLandscapePlayerViewController: UIViewController {
         
         NSLayoutConstraint.activate([
             controlsContainer.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            controlsContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            // Ensure the container gets a real height (was ambiguous → 0)
+            controlsContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
             controlsContainer.heightAnchor.constraint(greaterThanOrEqualToConstant: 64),
             
             // Left button
@@ -94,7 +93,7 @@ final class QuickLandscapePlayerViewController: UIViewController {
             slider.leadingAnchor.constraint(equalTo: skipBack.trailingAnchor, constant: 12),
             slider.topAnchor.constraint(equalTo: controlsContainer.topAnchor, constant: 12),
             slider.bottomAnchor.constraint(equalTo: controlsContainer.bottomAnchor, constant: -12),
-            slider.widthAnchor.constraint(greaterThanOrEqualToConstant: 280),
+            slider.widthAnchor.constraint(greaterThanOrEqualToConstant: 520),
             
             // Right button
             skipFwd.leadingAnchor.constraint(equalTo: slider.trailingAnchor, constant: 12),
