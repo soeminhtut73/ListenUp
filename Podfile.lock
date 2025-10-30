@@ -1389,21 +1389,15 @@ PODS:
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
   - PromisesObjC (2.4.0)
-  - PryntTrimmerView (4.0.2)
-  - Realm (20.0.3):
-    - Realm/Headers (= 20.0.3)
-  - Realm/Headers (20.0.3)
-  - RealmSwift (20.0.3):
-    - Realm (= 20.0.3)
+  - Realm (10.54.5):
+    - Realm/Headers (= 10.54.5)
+  - Realm/Headers (10.54.5)
+  - RealmSwift (10.54.5):
+    - Realm (= 10.54.5)
   - RecaptchaInterop (100.0.0)
   - SDWebImage (5.20.0):
     - SDWebImage/Core (= 5.20.0)
   - SDWebImage/Core (5.20.0)
-  - SteviaLayout (5.1.2)
-  - WebBrowser (0.1.5)
-  - YPImagePicker (5.2.2):
-    - PryntTrimmerView (= 4.0.2)
-    - SteviaLayout (= 5.1.2)
 
 DEPENDENCIES:
   - Firebase/Auth
@@ -1413,8 +1407,6 @@ DEPENDENCIES:
   - Firebase/Storage
   - RealmSwift
   - SDWebImage
-  - WebBrowser
-  - YPImagePicker
 
 SPEC REPOS:
   trunk:
@@ -1442,14 +1434,10 @@ SPEC REPOS:
     - leveldb-library
     - nanopb
     - PromisesObjC
-    - PryntTrimmerView
     - Realm
     - RealmSwift
     - RecaptchaInterop
     - SDWebImage
-    - SteviaLayout
-    - WebBrowser
-    - YPImagePicker
 
 SPEC CHECKSUMS:
   abseil: d121da9ef7e2ff4cab7666e76c5a3e0915ae08c3
@@ -1476,15 +1464,11 @@ SPEC CHECKSUMS:
   leveldb-library: cc8b8f8e013647a295ad3f8cd2ddf49a6f19be19
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  PryntTrimmerView: 6a43cc90df5d99addeabd33d4ba09b1365322130
-  Realm: 853e5089d6042dff807bda000277eadfe2da93d2
-  RealmSwift: f33c19577cefcbf681345d721fcbc7b42be4c949
+  Realm: ac6ab7d43b76db2bdb48bbd097019bb621d860b8
+  RealmSwift: 7c258367cc498594aa989b7d9620989a276ad7f4
   RecaptchaInterop: 7d1a4a01a6b2cb1610a47ef3f85f0c411434cb21
   SDWebImage: 73c6079366fea25fa4bb9640d5fb58f0893facd8
-  SteviaLayout: 05424e528d643657d39ce72c786e4adf13cfc5f2
-  WebBrowser: 0248873c77f54e2ac504ece7c2bc8eeb710b5a4f
-  YPImagePicker: afc81b3cffab05a6e7261c5daf80dc31b4e917b4
 
-PODFILE CHECKSUM: 2b07e8f88428e3b6bc75a9a5bda6e0c66c22201f
+PODFILE CHECKSUM: 2e7656fcf13e18acae25f9643b99dbf7239ae7f0
 
 COCOAPODS: 1.16.2

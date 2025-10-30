@@ -7,7 +7,7 @@
 
 import UIKit
 import Foundation
-import RealmSwift
+import Realm
 
 typealias Completion = (Result<URL, Error>) -> Void
 

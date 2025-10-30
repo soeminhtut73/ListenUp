@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import WebBrowser
+//import WebBrowser
 import WebKit
 
 struct WebViewScripts {
