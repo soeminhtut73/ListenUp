@@ -106,6 +106,7 @@ class DownloadTableViewCell: UITableViewCell {
 
     override func setEditing(_ editing: Bool, animated: Bool) {
         super.setEditing(editing, animated: animated)
+        optionButton.isHidden = editing
 
         if animated {
             UIView.animate(withDuration: 0.25) { self.layoutIfNeeded() }
@@ -253,26 +254,14 @@ class DownloadTableViewCell: UITableViewCell {
     
     // MARK: - Thumbnail Configuration
     private func configureThumbnail(for item: DownloadItem, mode: DownloadCellDisplayMode) {
-        switch mode {
-        case .video:
-            // Video: Show thumbnail from URL or generate from file
-            if let url = URL(string: item.thumbURL), !item.thumbURL.isEmpty {
-                albumImageView.sd_setImage(
-                    with: url,
-                    placeholderImage: UIImage(systemName: "play.rectangle.fill"),
-                    options: [.retryFailed, .continueInBackground]
-                )
-            } else {
-                // Generate thumbnail from local video file
-                albumImageView.image = UIImage(systemName: "questionmark.video")
-            }
-            
-        case .audio:
-            // Audio: Show music note icon or album art if available
-            let config = UIImage.SymbolConfiguration(pointSize: 24, weight: .medium)
-            albumImageView.image = UIImage(systemName: "music.note", withConfiguration: config)
-            albumImageView.backgroundColor = .clear
-            albumImageView.tintColor = .secondaryLabel
+        if let url = URL(string: item.thumbURL), !item.thumbURL.isEmpty {
+            albumImageView.sd_setImage(
+                with: url,
+                placeholderImage: UIImage(systemName: "play.rectangle.fill"),
+                options: [.retryFailed, .continueInBackground]
+            )
+        } else {
+            albumImageView.image = UIImage(systemName: "questionmark.video")
             albumImageView.contentMode = .center
         }
     }

@@ -19,6 +19,8 @@ final class MediaPlayerViewController: UIViewController {
     private let playerView = PlayerView()
     private var player = PlayerCenter.shared.player
     
+    private let artworkView = UIImageView()
+    
     private let controlsStack = UIStackView()
     private let timeRowStack = UIStackView()
     private let transportStack = UIStackView()
@@ -33,9 +35,21 @@ final class MediaPlayerViewController: UIViewController {
     // Inject your live Results before presenting
     var downloadsResults: Results<DownloadItem>!
     
-    func startAt(url: URL?) {
+    func startAt(url: URL?, mediaType: MediaType? = .video) {
         pendingStartURL = url
-        if let url, let idx = playlist.firstIndex(where: { $0.url == url }) {
+        
+        switch mediaType {
+        case .video:
+            artworkView.isHidden = true
+            videoView.isHidden = false
+        case.audio:
+            artworkView.isHidden = false
+            videoView.isHidden = true
+        case .none:
+            break
+        }
+        
+        if let url = url, let idx = playlist.firstIndex(where: { $0.url == url }) {
             currentIndex = idx
             startCurrent(replace: true)
             pendingStartURL = nil
@@ -134,7 +148,7 @@ final class MediaPlayerViewController: UIViewController {
     
     //MARK: - VideoFull Implementation
     @objc private func openLandscapeQuickControls() {
-        guard let window = view.window ?? UIApplication.shared.windows.first else {
+        guard let window = view.window ?? UIApplication.shared.firstActiveWindow else {
             // Fallback: present directly
             let vc = QuickLandscapePlayerViewController(player: PlayerCenter.shared.player) { [weak self] in
                 guard let self else { return }
@@ -218,6 +232,13 @@ final class MediaPlayerViewController: UIViewController {
         videoView.playerLayer.videoGravity = .resizeAspectFill
         videoView.isUserInteractionEnabled = true
         
+        artworkView.contentMode = .scaleAspectFit
+        artworkView.image = UIImage(systemName: "music.note.list")
+        artworkView.tintColor = .secondaryLabel
+        artworkView.layer.cornerRadius = 20
+        artworkView.backgroundColor = .systemGray5
+        artworkView.clipsToBounds = true
+        
         // Expand Button
         expandButton.setImage(UIImage(systemName: "arrow.down.left.and.arrow.up.right"), for: .normal)
         expandButton.tintColor = .white
@@ -284,7 +305,7 @@ final class MediaPlayerViewController: UIViewController {
         loopButton.contentHorizontalAlignment = .fill
         loopButton.contentVerticalAlignment = .fill
         
-        [videoView, expandButton, titleLabel, slider,
+        [videoView, artworkView, expandButton, titleLabel, slider,
          currentLabel, totalLabel, prevButton, playPauseButton,
          nextButton, shuffleButton, loopButton].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
@@ -377,6 +398,11 @@ final class MediaPlayerViewController: UIViewController {
             videoView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             videoView.heightAnchor.constraint(equalTo: videoView.widthAnchor, multiplier: 9.0/16.0),
             
+            artworkView.centerYAnchor.constraint(equalTo: videoView.centerYAnchor),
+            artworkView.centerXAnchor.constraint(equalTo: videoView.centerXAnchor),
+            artworkView.widthAnchor.constraint(equalToConstant: 240),
+            artworkView.heightAnchor.constraint(equalToConstant: 240),
+            
             controlsStack.topAnchor.constraint(equalTo: view.centerYAnchor, constant: 20),
             controlsStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             controlsStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
@@ -422,6 +448,12 @@ final class MediaPlayerViewController: UIViewController {
                                                selector: #selector(itemDidEnd(_:)),
                                                name: .AVPlayerItemDidPlayToEndTime,
                                                object: nil)
+    }
+    
+    private func isLikelyAudio(_ url: URL) -> Bool {
+        let ext = url.pathExtension.lowercased()
+        let audioExts = ["mp3", "m4a", "aac", "wav", "flac", "caf", "aiff", "alac"]
+        return audioExts.contains(ext)
     }
     
     private func wirePlayer() {

@@ -11,23 +11,38 @@ import RealmSwift
 import AVFoundation
 import AVKit
 
-class HistoryController: UIViewController {
+final class HistoryController: UIViewController {
     
-    //MARK: - Properties
+    // MARK: - Properties
     
+    // Data
     private var results: Results<DownloadItem>!
     private var searchResults: Results<DownloadItem>!
-    private let searchController = UISearchController(searchResultsController: nil)
-    
     private var token: NotificationToken?
     private var progressCache: [ObjectId: Float] = [:]
     
+    // Search
+    private let searchController = UISearchController(searchResultsController: nil)
+    
+    // Navigation Bar Items
     private var deleteButton: UIBarButtonItem!
     private var selectAllButton: UIBarButtonItem!
     private var cancelButton: UIBarButtonItem!
     private var sortButton: UIBarButtonItem!
     
+    // Player Observation
+    private var lastPlayingIndexPath: IndexPath?
+    private var playerRateKVO: NSKeyValueObservation?
+    private var playerItemKVO: NSKeyValueObservation?
+    private var notiTokens: [NSObjectProtocol] = []
+    
+    private var isSearching: Bool {
+        let raw = (searchController.searchBar.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return !raw.isEmpty
+    }
+    
     // MARK: - UI Components
+    
     private let tableView: UITableView = {
         let tv = UITableView()
         tv.separatorStyle = .singleLine
@@ -48,39 +63,24 @@ class HistoryController: UIViewController {
         return label
     }()
     
-    // MARK: - Properties
-    private var lastPlayingIndexPath: IndexPath?
-    private var playerRateKVO: NSKeyValueObservation?
-    private var playerItemKVO: NSKeyValueObservation?
-    private var notiTokens: [NSObjectProtocol] = []
-
-    //MARK: - LifeCycle
+    // MARK: - Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         setupUI()
-        fetchResult()
+        setupNavigationBar()
         setupSearch()
+        fetchResult()
         configureToken()
         startObservingPlayer()
-        setupNavigationBar()
-        
-        NotificationCenter.default.addObserver(
-            self, selector: #selector(appDidBecomeActive),
-            name: UIApplication.didBecomeActiveNotification, object: nil
-        )
+        setupNotifications()
     }
     
     deinit {
-        token?.invalidate()
-        playerRateKVO?.invalidate()
-        playerItemKVO?.invalidate()
-        notiTokens.forEach { NotificationCenter.default.removeObserver($0) }
-        NotificationCenter.default.removeObserver(self)
+        cleanupObservers()
     }
     
-    //MARK: - HelperFunctions
+    // MARK: - Setup
     
     private func setupUI() {
         title = "Library"
@@ -88,6 +88,7 @@ class HistoryController: UIViewController {
         
         view.addSubview(tableView)
         view.addSubview(emptyStateLabel)
+        
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -98,7 +99,6 @@ class HistoryController: UIViewController {
             emptyStateLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
         
-        
         tableView.dataSource = self
         tableView.delegate = self
         tableView.allowsMultipleSelectionDuringEditing = true
@@ -106,46 +106,6 @@ class HistoryController: UIViewController {
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
         tableView.refreshControl = refreshControl
-        
-    }
-    
-    private func configureAudioSession() {
-        let s = AVAudioSession.sharedInstance()
-        do {
-            try s.setCategory(.playback,
-                              mode: .moviePlayback,
-                              options: [
-                                .allowBluetoothA2DP,
-                                .allowBluetoothHFP,
-                                .allowAirPlay,
-                                .mixWithOthers
-                              ])
-        } catch {
-            print("Audio session error:", error)
-        }
-    }
-    
-    
-    func configureToken() {
-        token = results.observe { [weak self] changes in
-            guard let self = self else { return }
-            switch changes {
-            case .initial:
-                self.updateEmptyState()
-                self.tableView.reloadData()
-                
-            case .update(_, let deletions, let insertions, let modifications):
-                self.tableView.performBatchUpdates({
-                    self.tableView.deleteRows(at: deletions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
-                    self.tableView.insertRows(at: insertions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
-                    self.tableView.reloadRows(at: modifications.map { IndexPath(row: $0, section: 0) }, with: .none)
-                    self.updateEmptyState()
-                })
-                
-            case .error(let error):
-                print("Realm error:", error)
-            }
-        }
     }
     
     private func setupNavigationBar() {
@@ -161,75 +121,168 @@ class HistoryController: UIViewController {
             image: UIImage(systemName: "trash"),
             style: .done,
             target: self,
-            action: #selector(deleteButtonTapped))
+            action: #selector(deleteButtonTapped)
+        )
         navigationItem.rightBarButtonItem = deleteButton
         
         selectAllButton = UIBarButtonItem(
-            title: "Select All",
+            image: UIImage(systemName: "checkmark.circle"),
             style: .plain,
             target: self,
-            action: #selector(selectAllTapped))
+            action: #selector(selectAllTapped)
+        )
         
         cancelButton = UIBarButtonItem(
             image: UIImage(systemName: "xmark"),
             style: .done,
             target: self,
-            action: #selector(cancelTapped))
+            action: #selector(cancelTapped)
+        )
     }
     
-    private func sortAudioFiles(by keyPath: String, ascending: Bool) {
-        searchResults  = searchResults
-            .sorted(byKeyPath: keyPath, ascending: ascending)
+    private func setupSearch() {
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.hidesNavigationBarDuringPresentation = false
+        searchController.searchBar.placeholder = "Search..."
+        searchController.searchBar.delegate = self
         
-        tableView.reloadData()
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
+        definesPresentationContext = true
     }
-
+    
+    private func setupNotifications() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+    }
+    
+    private func cleanupObservers() {
+        token?.invalidate()
+        playerRateKVO?.invalidate()
+        playerItemKVO?.invalidate()
+        notiTokens.forEach { NotificationCenter.default.removeObserver($0) }
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    // MARK: - Data Management
     
     private func fetchResult() {
-        results = RealmService.shared.fetchVideoItems().sorted(byKeyPath: "createdAt", ascending: false)
+        results = RealmService.shared.fetchVideoItems()
+            .sorted(byKeyPath: "createdAt", ascending: false)
         print("Debug: download results : \(results[0])")
         searchResults = results
         tableView.reloadData()
+    }
+    
+    func configureToken() {
+        token = results.observe { [weak self] changes in
+            guard let self = self else { return }
+            switch changes {
+            case .initial:
+                self.updateEmptyState()
+                self.tableView.reloadData()
+                
+            case .update(_, let deletions, let insertions, let modifications):
+                if self.isSearching {
+                    // re-apply the filter so `searchResults` is updated
+                    self.applySearch(text: self.searchController.searchBar.text)
+                    self.updateEmptyState()
+                    self.tableView.reloadData()
+                } else {
+                    self.tableView.performBatchUpdates({
+                        self.tableView.deleteRows(
+                            at: deletions.map { IndexPath(row: $0, section: 0) },
+                            with: .automatic
+                        )
+                        self.tableView.insertRows(
+                            at: insertions.map { IndexPath(row: $0, section: 0) },
+                            with: .automatic
+                        )
+                        self.tableView.reloadRows(
+                            at: modifications.map { IndexPath(row: $0, section: 0) },
+                            with: .none
+                        )
+                        //                    self.updateEmptyState()
+                    })
+                }
+                
+            case .error(let error):
+                print("Realm error:", error)
+            }
+        }
     }
     
     private func updateEmptyState() {
         emptyStateLabel.isHidden = !results.isEmpty
     }
     
-    private func deleteAll() {
-        RealmService.shared.deleteAll()
+    // MARK: - Audio Session
+    
+    private func configureAudioSession() {
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(
+                .playback,
+                mode: .moviePlayback,
+                options: [
+                    .allowBluetoothA2DP,
+                    .allowBluetoothHFP,
+                    .allowAirPlay,
+                    .mixWithOthers
+                ]
+            )
+        } catch {
+            print("Audio session error:", error)
+        }
     }
     
-    private func showActionSheet(for item: DownloadItem) {
-        let actionSheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        /// convert action
-        let convertAction = UIAlertAction(title: "Convert", style: .default) { _ in
-            guard let localPath = item.localPath as String? else { return }
-            
-            guard let fileURL = FileHelper.fileURL(for: localPath) else { return }
-            
-            let vc = RingtoneTrimWithStripViewController(videoURL: fileURL, item: item)
-            let nav = UINavigationController(rootViewController: vc)
-            self.present(nav, animated: true)
-        }
-        
-        /// Delete Action
-        let deleteAction = UIAlertAction(title: "Delete", style: .destructive) {  _ in
-            self.showDeleteAlert {
-                RealmService.shared.delete(item)
-            }
-        }
-        
-        /// Cancel Action
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
-        actionSheet.addAction(convertAction)
-        actionSheet.addAction(deleteAction)
-        actionSheet.addAction(cancelAction)
-        
-        present(actionSheet, animated: true)
+    // MARK: - Sorting
+    
+    private func sortAudioFiles(by keyPath: String, ascending: Bool) {
+        searchResults = searchResults.sorted(byKeyPath: keyPath, ascending: ascending)
+        tableView.reloadData()
     }
     
-    //MARK: - Playing indicator setup
+    // MARK: - Search
+    
+    private func applySearch(text: String?) {
+        let raw = (text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else {
+            searchResults = results
+            tableView.reloadData()
+            return
+        }
+        
+        // Split into tokens by spaces; ignore empties
+        let tokens = raw
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+        
+        // Build (AND over tokens) of (OR over fields) predicates
+        var andSubpredicates: [NSPredicate] = []
+        for tok in tokens {
+            // search across title and localPath
+            let orForToken = NSCompoundPredicate(orPredicateWithSubpredicates: [
+                NSPredicate(format: "title CONTAINS[c] %@", tok)
+            ])
+            andSubpredicates.append(orForToken)
+        }
+        
+        let compound = NSCompoundPredicate(andPredicateWithSubpredicates: andSubpredicates)
+        
+        // Filter from the full, already-sorted Results
+        searchResults = results.filter(compound)
+        
+        tableView.reloadData()
+    }
+    
+    // MARK: - Playing Indicator
+    
     private func isRowCurrentItem(_ item: DownloadItem) -> Bool {
         guard let playing = PlayerCenter.shared.currentURL?.standardizedFileURL,
               let url = FileHelper.fileURL(for: item.localPath)
@@ -239,7 +292,7 @@ class HistoryController: UIViewController {
     
     private func currentItemIndexPath() -> IndexPath? {
         guard let playing = PlayerCenter.shared.currentURL?.standardizedFileURL else { return nil }
-        for (row, item) in results.enumerated() {                // results: Results<DownloadItem>
+        for (row, item) in results.enumerated() {
             if let url = FileHelper.fileURL(for: item.localPath), url == playing {
                 return IndexPath(row: row, section: 0)
             }
@@ -258,41 +311,131 @@ class HistoryController: UIViewController {
         guard !toReload.isEmpty else { return }
         tableView.reloadRows(at: toReload, with: .none)
     }
-
-    // MARK: - Observe player state
-
+    
+    // MARK: - Player Observation
+    
     private func startObservingPlayer() {
         // KVO for play/pause
         playerRateKVO = PlayerCenter.shared.player.observe(\.rate, options: [.new]) { [weak self] _, _ in
             DispatchQueue.main.async { self?.reloadPlayingRows() }
         }
-
+        
         // KVO for item changes (next/prev/restart/expand)
         playerItemKVO = PlayerCenter.shared.player.observe(\.currentItem, options: [.new]) { [weak self] _, _ in
             DispatchQueue.main.async { self?.reloadPlayingRows() }
         }
-
-        // End-of-item → will switch current item (your code may auto-advance)
-        let endTok = NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: nil, queue: .main) { [weak self] _ in
+        
+        // End-of-item → will switch current item
+        let endTok = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
             self?.reloadPlayingRows()
         }
         notiTokens.append(endTok)
     }
-
     
-    //MARK: - Selector
+    // MARK: - Action Sheet
     
-    @objc func refreshData() {
+    private func showActionSheet(for item: DownloadItem) {
+        print("Debug: selected item : \(item.title)")
+        let actionSheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        
+        // Convert action
+        let convertAction = UIAlertAction(title: "Convert", style: .default) { _ in
+            guard let localPath = item.localPath as String?,
+                  let fileURL = FileHelper.fileURL(for: localPath) else { return }
+            
+            let vc = RingtoneTrimWithStripViewController(videoURL: fileURL, item: item)
+            let nav = UINavigationController(rootViewController: vc)
+            self.present(nav, animated: true)
+        }
+        
+        // Delete Action
+        let deleteAction = UIAlertAction(title: "Delete", style: .destructive) { _ in
+            self.showDeleteAlert {
+                RealmService.shared.delete(item)
+            }
+        }
+        
+        // Cancel Action
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        
+        actionSheet.addAction(convertAction)
+        actionSheet.addAction(deleteAction)
+        actionSheet.addAction(cancelAction)
+        
+        present(actionSheet, animated: true)
+    }
+    
+    // MARK: - Selection Mode
+    
+    private var selectionCount: Int {
+        tableView.indexPathsForSelectedRows?.count ?? 0
+    }
+    
+    private func enterSelectionMode() {
+        tableView.setEditing(true, animated: true)
+        navigationItem.leftBarButtonItems = [cancelButton, selectAllButton]
+        updateDeleteButtonTitle()
+        updateSelectAllButtonTitle()
+    }
+    
+    private func exitSelectionMode() {
+        // Clear visual selections
+        if let selected = tableView.indexPathsForSelectedRows {
+            for ip in selected {
+                tableView.deselectRow(at: ip, animated: false)
+            }
+        }
+        tableView.setEditing(false, animated: true)
+        navigationItem.leftBarButtonItem = nil
+        navigationItem.leftBarButtonItem = sortButton
+    }
+    
+    private func updateDeleteButtonTitle() {
+        guard tableView.isEditing else {
+            deleteButton.title = "Select"
+            return
+        }
+        deleteButton.title = "Delete (\(selectionCount))"
+    }
+    
+    private func updateSelectAllButtonTitle() {
+        guard tableView.isEditing else { return }
+        let total = searchResults?.count ?? 0
+        let allSelected = selectionCount == total && total > 0
+        let imageTitle = allSelected ? "checkmark.circle.fill" : "checkmark.circle"
+        selectAllButton.isEnabled = results.count > 0
+    }
+    
+    private func performDeleteSelected() {
+        guard let selected = tableView.indexPathsForSelectedRows else { return }
+        
+        // Snapshot the objects to delete (Realm Results are live)
+        let items: [DownloadItem] = selected.map { searchResults[$0.row] }
+        
+        RealmService.shared.deleteItems(with: items) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success:
+                self.exitSelectionMode()
+            case .failure:
+                self.showMessage(withTitle: "Oops!", message: "Failed to delete!")
+                self.exitSelectionMode()
+            }
+        }
+    }
+    
+    // MARK: - Actions
+    
+    @objc private func refreshData() {
         tableView.refreshControl?.endRefreshing()
     }
     
-    @objc private func onFinished(_ note: Notification) {
-        guard let id = note.userInfo?["id"] as? ObjectId else { return }
-        progressCache[id] = 1.0
-    }
-    
     @objc private func appDidBecomeActive() {
-        reloadPlayingRows()   // your existing method that reloads old/new playing index paths
+        reloadPlayingRows()
     }
     
     @objc private func sortButtonTapped() {
@@ -318,9 +461,59 @@ class HistoryController: UIViewController {
         
         present(alert, animated: true)
     }
+    
+    @objc private func deleteButtonTapped() {
+        if !tableView.isEditing {
+            // First press → enter selection mode
+            enterSelectionMode()
+            return
+        }
+        
+        // Second press → confirm & delete selected rows
+        let count = selectionCount
+        guard count > 0 else { return }
+        
+        let title = count == 1 ? "Delete 1 item?" : "Delete \(count) items?"
+        let alert = UIAlertController(
+            title: title,
+            message: "This will remove them from history.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+            self?.performDeleteSelected()
+        })
+        present(alert, animated: true)
+    }
+    
+    @objc private func selectAllTapped() {
+        guard tableView.isEditing else { return }
+        let total = searchResults?.count ?? 0
+        let allSelected = selectionCount == total && total > 0
+        
+        if allSelected {
+            if let selected = tableView.indexPathsForSelectedRows {
+                for ip in selected {
+                    tableView.deselectRow(at: ip, animated: false)
+                }
+            }
+        } else {
+            for row in 0..<total {
+                let ip = IndexPath(row: row, section: 0)
+                tableView.selectRow(at: ip, animated: false, scrollPosition: .none)
+            }
+        }
+        updateDeleteButtonTitle()
+        updateSelectAllButtonTitle()
+    }
+    
+    @objc private func cancelTapped() {
+        exitSelectionMode()
+    }
 }
 
-//MARK: - UITableViewDataSource
+// MARK: - UITableViewDataSource
+
 extension HistoryController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return searchResults?.count ?? 0
@@ -328,26 +521,29 @@ extension HistoryController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let item = searchResults[indexPath.row]
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: DownloadTableViewCell.identifier, for: indexPath) as? DownloadTableViewCell else {
+        guard let cell = tableView.dequeueReusableCell(
+            withIdentifier: DownloadTableViewCell.identifier,
+            for: indexPath
+        ) as? DownloadTableViewCell else {
             return UITableViewCell()
         }
         
         cell.delegate = self
         cell.configure(with: item, mode: .video)
+        
         let isCurrent = isRowCurrentItem(item)
-        cell.setPlaying(isCurrent && PlayerCenter.shared.isActuallyPlaying)   // <- no KVC
+        cell.setPlaying(isCurrent && PlayerCenter.shared.isActuallyPlaying)
         if isCurrent { lastPlayingIndexPath = indexPath }
-
         
         return cell
     }
 }
 
-//MARK: - UITableViewDelegate
+// MARK: - UITableViewDelegate
+
 extension HistoryController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
         if tableView.isEditing {
             updateDeleteButtonTitle()
             updateSelectAllButtonTitle()
@@ -355,6 +551,9 @@ extension HistoryController: UITableViewDelegate {
         }
         
         tableView.deselectRow(at: indexPath, animated: true)
+        
+        let item = searchResults[indexPath.row]
+        guard item.status == .completed else { return }
         
         let tapped = searchResults[indexPath.row]
         guard let rel = tapped.localPath else { return }
@@ -365,7 +564,7 @@ extension HistoryController: UITableViewDelegate {
         
         let vc = MediaPlayerViewController()
         vc.downloadsResults = searchResults
-        vc.startAt(url: url)
+        vc.startAt(url: url, mediaType: item.mediaType)
         vc.modalPresentationStyle = .overFullScreen
         present(vc, animated: true)
     }
@@ -378,171 +577,24 @@ extension HistoryController: UITableViewDelegate {
     }
 }
 
-//MARK: - Setup SearchBar
-extension HistoryController: UISearchResultsUpdating, UISearchBarDelegate {
-    private func setupSearch() {
-        searchController.searchResultsUpdater = self
-        searchController.obscuresBackgroundDuringPresentation = false
-        searchController.hidesNavigationBarDuringPresentation = false
-        searchController.searchBar.placeholder = "Search..."
-        searchController.searchBar.delegate = self
-        
-        navigationItem.searchController = searchController
-        navigationItem.hidesSearchBarWhenScrolling = false
-        definesPresentationContext = true
-    }
-    
+// MARK: - UISearchResultsUpdating
+
+extension HistoryController: UISearchResultsUpdating {
     func updateSearchResults(for searchController: UISearchController) {
         applySearch(text: searchController.searchBar.text)
     }
-    
+}
+
+// MARK: - UISearchBarDelegate
+
+extension HistoryController: UISearchBarDelegate {
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         applySearch(text: nil)
     }
-    
-    private func applySearch(text: String?) {
-        let raw = (text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !raw.isEmpty else {
-            searchResults = results
-            tableView.reloadData()
-            return
-        }
-        
-        // Split into tokens by spaces; ignore empties
-        let tokens = raw
-            .components(separatedBy: .whitespacesAndNewlines)
-            .filter { !$0.isEmpty }
-        
-        // Build (AND over tokens) of (OR over fields) predicates
-        var andSubpredicates: [NSPredicate] = []
-        for tok in tokens {
-            // search across title and localPath (add more fields if you have them)
-            let orForToken = NSCompoundPredicate(orPredicateWithSubpredicates: [
-                NSPredicate(format: "title CONTAINS[c] %@", tok)
-            ])
-            andSubpredicates.append(orForToken)
-        }
-        
-        let compound = NSCompoundPredicate(andPredicateWithSubpredicates: andSubpredicates)
-        
-        // Filter from the full, already-sorted Results
-        searchResults = results.filter(compound)
-        
-        tableView.reloadData()
-    }
 }
 
-//MARK: - Delete Action
-extension HistoryController {
-    private var selectionCount: Int {
-        tableView.indexPathsForSelectedRows?.count ?? 0
-    }
-    
-    private func enterSelectionMode() {
-        tableView.setEditing(true, animated: true)
-        navigationItem.leftBarButtonItems = [cancelButton, selectAllButton]
-        updateDeleteButtonTitle()
-        updateSelectAllButtonTitle()
-    }
-    
-    private func exitSelectionMode() {
-        // Clear visual selections
-        if let selected = tableView.indexPathsForSelectedRows {
-            for ip in selected {
-                tableView.deselectRow(at: ip, animated: false)
-            }
-        }
-        tableView.setEditing(false, animated: true)
-        navigationItem.leftBarButtonItem = nil
-        navigationItem.leftBarButtonItem = sortButton
-//        deleteButton.title = "Select"
-    }
-    
-    private func updateDeleteButtonTitle() {
-        guard tableView.isEditing else { deleteButton.title = "Select"; return }
-        deleteButton.title = "Delete (\(selectionCount))"
-    }
-    
-    private func updateSelectAllButtonTitle() {
-        guard tableView.isEditing else { return }
-        let allSelected = selectionCount == results.count && results.count > 0
-        selectAllButton.title = allSelected ? "Deselect All" : "Select All"
-        selectAllButton.isEnabled = results.count > 0
-    }
-    
-    @objc private func deleteButtonTapped() {
-        if !tableView.isEditing {
-            // First press → enter selection mode
-            enterSelectionMode()
-            return
-        }
-        
-        // Second press → confirm & delete selected rows
-        let count = selectionCount
-        guard count > 0 else {
-            // nothing selected; you can vibrate or simply ignore
-            return
-        }
-        
-        let title = count == 1 ? "Delete 1 item?" : "Delete \(count) items?"
-        let alert = UIAlertController(title: title,
-                                      message: "This will remove them from history.",
-                                      preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { [weak self] _ in
-            // FIXME: - handle to delete
-            self?.performDeleteSelected()
-        }))
-        present(alert, animated: true)
-    }
-    
-    @objc private func selectAllTapped() {
-        guard tableView.isEditing else { return }
-        let allSelected = selectionCount == results.count && results.count > 0
-        
-        if allSelected {
-            // Deselect all
-            if let selected = tableView.indexPathsForSelectedRows {
-                for ip in selected {
-                    tableView.deselectRow(at: ip, animated: false)
-                }
-            }
-        } else {
-            // Select all visible in current filter
-            for row in 0..<results.count {
-                let ip = IndexPath(row: row, section: 0)
-                tableView.selectRow(at: ip, animated: false, scrollPosition: .none)
-            }
-        }
-        updateDeleteButtonTitle()
-        updateSelectAllButtonTitle()
-    }
-    
-    private func performDeleteSelected() {
-        guard let selected = tableView.indexPathsForSelectedRows else { return }
-        
-        // Snapshot the objects to delete (Realm Results are live)
-        let items: [DownloadItem] = selected
-            .map { searchResults[$0.row] }
-        
-        RealmService.shared.deleteItems(with: items) { [weak self] result in
-            guard let self = self else { return }
-            switch result {
-            case .success:
-                self.exitSelectionMode()
-            case .failure:
-                self.showMessage(withTitle: "Oop!", message: "Faield to delete!")
-                self.exitSelectionMode()
-            }
-        }
-    }
-    
-    @objc private func cancelTapped() {
-        exitSelectionMode()
-    }
-}
+// MARK: - DownloadTableViewCellDelegate
 
-//MARK: - DownloadTableViewCellDelegate
 extension HistoryController: DownloadTableViewCellDelegate {
     func cell(_ cell: DownloadTableViewCell, didTapOptionFor item: DownloadItem) {
         showActionSheet(for: item)

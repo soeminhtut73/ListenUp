@@ -237,7 +237,7 @@ extension AudioController: UITableViewDelegate {
         
         let vc = MediaPlayerViewController()
         vc.downloadsResults = searchResults
-        vc.startAt(url: url)
+        vc.startAt(url: url, mediaType: item.mediaType)
         vc.modalPresentationStyle = .overFullScreen
         present(vc, animated: true)
     }
