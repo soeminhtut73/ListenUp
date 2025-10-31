@@ -30,16 +30,13 @@ enum DownloadGuard {
         // Check 3: Cellular - check settings
         if networkType == .wifi {
             if manager.isCellularDataEnabled {
-                // Cellular enabled - proceed
                 proceed(.proceed)
             } else {
-                // Cellular NOT enabled - ask user
                 showCellularConfirmationAlert(from: presenter, proceed: proceed)
             }
             return
         }
         
-        // Fallback for unknown connection types
         proceed(.proceed)
     }
     

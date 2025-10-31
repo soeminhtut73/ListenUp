@@ -180,6 +180,7 @@ class HistoryController: UIViewController {
     
     private func fetchResult() {
         results = RealmService.shared.fetchVideoItems().sorted(byKeyPath: "createdAt", ascending: false)
+        print("Debug: download results : \(results)")
         searchResults = results
         tableView.reloadData()
     }

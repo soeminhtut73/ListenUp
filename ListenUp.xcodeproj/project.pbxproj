@@ -16,7 +16,6 @@
 		041469782DF009B0009D6EF9 /* MainTabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041469772DF009B0009D6EF9 /* MainTabBarController.swift */; };
 		0414697C2DF009E4009D6EF9 /* BrowserController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0414697B2DF009E4009D6EF9 /* BrowserController.swift */; };
 		041469802DF009F9009D6EF9 /* HistoryController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0414697F2DF009F9009D6EF9 /* HistoryController.swift */; };
-		041469822DF00A01009D6EF9 /* ProfileController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041469812DF00A01009D6EF9 /* ProfileController.swift */; };
 		0414698C2DF41537009D6EF9 /* Style.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0414698B2DF41531009D6EF9 /* Style.swift */; };
 		0414698E2DF41577009D6EF9 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0414698D2DF41577009D6EF9 /* Constants.swift */; };
 		041469902DF415A3009D6EF9 /* Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0414698F2DF415A3009D6EF9 /* Extension.swift */; };
@@ -29,7 +28,6 @@
 		041BB0C82EAE120A004BC0D8 /* ActionSheetConfigurable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BB0C72EAE120A004BC0D8 /* ActionSheetConfigurable.swift */; };
 		041BB0EC2EB0C202004BC0D8 /* QuickLandscapePlayerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BB0EB2EB0C202004BC0D8 /* QuickLandscapePlayerViewController.swift */; };
 		041C4AC42E655C22005B7DEC /* ExtractAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041C4AC32E655C22005B7DEC /* ExtractAPI.swift */; };
-		041C4AC62E658442005B7DEC /* PlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041C4AC52E658442005B7DEC /* PlayerController.swift */; };
 		041C4AF52E693E91005B7DEC /* RealmService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041C4AF42E693E90005B7DEC /* RealmService.swift */; };
 		041C4AF72E693EDC005B7DEC /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041C4AF62E693EDC005B7DEC /* DownloadManager.swift */; };
 		041C4AFF2E696B0B005B7DEC /* DownloadItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041C4AFE2E696B0B005B7DEC /* DownloadItem.swift */; };
@@ -55,6 +53,7 @@
 		04C00F502E77B30400104CD9 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C00F4F2E77B30400104CD9 /* PlayerView.swift */; };
 		04C00F522E77B34F00104CD9 /* MediaPlayerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C00F512E77B34F00104CD9 /* MediaPlayerViewController.swift */; };
 		04C00F542E77FD5300104CD9 /* PlayerCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C00F532E77FD5300104CD9 /* PlayerCenter.swift */; };
+		04D81B642EB39ADA003F9392 /* MediaItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04D81B632EB39ADA003F9392 /* MediaItem.swift */; };
 		490DF94C2B40AA0E2D8FBA51 /* Pods_ListenUpTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6A1B391BE616A1989A549AB /* Pods_ListenUpTests.framework */; };
 		50241556AAD13BBBBFC4A104 /* Pods_ListenUp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B72DDFEC1DAD08A7D4DC97D1 /* Pods_ListenUp.framework */; };
 		D03EE9922D419A2E6094BC5B /* Pods_ListenUp_ListenUpUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E836D5D13BB0499862FD3E59 /* Pods_ListenUp_ListenUpUITests.framework */; };
@@ -88,7 +87,6 @@
 		041469772DF009B0009D6EF9 /* MainTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabBarController.swift; sourceTree = "<group>"; };
 		0414697B2DF009E4009D6EF9 /* BrowserController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserController.swift; sourceTree = "<group>"; };
 		0414697F2DF009F9009D6EF9 /* HistoryController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryController.swift; sourceTree = "<group>"; };
-		041469812DF00A01009D6EF9 /* ProfileController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileController.swift; sourceTree = "<group>"; };
 		0414698B2DF41531009D6EF9 /* Style.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Style.swift; sourceTree = "<group>"; };
 		0414698D2DF41577009D6EF9 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		0414698F2DF415A3009D6EF9 /* Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extension.swift; sourceTree = "<group>"; };
@@ -101,7 +99,6 @@
 		041BB0C72EAE120A004BC0D8 /* ActionSheetConfigurable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionSheetConfigurable.swift; sourceTree = "<group>"; };
 		041BB0EB2EB0C202004BC0D8 /* QuickLandscapePlayerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLandscapePlayerViewController.swift; sourceTree = "<group>"; };
 		041C4AC32E655C22005B7DEC /* ExtractAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtractAPI.swift; sourceTree = "<group>"; };
-		041C4AC52E658442005B7DEC /* PlayerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerController.swift; sourceTree = "<group>"; };
 		041C4AF42E693E90005B7DEC /* RealmService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealmService.swift; sourceTree = "<group>"; };
 		041C4AF62E693EDC005B7DEC /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
 		041C4AFE2E696B0B005B7DEC /* DownloadItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadItem.swift; sourceTree = "<group>"; };
@@ -130,6 +127,7 @@
 		04C00F4F2E77B30400104CD9 /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
 		04C00F512E77B34F00104CD9 /* MediaPlayerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaPlayerViewController.swift; sourceTree = "<group>"; };
 		04C00F532E77FD5300104CD9 /* PlayerCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCenter.swift; sourceTree = "<group>"; };
+		04D81B632EB39ADA003F9392 /* MediaItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaItem.swift; sourceTree = "<group>"; };
 		0F3EF8745F5BB7CD67BB0237 /* Pods-ListenUp-ListenUpUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ListenUp-ListenUpUITests.debug.xcconfig"; path = "Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests.debug.xcconfig"; sourceTree = "<group>"; };
 		1712B13EF12EBF608FF1C2F2 /* Pods-ListenUpTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ListenUpTests.debug.xcconfig"; path = "Target Support Files/Pods-ListenUpTests/Pods-ListenUpTests.debug.xcconfig"; sourceTree = "<group>"; };
 		28DB171FD6D9A2BE6A80BEF8 /* Pods-ListenUp-ListenUpUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ListenUp-ListenUpUITests.release.xcconfig"; path = "Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests.release.xcconfig"; sourceTree = "<group>"; };
@@ -144,15 +142,11 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		0440B2822DF003DE00184BE2 /* ListenUpTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = ListenUpTests;
 			sourceTree = "<group>";
 		};
 		0440B28C2DF003DE00184BE2 /* ListenUpUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = ListenUpUITests;
 			sourceTree = "<group>";
 		};
@@ -189,13 +183,9 @@
 		041469622DF00978009D6EF9 /* Controller */ = {
 			isa = PBXGroup;
 			children = (
-				04396C6A2E824F55002B907A /* PlayerController */,
-				041469772DF009B0009D6EF9 /* MainTabBarController.swift */,
-				041469892DF3E7A0009D6EF9 /* CoreController */,
-				04B16AC32EA0F43800332961 /* CategoriesViewController.swift */,
-				04B16AC52EA0FAA200332961 /* RingtonesViewController.swift */,
-				04B16ACA2EA125B300332961 /* RingtoneDetailViewController.swift */,
-				041BB0B32EAB6180004BC0D8 /* RingtoneTrimWithStripViewController.swift */,
+				04D81B6C2EB3A717003F9392 /* Ringtone */,
+				04D81B6B2EB3A70F003F9392 /* Player */,
+				04D81B6A2EB3A32B003F9392 /* Main */,
 			);
 			path = Controller;
 			sourceTree = "<group>";
@@ -206,6 +196,7 @@
 				041C4AFE2E696B0B005B7DEC /* DownloadItem.swift */,
 				04B16ABD2EA0E7F500332961 /* MusicCategory.swift */,
 				04B16ABF2EA0E90300332961 /* Ringtone.swift */,
+				04D81B632EB39ADA003F9392 /* MediaItem.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -213,11 +204,9 @@
 		041469642DF00978009D6EF9 /* View */ = {
 			isa = PBXGroup;
 			children = (
-				04B16AC72EA1191500332961 /* RingtoneCell */,
-				04396C672E824EB9002B907A /* PlayerView */,
-				0461FEEB2E2E75580052F966 /* HistoryCell */,
-				046C47ED2DF4779800986913 /* LibraryCell */,
-				041BB0B52EAB6413004BC0D8 /* ThumbnailStripView.swift */,
+				04D81B692EB39B86003F9392 /* Components */,
+				04D81B682EB39B81003F9392 /* Custom */,
+				04D81B672EB39B7B003F9392 /* Cell */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -225,33 +214,19 @@
 		0414696F2DF00978009D6EF9 /* ListenUp */ = {
 			isa = PBXGroup;
 			children = (
+				04D81B622EB387BA003F9392 /* App */,
 				041469632DF00978009D6EF9 /* Model */,
 				041469642DF00978009D6EF9 /* View */,
 				041469622DF00978009D6EF9 /* Controller */,
 				0414698A2DF414FA009D6EF9 /* Utilities */,
 				0461FECF2E2A9D340052F966 /* Services */,
 				041469672DF00978009D6EF9 /* Assets.xcassets */,
-				041469662DF00978009D6EF9 /* AppDelegate.swift */,
 				041469682DF00978009D6EF9 /* Info.plist */,
 				0414696A2DF00978009D6EF9 /* LaunchScreen.storyboard */,
 				0414696C2DF00978009D6EF9 /* Main.storyboard */,
-				0414696D2DF00978009D6EF9 /* SceneDelegate.swift */,
 				0414696E2DF00978009D6EF9 /* ViewController.swift */,
 			);
 			path = ListenUp;
-			sourceTree = "<group>";
-		};
-		041469892DF3E7A0009D6EF9 /* CoreController */ = {
-			isa = PBXGroup;
-			children = (
-				0414697B2DF009E4009D6EF9 /* BrowserController.swift */,
-				0414697F2DF009F9009D6EF9 /* HistoryController.swift */,
-				041469812DF00A01009D6EF9 /* ProfileController.swift */,
-				041C4AC52E658442005B7DEC /* PlayerController.swift */,
-				04396CC92E961CAA002B907A /* SettingsController.swift */,
-				041BB0BD2EACD60A004BC0D8 /* AudioController.swift */,
-			);
-			path = CoreController;
 			sourceTree = "<group>";
 		};
 		0414698A2DF414FA009D6EF9 /* Utilities */ = {
@@ -273,33 +248,13 @@
 			path = Utilities;
 			sourceTree = "<group>";
 		};
-		041C4AC22E655BAE005B7DEC /* Networking */ = {
+		041C4AC22E655BAE005B7DEC /* Network */ = {
 			isa = PBXGroup;
 			children = (
 				041C4AC32E655C22005B7DEC /* ExtractAPI.swift */,
 				04B16AC12EA0F21F00332961 /* APIService.swift */,
 			);
-			path = Networking;
-			sourceTree = "<group>";
-		};
-		04396C672E824EB9002B907A /* PlayerView */ = {
-			isa = PBXGroup;
-			children = (
-				04C00F4F2E77B30400104CD9 /* PlayerView.swift */,
-				04396C682E824EC4002B907A /* MiniPlayerView.swift */,
-				04396C902E893B69002B907A /* PlayingIndicatorView.swift */,
-			);
-			path = PlayerView;
-			sourceTree = "<group>";
-		};
-		04396C6A2E824F55002B907A /* PlayerController */ = {
-			isa = PBXGroup;
-			children = (
-				04C00F512E77B34F00104CD9 /* MediaPlayerViewController.swift */,
-				04396C6B2E824FA1002B907A /* MiniPlayerContainerViewController.swift */,
-				041BB0EB2EB0C202004BC0D8 /* QuickLandscapePlayerViewController.swift */,
-			);
-			path = PlayerController;
+			path = Network;
 			sourceTree = "<group>";
 		};
 		0440B2602DF003DD00184BE2 = {
@@ -327,37 +282,107 @@
 		0461FECF2E2A9D340052F966 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				041C4AC22E655BAE005B7DEC /* Networking */,
-				041C4AF42E693E90005B7DEC /* RealmService.swift */,
-				041C4AF62E693EDC005B7DEC /* DownloadManager.swift */,
-				04396CCB2E98EE04002B907A /* AppSettingsManager.swift */,
-				04396CD12E9A129D002B907A /* DownloadNotificationManager.swift */,
+				04D81B6F2EB4659D003F9392 /* Manager */,
+				04D81B6E2EB46593003F9392 /* Player */,
+				04D81B6D2EB4658E003F9392 /* Storage */,
+				041C4AC22E655BAE005B7DEC /* Network */,
 			);
 			path = Services;
 			sourceTree = "<group>";
 		};
-		0461FEEB2E2E75580052F966 /* HistoryCell */ = {
+		04D81B622EB387BA003F9392 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				041469662DF00978009D6EF9 /* AppDelegate.swift */,
+				0414696D2DF00978009D6EF9 /* SceneDelegate.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		04D81B672EB39B7B003F9392 /* Cell */ = {
 			isa = PBXGroup;
 			children = (
 				0461FEEC2E2E756A0052F966 /* HistoryTableViewCell.swift */,
-			);
-			path = HistoryCell;
-			sourceTree = "<group>";
-		};
-		046C47ED2DF4779800986913 /* LibraryCell */ = {
-			isa = PBXGroup;
-			children = (
 				041BB0BB2EABC7B7004BC0D8 /* DownloadTableViewCell.swift */,
-			);
-			path = LibraryCell;
-			sourceTree = "<group>";
-		};
-		04B16AC72EA1191500332961 /* RingtoneCell */ = {
-			isa = PBXGroup;
-			children = (
 				04B16AC82EA1196D00332961 /* RingtoneCell.swift */,
 			);
-			path = RingtoneCell;
+			path = Cell;
+			sourceTree = "<group>";
+		};
+		04D81B682EB39B81003F9392 /* Custom */ = {
+			isa = PBXGroup;
+			children = (
+				04396C682E824EC4002B907A /* MiniPlayerView.swift */,
+				04396C902E893B69002B907A /* PlayingIndicatorView.swift */,
+				04C00F4F2E77B30400104CD9 /* PlayerView.swift */,
+				041BB0B52EAB6413004BC0D8 /* ThumbnailStripView.swift */,
+			);
+			path = Custom;
+			sourceTree = "<group>";
+		};
+		04D81B692EB39B86003F9392 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		04D81B6A2EB3A32B003F9392 /* Main */ = {
+			isa = PBXGroup;
+			children = (
+				041469772DF009B0009D6EF9 /* MainTabBarController.swift */,
+				0414697F2DF009F9009D6EF9 /* HistoryController.swift */,
+				0414697B2DF009E4009D6EF9 /* BrowserController.swift */,
+				04396CC92E961CAA002B907A /* SettingsController.swift */,
+				041BB0BD2EACD60A004BC0D8 /* AudioController.swift */,
+			);
+			path = Main;
+			sourceTree = "<group>";
+		};
+		04D81B6B2EB3A70F003F9392 /* Player */ = {
+			isa = PBXGroup;
+			children = (
+				04396C6B2E824FA1002B907A /* MiniPlayerContainerViewController.swift */,
+				041BB0EB2EB0C202004BC0D8 /* QuickLandscapePlayerViewController.swift */,
+				04C00F512E77B34F00104CD9 /* MediaPlayerViewController.swift */,
+			);
+			path = Player;
+			sourceTree = "<group>";
+		};
+		04D81B6C2EB3A717003F9392 /* Ringtone */ = {
+			isa = PBXGroup;
+			children = (
+				04B16AC52EA0FAA200332961 /* RingtonesViewController.swift */,
+				04B16ACA2EA125B300332961 /* RingtoneDetailViewController.swift */,
+				041BB0B32EAB6180004BC0D8 /* RingtoneTrimWithStripViewController.swift */,
+				04B16AC32EA0F43800332961 /* CategoriesViewController.swift */,
+			);
+			path = Ringtone;
+			sourceTree = "<group>";
+		};
+		04D81B6D2EB4658E003F9392 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				041C4AF42E693E90005B7DEC /* RealmService.swift */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		04D81B6E2EB46593003F9392 /* Player */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Player;
+			sourceTree = "<group>";
+		};
+		04D81B6F2EB4659D003F9392 /* Manager */ = {
+			isa = PBXGroup;
+			children = (
+				041C4AF62E693EDC005B7DEC /* DownloadManager.swift */,
+				04396CD12E9A129D002B907A /* DownloadNotificationManager.swift */,
+				04396CCB2E98EE04002B907A /* AppSettingsManager.swift */,
+			);
+			path = Manager;
 			sourceTree = "<group>";
 		};
 		24CCC883B4C52F81768FCE95 /* Frameworks */ = {
@@ -574,9 +599,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -613,9 +642,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ListenUp/Pods-ListenUp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ListenUp/Pods-ListenUp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -640,7 +673,7 @@
 				04396C6C2E824FA1002B907A /* MiniPlayerContainerViewController.swift in Sources */,
 				04396CCA2E961CAA002B907A /* SettingsController.swift in Sources */,
 				041BB0BE2EACD60A004BC0D8 /* AudioController.swift in Sources */,
-				041C4AC62E658442005B7DEC /* PlayerController.swift in Sources */,
+				04D81B642EB39ADA003F9392 /* MediaItem.swift in Sources */,
 				04B16AC92EA1196D00332961 /* RingtoneCell.swift in Sources */,
 				041469712DF00978009D6EF9 /* SceneDelegate.swift in Sources */,
 				04396CCC2E98EE04002B907A /* AppSettingsManager.swift in Sources */,
@@ -673,7 +706,6 @@
 				041BB0C62EAE0D33004BC0D8 /* SelectionModeCapable.swift in Sources */,
 				04C00F522E77B34F00104CD9 /* MediaPlayerViewController.swift in Sources */,
 				04B16AC22EA0F21F00332961 /* APIService.swift in Sources */,
-				041469822DF00A01009D6EF9 /* ProfileController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

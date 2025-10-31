@@ -11,13 +11,6 @@ import AVFoundation
 import RealmSwift
 import MediaPlayer
 
-// MARK: - Models
-struct MediaItem {
-    let title: String
-    let url: URL   // local file URL (Documents/… or elsewhere)
-    let duration: TimeInterval
-}
-
 enum LoopMode { case off, one, all }
 
 // MARK: - Media Player VC (Realm-aware)
