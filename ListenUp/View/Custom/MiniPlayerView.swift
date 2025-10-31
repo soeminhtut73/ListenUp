@@ -47,15 +47,17 @@ final class MiniPlayerView: UIView {
         progressView.trackTintColor = .systemGray5
         
         // Thumbnail
-        thumbnailImageView.contentMode = .scaleAspectFit
+        thumbnailImageView.contentMode = .center
         thumbnailImageView.clipsToBounds = true
         thumbnailImageView.tintColor = .secondaryLabel
         thumbnailImageView.layer.cornerRadius = 8
-//        thumbnailImageView.backgroundColor = .systemGray5
+        thumbnailImageView.image = UIImage(systemName: "music.note")
+        thumbnailImageView.backgroundColor = .systemGray5
         
         // Title
         titleLabel.font = .systemFont(ofSize: 14, weight: .medium)
         titleLabel.textColor = .label
+        titleLabel.text = "Not Playing..."
         
         // Buttons
         playPauseButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
@@ -85,8 +87,8 @@ final class MiniPlayerView: UIView {
             
             thumbnailImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
             thumbnailImageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            thumbnailImageView.widthAnchor.constraint(equalToConstant: 34),
-            thumbnailImageView.heightAnchor.constraint(equalToConstant: 34),
+            thumbnailImageView.widthAnchor.constraint(equalToConstant: 40),
+            thumbnailImageView.heightAnchor.constraint(equalToConstant: 40),
             
             titleLabel.leadingAnchor.constraint(equalTo: thumbnailImageView.trailingAnchor, constant: 12),
             titleLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
@@ -117,6 +119,5 @@ final class MiniPlayerView: UIView {
         titleLabel.text = title
         playPauseButton.setImage(UIImage(systemName: isPlaying ? "pause.fill" : "play.fill"), for: .normal)
         progressView.progress = progress
-        thumbnailImageView.image = UIImage(systemName: "music.note")
     }
 }

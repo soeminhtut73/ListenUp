@@ -80,7 +80,12 @@ class AudioController: UIViewController {
         view.backgroundColor = Style.viewBackgroundColor
         
         view.addSubview(tableView)
+        view.addSubview(emptyStateLabel)
         NSLayoutConstraint.activate([
+            
+            emptyStateLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            emptyStateLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -109,6 +114,10 @@ class AudioController: UIViewController {
         notificationToken = searchResults.observe { [weak self] changes in
             guard let self = self else { return }
             switch changes {
+            case.initial:
+                self.updateEmptyState()
+                self.tableView.reloadData()
+                
             case .update(_, let deletions, let insertions, let modifications):
                 self.tableView.performBatchUpdates({
                     self.tableView.deleteRows(
@@ -123,6 +132,7 @@ class AudioController: UIViewController {
                         at: modifications.map { IndexPath(row: $0, section: 0) },
                         with: .none
                     )
+                    self.updateEmptyState()
                 })
                 
                 if self.tableView.isEditing {
@@ -145,6 +155,10 @@ class AudioController: UIViewController {
             .sorted(byKeyPath: keyPath, ascending: ascending)
         
         tableView.reloadData()
+    }
+    
+    private func updateEmptyState() {
+        emptyStateLabel.isHidden = !results.isEmpty
     }
     
     //MARK: - Selector
@@ -232,8 +246,6 @@ extension AudioController: UITableViewDelegate {
         guard tableView.isEditing else { return }
         updateSelectAllButtonTitle()
     }
-    
-    
 }
 
 //MARK: - UITableView DataSource

@@ -209,7 +209,6 @@ class HistoryTableViewCell: UITableViewCell {
     }
     
     @objc func handleOptionButtonTapped() {
-        print("Debug: got tap")
         delegate?.didTapOptionButton(for: self)
     }
     

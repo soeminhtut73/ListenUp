@@ -23,12 +23,12 @@ target 'ListenUp' do
     # Pods for testing
   end
   
-    pod 'RealmSwift'
-  
-    pod 'Firebase/Core'
-    pod 'Firebase/Database'
-    pod 'Firebase/Firestore'
-    pod 'Firebase/Storage'
-    pod 'Firebase/Auth'
+#    pod 'RealmSwift'
+#    pod 'Firebase/Core'
+#    pod 'Firebase/Database'
+#    pod 'Firebase/Firestore'
+#    pod 'Firebase/Storage'
+#    pod 'Firebase/Auth'
     pod 'SDWebImage'
+    pod 'RealmSwift'
 end

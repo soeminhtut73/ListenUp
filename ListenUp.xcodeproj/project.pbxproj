@@ -17,7 +17,6 @@
 		0414697C2DF009E4009D6EF9 /* BrowserController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0414697B2DF009E4009D6EF9 /* BrowserController.swift */; };
 		041469802DF009F9009D6EF9 /* HistoryController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0414697F2DF009F9009D6EF9 /* HistoryController.swift */; };
 		0414698C2DF41537009D6EF9 /* Style.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0414698B2DF41531009D6EF9 /* Style.swift */; };
-		0414698E2DF41577009D6EF9 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0414698D2DF41577009D6EF9 /* Constants.swift */; };
 		041469902DF415A3009D6EF9 /* Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0414698F2DF415A3009D6EF9 /* Extension.swift */; };
 		041BB0B42EAB6180004BC0D8 /* RingtoneTrimWithStripViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BB0B32EAB6180004BC0D8 /* RingtoneTrimWithStripViewController.swift */; };
 		041BB0B62EAB6413004BC0D8 /* ThumbnailStripView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041BB0B52EAB6413004BC0D8 /* ThumbnailStripView.swift */; };
@@ -54,6 +53,7 @@
 		04C00F522E77B34F00104CD9 /* MediaPlayerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C00F512E77B34F00104CD9 /* MediaPlayerViewController.swift */; };
 		04C00F542E77FD5300104CD9 /* PlayerCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C00F532E77FD5300104CD9 /* PlayerCenter.swift */; };
 		04D81B642EB39ADA003F9392 /* MediaItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04D81B632EB39ADA003F9392 /* MediaItem.swift */; };
+		04D81BAD2EB47FA1003F9392 /* FormatterHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04D81BAC2EB47F9A003F9392 /* FormatterHelper.swift */; };
 		490DF94C2B40AA0E2D8FBA51 /* Pods_ListenUpTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6A1B391BE616A1989A549AB /* Pods_ListenUpTests.framework */; };
 		50241556AAD13BBBBFC4A104 /* Pods_ListenUp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B72DDFEC1DAD08A7D4DC97D1 /* Pods_ListenUp.framework */; };
 		D03EE9922D419A2E6094BC5B /* Pods_ListenUp_ListenUpUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E836D5D13BB0499862FD3E59 /* Pods_ListenUp_ListenUpUITests.framework */; };
@@ -88,7 +88,6 @@
 		0414697B2DF009E4009D6EF9 /* BrowserController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserController.swift; sourceTree = "<group>"; };
 		0414697F2DF009F9009D6EF9 /* HistoryController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryController.swift; sourceTree = "<group>"; };
 		0414698B2DF41531009D6EF9 /* Style.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Style.swift; sourceTree = "<group>"; };
-		0414698D2DF41577009D6EF9 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		0414698F2DF415A3009D6EF9 /* Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extension.swift; sourceTree = "<group>"; };
 		041BB0B32EAB6180004BC0D8 /* RingtoneTrimWithStripViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RingtoneTrimWithStripViewController.swift; sourceTree = "<group>"; };
 		041BB0B52EAB6413004BC0D8 /* ThumbnailStripView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailStripView.swift; sourceTree = "<group>"; };
@@ -128,6 +127,7 @@
 		04C00F512E77B34F00104CD9 /* MediaPlayerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaPlayerViewController.swift; sourceTree = "<group>"; };
 		04C00F532E77FD5300104CD9 /* PlayerCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCenter.swift; sourceTree = "<group>"; };
 		04D81B632EB39ADA003F9392 /* MediaItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaItem.swift; sourceTree = "<group>"; };
+		04D81BAC2EB47F9A003F9392 /* FormatterHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatterHelper.swift; sourceTree = "<group>"; };
 		0F3EF8745F5BB7CD67BB0237 /* Pods-ListenUp-ListenUpUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ListenUp-ListenUpUITests.debug.xcconfig"; path = "Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests.debug.xcconfig"; sourceTree = "<group>"; };
 		1712B13EF12EBF608FF1C2F2 /* Pods-ListenUpTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ListenUpTests.debug.xcconfig"; path = "Target Support Files/Pods-ListenUpTests/Pods-ListenUpTests.debug.xcconfig"; sourceTree = "<group>"; };
 		28DB171FD6D9A2BE6A80BEF8 /* Pods-ListenUp-ListenUpUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ListenUp-ListenUpUITests.release.xcconfig"; path = "Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests.release.xcconfig"; sourceTree = "<group>"; };
@@ -232,18 +232,15 @@
 		0414698A2DF414FA009D6EF9 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				04D81BAC2EB47F9A003F9392 /* FormatterHelper.swift */,
 				0414698B2DF41531009D6EF9 /* Style.swift */,
-				0414698D2DF41577009D6EF9 /* Constants.swift */,
 				0414698F2DF415A3009D6EF9 /* Extension.swift */,
 				0461FED42E2A9D680052F966 /* WebViewScripts.swift */,
-				0461FEEE2E2E8C050052F966 /* CircularProgressView.swift */,
 				04C00F532E77FD5300104CD9 /* PlayerCenter.swift */,
 				04396C9E2E8D0833002B907A /* FileHelper.swift */,
 				04396CCF2E99E509002B907A /* NetworkMonitor.swift */,
 				04396CCD2E993D90002B907A /* DownloadGuard.swift */,
 				041BB0B72EAB643C004BC0D8 /* AudioConverter.swift */,
-				041BB0C52EAE0D33004BC0D8 /* SelectionModeCapable.swift */,
-				041BB0C72EAE120A004BC0D8 /* ActionSheetConfigurable.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -312,6 +309,7 @@
 		04D81B682EB39B81003F9392 /* Custom */ = {
 			isa = PBXGroup;
 			children = (
+				0461FEEE2E2E8C050052F966 /* CircularProgressView.swift */,
 				04396C682E824EC4002B907A /* MiniPlayerView.swift */,
 				04396C902E893B69002B907A /* PlayingIndicatorView.swift */,
 				04C00F4F2E77B30400104CD9 /* PlayerView.swift */,
@@ -323,6 +321,8 @@
 		04D81B692EB39B86003F9392 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				041BB0C72EAE120A004BC0D8 /* ActionSheetConfigurable.swift */,
+				041BB0C52EAE0D33004BC0D8 /* SelectionModeCapable.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -419,7 +419,7 @@
 				0440B2652DF003DD00184BE2 /* Sources */,
 				0440B2662DF003DD00184BE2 /* Frameworks */,
 				0440B2672DF003DD00184BE2 /* Resources */,
-				EDBF44ED6A6FAC43C2FF71F7 /* [CP] Embed Pods Frameworks */,
+				1728CDB28997E75946AACBC3 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -460,7 +460,7 @@
 				0440B2852DF003DE00184BE2 /* Sources */,
 				0440B2862DF003DE00184BE2 /* Frameworks */,
 				0440B2872DF003DE00184BE2 /* Resources */,
-				21B3D7943E308979F0CF3E48 /* [CP] Embed Pods Frameworks */,
+				18F365BBE139B686C7994D0B /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -569,6 +569,27 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		1728CDB28997E75946AACBC3 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ListenUp/Pods-ListenUp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ListenUp/Pods-ListenUp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ListenUp/Pods-ListenUp-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		1772CB9D938859AC83381107 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -591,7 +612,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		21B3D7943E308979F0CF3E48 /* [CP] Embed Pods Frameworks */ = {
+		18F365BBE139B686C7994D0B /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -634,27 +655,6 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		EDBF44ED6A6FAC43C2FF71F7 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-ListenUp/Pods-ListenUp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			inputPaths = (
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-ListenUp/Pods-ListenUp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ListenUp/Pods-ListenUp-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -692,9 +692,9 @@
 				04B16AC02EA0E90300332961 /* Ringtone.swift in Sources */,
 				0461FEEF2E2E8C050052F966 /* CircularProgressView.swift in Sources */,
 				041469782DF009B0009D6EF9 /* MainTabBarController.swift in Sources */,
-				0414698E2DF41577009D6EF9 /* Constants.swift in Sources */,
 				04396C9F2E8D0833002B907A /* FileHelper.swift in Sources */,
 				04B16AC42EA0F43800332961 /* CategoriesViewController.swift in Sources */,
+				04D81BAD2EB47FA1003F9392 /* FormatterHelper.swift in Sources */,
 				041BB0EC2EB0C202004BC0D8 /* QuickLandscapePlayerViewController.swift in Sources */,
 				041469722DF00978009D6EF9 /* ViewController.swift in Sources */,
 				04B16AC62EA0FAA200332961 /* RingtonesViewController.swift in Sources */,

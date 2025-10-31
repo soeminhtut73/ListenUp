@@ -112,12 +112,17 @@ class HistoryController: UIViewController {
     private func configureAudioSession() {
         let s = AVAudioSession.sharedInstance()
         do {
-            try s.setCategory(.playback, mode: .moviePlayback, options: [.allowBluetooth,
-                                                                         .allowBluetoothA2DP,
-                                                                         .allowAirPlay,
-                                                                         .mixWithOthers])
-            try s.setActive(true)
-        } catch { print("Audio session error:", error) }
+            try s.setCategory(.playback,
+                              mode: .moviePlayback,
+                              options: [
+                                .allowBluetoothA2DP,
+                                .allowBluetoothHFP,
+                                .allowAirPlay,
+                                .mixWithOthers
+                              ])
+        } catch {
+            print("Audio session error:", error)
+        }
     }
     
     
@@ -126,6 +131,7 @@ class HistoryController: UIViewController {
             guard let self = self else { return }
             switch changes {
             case .initial:
+                self.updateEmptyState()
                 self.tableView.reloadData()
                 
             case .update(_, let deletions, let insertions, let modifications):
@@ -133,6 +139,7 @@ class HistoryController: UIViewController {
                     self.tableView.deleteRows(at: deletions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
                     self.tableView.insertRows(at: insertions.map { IndexPath(row: $0, section: 0) }, with: .automatic)
                     self.tableView.reloadRows(at: modifications.map { IndexPath(row: $0, section: 0) }, with: .none)
+                    self.updateEmptyState()
                 })
                 
             case .error(let error):
@@ -180,9 +187,13 @@ class HistoryController: UIViewController {
     
     private func fetchResult() {
         results = RealmService.shared.fetchVideoItems().sorted(byKeyPath: "createdAt", ascending: false)
-        print("Debug: download results : \(results)")
+        print("Debug: download results : \(results[0])")
         searchResults = results
         tableView.reloadData()
+    }
+    
+    private func updateEmptyState() {
+        emptyStateLabel.isHidden = !results.isEmpty
     }
     
     private func deleteAll() {
