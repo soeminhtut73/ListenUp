@@ -8,46 +8,57 @@
 import UIKit
 import RealmSwift
 
-
 class AudioController: UIViewController {
     
-    //MARK: - Properties
+    // MARK: - Properties
+    
+    // Data
     private var results: Results<DownloadItem>!
     private var searchResults: Results<DownloadItem>!
     private var notificationToken: NotificationToken?
+    
+    // Search
     private let searchController = UISearchController(searchResultsController: nil)
     
-    lazy var sortButton = UIBarButtonItem(
+    // Navigation Bar Items
+    internal lazy var sortButton = UIBarButtonItem(
         image: UIImage(systemName: "arrow.up.arrow.down"),
         style: .plain,
         target: self,
-        action: #selector(sortButtonTapped))
+        action: #selector(sortButtonTapped)
+    )
     
-    lazy var deleteButton = UIBarButtonItem(
+    internal lazy var deleteButton = UIBarButtonItem(
         image: UIImage(systemName: "trash"),
         style: .done,
         target: self,
-        action: #selector(deleteButtonTapped))
+        action: #selector(deleteButtonTapped)
+    )
     
-    lazy var selectAllButton = UIBarButtonItem(
+    internal lazy var selectAllButton = UIBarButtonItem(
         image: UIImage(systemName: "checkmark.circle"),
         style: .plain,
         target: self,
-        action: #selector(selectAllTapped))
+        action: #selector(selectAllTapped)
+    )
     
-    lazy var cancelButton = UIBarButtonItem(
+    internal lazy var cancelButton = UIBarButtonItem(
         image: UIImage(systemName: "xmark"),
         style: .done,
         target: self,
-        action: #selector(cancelTapped))
+        action: #selector(cancelTapped)
+    )
     
-    //MARK: - UI Component
+    // MARK: - UI Components
+    
     private(set) lazy var tableView: UITableView = {
         let tv = UITableView(frame: .zero, style: .plain)
         tv.separatorStyle = .singleLine
         tv.rowHeight = 64
-        tv.register(DownloadTableViewCell.self,
-                    forCellReuseIdentifier: DownloadTableViewCell.identifier)
+        tv.register(
+            DownloadTableViewCell.self,
+            forCellReuseIdentifier: DownloadTableViewCell.identifier
+        )
         tv.allowsMultipleSelectionDuringEditing = true
         tv.translatesAutoresizingMaskIntoConstraints = false
         return tv
@@ -64,25 +75,30 @@ class AudioController: UIViewController {
         return label
     }()
     
-    //MARK: - LifeCycle
+    // MARK: - Lifecycle
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
         setupUI()
+        setupSearch()
         fetchResult()
         observeRealmChanges()
-        setupSearch()
     }
     
-    //MARK: - HelperFunctions
+    deinit {
+        notificationToken?.invalidate()
+    }
+    
+    // MARK: - Setup
+    
     private func setupUI() {
         title = "Tones"
         view.backgroundColor = Style.viewBackgroundColor
         
         view.addSubview(tableView)
         view.addSubview(emptyStateLabel)
+        
         NSLayoutConstraint.activate([
-            
             emptyStateLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyStateLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             
@@ -104,8 +120,23 @@ class AudioController: UIViewController {
         tableView.refreshControl = refreshControl
     }
     
+    private func setupSearch() {
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.hidesNavigationBarDuringPresentation = false
+        searchController.searchBar.placeholder = "Search Tone..."
+        searchController.searchBar.delegate = self
+        
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
+        definesPresentationContext = true
+    }
+    
+    // MARK: - Data Management
+    
     private func fetchResult() {
-        results = RealmService.shared.fetchAudioItems().sorted(byKeyPath: "createdAt", ascending: false)
+        results = RealmService.shared.fetchAudioItems()
+            .sorted(byKeyPath: "createdAt", ascending: false)
         searchResults = results
         tableView.reloadData()
     }
@@ -114,7 +145,7 @@ class AudioController: UIViewController {
         notificationToken = searchResults.observe { [weak self] changes in
             guard let self = self else { return }
             switch changes {
-            case.initial:
+            case .initial:
                 self.updateEmptyState()
                 self.tableView.reloadData()
                 
@@ -138,41 +169,91 @@ class AudioController: UIViewController {
                 if self.tableView.isEditing {
                     self.updateSelectAllButtonTitle()
                 }
+                
             default:
                 break
             }
         }
     }
     
-    deinit {
-        notificationToken?.invalidate()
-    }
-    
-    //MARK: - Helper Functions
-    
-    private func sortAudioFiles(by keyPath: String, ascending: Bool) {
-        searchResults  = searchResults
-            .sorted(byKeyPath: keyPath, ascending: ascending)
-        
-        tableView.reloadData()
-    }
-    
     private func updateEmptyState() {
         emptyStateLabel.isHidden = !results.isEmpty
     }
     
-    //MARK: - Selector
+    // MARK: - Sorting
+    
+    private func sortAudioFiles(by keyPath: String, ascending: Bool) {
+        searchResults = searchResults.sorted(byKeyPath: keyPath, ascending: ascending)
+        tableView.reloadData()
+    }
+    
+    // MARK: - Search
+    
+    private func applySearch(text: String?) {
+        let raw = (text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else {
+            searchResults = results
+            tableView.reloadData()
+            return
+        }
+        
+        // Split into tokens by spaces; ignore empties
+        let tokens = raw
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+        
+        var andSubpredicates: [NSPredicate] = []
+        for tok in tokens {
+            let orForToken = NSCompoundPredicate(orPredicateWithSubpredicates: [
+                NSPredicate(format: "title CONTAINS[c] %@", tok)
+            ])
+            andSubpredicates.append(orForToken)
+        }
+        
+        let compound = NSCompoundPredicate(andPredicateWithSubpredicates: andSubpredicates)
+        
+        // Filter from the full, already-sorted Results
+        searchResults = results.filter(compound)
+        
+        tableView.reloadData()
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func shareAudio(_ item: DownloadItem) {
+        guard let localPath = item.localPath,
+              let fileURL = FileHelper.fileURL(for: localPath) else { return }
+        
+        let activityVC = UIActivityViewController(
+            activityItems: [fileURL],
+            applicationActivities: nil
+        )
+        present(activityVC, animated: true)
+    }
+    
+    private func showDeleteConfirmation(for item: DownloadItem) {
+        let alert = UIAlertController(
+            title: "Delete Audio",
+            message: "This will remove it permanently.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { _ in
+            RealmService.shared.delete(item)
+        })
+        present(alert, animated: true)
+    }
+    
+    // MARK: - Actions
     
     @objc private func refreshData() {
         fetchResult()
         DispatchQueue.main.async {
             self.tableView.reloadData()
         }
-        
         tableView.refreshControl?.endRefreshing()
     }
     
-    //MARK: - Action for navigationItems
     @objc private func sortButtonTapped() {
         let alert = UIAlertController(title: "Sort By", message: nil, preferredStyle: .actionSheet)
         
@@ -210,7 +291,29 @@ class AudioController: UIViewController {
     }
 }
 
-//MARK: - UITableView Delegate
+// MARK: - UITableViewDataSource
+
+extension AudioController: UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return searchResults.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(
+            withIdentifier: DownloadTableViewCell.identifier,
+            for: indexPath
+        ) as! DownloadTableViewCell
+        
+        let item = searchResults[indexPath.row]
+        cell.configure(with: item, mode: .audio)
+        cell.delegate = self
+        
+        return cell
+    }
+}
+
+// MARK: - UITableViewDelegate
+
 extension AudioController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if tableView.isEditing {
@@ -227,7 +330,6 @@ extension AudioController: UITableViewDelegate {
         let item = searchResults[indexPath.row]
         guard item.status == .completed else { return }
         
-        /// need to implement play audio
         let tapped = searchResults[indexPath.row]
         guard let rel = tapped.localPath else { return }
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -248,25 +350,23 @@ extension AudioController: UITableViewDelegate {
     }
 }
 
-//MARK: - UITableView DataSource
-extension AudioController: UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return searchResults.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(
-            withIdentifier: DownloadTableViewCell.identifier,
-            for: indexPath
-        ) as! DownloadTableViewCell
-        
-        let item = searchResults[indexPath.row]
-        cell.configure(with: item, mode: .audio)
-        cell.delegate = self
-        
-        return cell
+// MARK: - UISearchResultsUpdating
+
+extension AudioController: UISearchResultsUpdating {
+    func updateSearchResults(for searchController: UISearchController) {
+        applySearch(text: searchController.searchBar.text)
     }
 }
+
+// MARK: - UISearchBarDelegate
+
+extension AudioController: UISearchBarDelegate {
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        applySearch(text: nil)
+    }
+}
+
+// MARK: - DownloadTableViewCellDelegate
 
 extension AudioController: DownloadTableViewCellDelegate {
     func cell(_ cell: DownloadTableViewCell, didTapOptionFor item: DownloadItem) {
@@ -274,9 +374,10 @@ extension AudioController: DownloadTableViewCellDelegate {
     }
 }
 
+// MARK: - SelectionModeCapable
 
 extension AudioController: SelectionModeCapable {
-
+    
     func getItems() -> Results<DownloadItem> {
         return searchResults
     }
@@ -289,13 +390,10 @@ extension AudioController: SelectionModeCapable {
         RealmService.shared.deleteItems(with: items, completion: completion)
     }
     
-//    func willEnterSelectionMode() {
-//        if currentlyPlayingItemId != nil {
-//            stopPlaying()
-//        }
-//    }
+    func willEnterSelectionMode() {
+        // Optional: Add any custom behavior when entering selection mode
+    }
     
-    // Customize delete message for audio
     func customizeDeleteAlert(count: Int) -> (title: String, message: String) {
         let title = count == 1 ? "Delete 1 audio?" : "Delete \(count) audios?"
         return (title, "This will permanently remove them.")
@@ -303,12 +401,13 @@ extension AudioController: SelectionModeCapable {
 }
 
 // MARK: - ActionSheetConfigurable
+
 extension AudioController: ActionSheetConfigurable {
-    /// action sheet for option button
+    
     func configureActions(for item: DownloadItem) -> [UIAlertAction] {
         var actions: [UIAlertAction] = []
         
-        // Share Action (simpler for audio)
+        // Share Action
         let shareAction = UIAlertAction(title: "Share", style: .default) { [weak self] _ in
             self?.shareAudio(item)
         }
@@ -321,84 +420,5 @@ extension AudioController: ActionSheetConfigurable {
         actions.append(deleteAction)
         
         return actions
-    }
-    
-    private func shareAudio(_ item: DownloadItem) {
-        guard let localPath = item.localPath,
-              let fileURL = FileHelper.fileURL(for: localPath) else { return }
-        
-        let activityVC = UIActivityViewController(
-            activityItems: [fileURL],
-            applicationActivities: nil
-        )
-        present(activityVC, animated: true)
-    }
-    
-    /// delete function for actionSheet
-    private func showDeleteConfirmation(for item: DownloadItem) {
-        let alert = UIAlertController(
-            title: "Delete Audio",
-            message: "This will remove it permanently.",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { _ in
-            RealmService.shared.delete(item)
-        })
-        present(alert, animated: true)
-    }
-}
-
-//MARK: - UISearchBarDelegate
-extension AudioController: UISearchResultsUpdating, UISearchBarDelegate {
-    private func setupSearch() {
-        searchController.searchResultsUpdater = self
-        searchController.obscuresBackgroundDuringPresentation = false
-        searchController.hidesNavigationBarDuringPresentation = false
-        searchController.searchBar.placeholder = "Search Tone..."
-        searchController.searchBar.delegate = self
-        
-        navigationItem.searchController = searchController
-        navigationItem.hidesSearchBarWhenScrolling = false
-        definesPresentationContext = true
-    }
-    
-    func updateSearchResults(for searchController: UISearchController) {
-        applySearch(text: searchController.searchBar.text)
-    }
-    
-    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
-        applySearch(text: nil)
-    }
-    
-    private func applySearch(text: String?) {
-        let raw = (text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !raw.isEmpty else {
-            searchResults = results
-            tableView.reloadData()
-            return
-        }
-        
-        // Split into tokens by spaces; ignore empties
-        let tokens = raw
-            .components(separatedBy: .whitespacesAndNewlines)
-            .filter { !$0.isEmpty }
-        
-        // Build (AND over tokens) of (OR over fields) predicates
-        var andSubpredicates: [NSPredicate] = []
-        for tok in tokens {
-            // search across title and localPath (add more fields if you have them)
-            let orForToken = NSCompoundPredicate(orPredicateWithSubpredicates: [
-                NSPredicate(format: "title CONTAINS[c] %@", tok)
-            ])
-            andSubpredicates.append(orForToken)
-        }
-        
-        let compound = NSCompoundPredicate(andPredicateWithSubpredicates: andSubpredicates)
-        
-        // Filter from the full, already-sorted Results
-        searchResults = results.filter(compound)
-        
-        tableView.reloadData()
     }
 }
