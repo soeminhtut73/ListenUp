@@ -76,11 +76,11 @@ class SettingsController: UITableViewController {
         case .network:
             return 1 // Cellular Data Usage
         case .notifications:
-            return 3 // Download Complete, Low Storage, Update Notification
+            return 2 // Download Complete, Low Storage
         case .storage:
             return 2 // Clear Cache, Clear Data
         case .legal:
-            return 6 // About, Terms, Privacy, License, Contact, Rate
+            return 4 // Terms, Privacy, License, Contact, Rate
         }
     }
     
@@ -138,14 +138,6 @@ class SettingsController: UITableViewController {
             ) { [weak self] isOn in
                 self?.settingsManager.isLowStorageNotificationEnabled = isOn
             }
-        case 2:
-            cell.configure(
-                title: "App Updates",
-                subtitle: nil,
-                isOn: settingsManager.isUpdateNotificationEnabled
-            ) { [weak self] isOn in
-                self?.settingsManager.isUpdateNotificationEnabled = isOn
-            }
         default:
             break
         }
@@ -188,29 +180,24 @@ class SettingsController: UITableViewController {
         
         switch indexPath.row {
         case 0: // About
-            cell.textLabel?.text = "About"
-            cell.detailTextLabel?.text = "Version \(settingsManager.appVersion) (\(settingsManager.appBuild))"
-            cell.detailTextLabel?.textColor = .secondaryLabel
-            
-        case 1:
             cell.textLabel?.text = "Terms of Service"
             
-        case 2:
+        case 1:
             cell.textLabel?.text = "Privacy Policy"
             
-        case 3:
+        case 2:
             cell.textLabel?.text = "Licenses"
             
-        case 4:
+        case 3:
             cell.textLabel?.text = "Contact Support"
             cell.imageView?.image = UIImage(systemName: "envelope")
             cell.imageView?.tintColor = .systemBlue
             
-        case 5:
+        case 4:
             cell.textLabel?.text = "Rate the App"
             cell.imageView?.image = UIImage(systemName: "star.fill")
             cell.imageView?.tintColor = .systemYellow
-            
+
         default:
             break
         }
@@ -249,16 +236,14 @@ class SettingsController: UITableViewController {
     private func handleLegalSelection(at indexPath: IndexPath) {
         switch indexPath.row {
         case 0: // About
-            showAboutScreen()
-        case 1: // Terms of Service
             openWebView(url: "https://example.com/terms")
-        case 2: // Privacy Policy
+        case 1: // Terms of Service
             openWebView(url: "https://example.com/privacy")
-        case 3: // Licenses
+        case 2: // Privacy Policy
             showLicensesScreen()
-        case 4: // Contact Support
+        case 3: // Licenses
             showContactSupport()
-        case 5: // Rate the App
+        case 4: // Contact Support
             rateApp()
         default:
             break
@@ -327,10 +312,6 @@ class SettingsController: UITableViewController {
     }
     
     // MARK: - Navigation Methods
-    private func showAboutScreen() {
-        let vc = AboutViewController()
-        navigationController?.pushViewController(vc, animated: true)
-    }
     
     private func showLicensesScreen() {
         let vc = LicensesViewController()
@@ -447,84 +428,6 @@ class SwitchTableViewCell: UITableViewCell {
     }
 }
 
-// MARK: - About View Controller
-class AboutViewController: UIViewController {
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        title = "About"
-        view.backgroundColor = .systemBackground
-        
-        let stackView = UIStackView()
-        stackView.axis = .vertical
-        stackView.spacing = 24
-        stackView.alignment = .center
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        
-        // App Icon
-        let iconView = UIImageView()
-        if let appIcon = UIImage(named: "AppIcon") {
-            iconView.image = appIcon
-        } else {
-            iconView.image = UIImage(systemName: "app.fill")
-            iconView.tintColor = .systemBlue
-        }
-        iconView.contentMode = .scaleAspectFit
-        iconView.layer.cornerRadius = 20
-        iconView.layer.masksToBounds = true
-        iconView.translatesAutoresizingMaskIntoConstraints = false
-        
-        // App Name
-        let nameLabel = UILabel()
-        nameLabel.text = Bundle.main.displayName ?? "App"
-        nameLabel.font = .systemFont(ofSize: 28, weight: .bold)
-        
-        // Version
-        let versionLabel = UILabel()
-        versionLabel.text = "Version \(AppSettingsManager.shared.appVersion)"
-        versionLabel.textColor = .secondaryLabel
-        versionLabel.font = .systemFont(ofSize: 16)
-        
-        // Build
-        let buildLabel = UILabel()
-        buildLabel.text = "Build \(AppSettingsManager.shared.appBuild)"
-        buildLabel.textColor = .tertiaryLabel
-        buildLabel.font = .systemFont(ofSize: 14)
-        
-        // Description
-        let descriptionLabel = UILabel()
-        descriptionLabel.text = "Thank you for using our app!"
-        descriptionLabel.textColor = .secondaryLabel
-        descriptionLabel.numberOfLines = 0
-        descriptionLabel.textAlignment = .center
-        descriptionLabel.font = .systemFont(ofSize: 16)
-        
-        // Copyright
-        let copyrightLabel = UILabel()
-        let year = Calendar.current.component(.year, from: Date())
-        copyrightLabel.text = "© \(year) Your Company. All rights reserved."
-        copyrightLabel.textColor = .tertiaryLabel
-        copyrightLabel.font = .systemFont(ofSize: 14)
-        
-        stackView.addArrangedSubview(iconView)
-        stackView.addArrangedSubview(nameLabel)
-        stackView.addArrangedSubview(versionLabel)
-        stackView.addArrangedSubview(buildLabel)
-        stackView.addArrangedSubview(UIView()) // Spacer
-        stackView.addArrangedSubview(descriptionLabel)
-        stackView.addArrangedSubview(copyrightLabel)
-        
-        view.addSubview(stackView)
-        
-        NSLayoutConstraint.activate([
-            iconView.widthAnchor.constraint(equalToConstant: 100),
-            iconView.heightAnchor.constraint(equalToConstant: 100),
-            stackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            stackView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -40),
-            stackView.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 40),
-            stackView.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -40)
-        ])
-    }
-}
 
 // MARK: - Licenses View Controller
 class LicensesViewController: UITableViewController {
