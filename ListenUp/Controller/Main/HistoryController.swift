@@ -102,10 +102,6 @@ final class HistoryController: UIViewController {
         tableView.dataSource = self
         tableView.delegate = self
         tableView.allowsMultipleSelectionDuringEditing = true
-        
-        let refreshControl = UIRefreshControl()
-        refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
-        tableView.refreshControl = refreshControl
     }
     
     private func setupNavigationBar() {
@@ -174,7 +170,6 @@ final class HistoryController: UIViewController {
     private func fetchResult() {
         results = RealmService.shared.fetchVideoItems()
             .sorted(byKeyPath: "createdAt", ascending: false)
-        print("Debug: download results : \(results[0])")
         searchResults = results
         tableView.reloadData()
     }
@@ -207,7 +202,6 @@ final class HistoryController: UIViewController {
                             at: modifications.map { IndexPath(row: $0, section: 0) },
                             with: .none
                         )
-                        //                    self.updateEmptyState()
                     })
                 }
                 
@@ -407,6 +401,7 @@ final class HistoryController: UIViewController {
         let total = searchResults?.count ?? 0
         let allSelected = selectionCount == total && total > 0
         let imageTitle = allSelected ? "checkmark.circle.fill" : "checkmark.circle"
+        selectAllButton.image = UIImage(systemName: imageTitle)
         selectAllButton.isEnabled = results.count > 0
     }
     
@@ -429,10 +424,6 @@ final class HistoryController: UIViewController {
     }
     
     // MARK: - Actions
-    
-    @objc private func refreshData() {
-        tableView.refreshControl?.endRefreshing()
-    }
     
     @objc private func appDidBecomeActive() {
         reloadPlayingRows()

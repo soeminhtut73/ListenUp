@@ -87,6 +87,7 @@ class AudioController: UIViewController {
     
     deinit {
         notificationToken?.invalidate()
+        NotificationCenter.default.removeObserver(self)
     }
     
     // MARK: - Setup
@@ -114,10 +115,6 @@ class AudioController: UIViewController {
         
         navigationItem.rightBarButtonItem = deleteButton
         navigationItem.leftBarButtonItem = sortButton
-        
-        let refreshControl = UIRefreshControl()
-        refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
-        tableView.refreshControl = refreshControl
     }
     
     private func setupSearch() {
@@ -245,14 +242,6 @@ class AudioController: UIViewController {
     }
     
     // MARK: - Actions
-    
-    @objc private func refreshData() {
-        fetchResult()
-        DispatchQueue.main.async {
-            self.tableView.reloadData()
-        }
-        tableView.refreshControl?.endRefreshing()
-    }
     
     @objc private func sortButtonTapped() {
         let alert = UIAlertController(title: "Sort By", message: nil, preferredStyle: .actionSheet)
@@ -388,10 +377,6 @@ extension AudioController: SelectionModeCapable {
     
     func deleteItems(_ items: [DownloadItem], completion: @escaping (Result<Void, Error>) -> Void) {
         RealmService.shared.deleteItems(with: items, completion: completion)
-    }
-    
-    func willEnterSelectionMode() {
-        // Optional: Add any custom behavior when entering selection mode
     }
     
     func customizeDeleteAlert(count: Int) -> (title: String, message: String) {
