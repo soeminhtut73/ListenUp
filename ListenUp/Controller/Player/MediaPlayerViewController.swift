@@ -450,12 +450,6 @@ final class MediaPlayerViewController: UIViewController {
                                                object: nil)
     }
     
-    private func isLikelyAudio(_ url: URL) -> Bool {
-        let ext = url.pathExtension.lowercased()
-        let audioExts = ["mp3", "m4a", "aac", "wav", "flac", "caf", "aiff", "alac"]
-        return audioExts.contains(ext)
-    }
-    
     private func wirePlayer() {
         videoView.player = player
         let interval = CMTime(seconds: 0.25, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
