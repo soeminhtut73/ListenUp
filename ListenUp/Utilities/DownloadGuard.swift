@@ -28,7 +28,7 @@ enum DownloadGuard {
         }
     
         // Check 3: Cellular - check settings
-        if networkType == .wifi {
+        if networkType == .cellular {
             if manager.isCellularDataEnabled {
                 proceed(.proceed)
             } else {

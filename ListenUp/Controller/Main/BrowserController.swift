@@ -9,8 +9,6 @@ import UIKit
 import MediaPlayer
 import WebKit
 import RealmSwift
-import AVKit
-import AVFoundation
 
 protocol BrowserControllerDelegate: AnyObject {
     func didTapDownloadButton(url: URL)
@@ -18,123 +16,27 @@ protocol BrowserControllerDelegate: AnyObject {
 
 class BrowserController: UIViewController {
     
-    //MARK: - Properties
+    // MARK: - Properties
     
+    // Singleton reference
     static weak var shared: BrowserController?
     
-    var webView: WKWebView = WKWebView()
+    // Delegate
+    weak var delegate: BrowserControllerDelegate?
     
+    // WebView
+    private(set) var webView: WKWebView!
+    
+    // Download tracking
     private var lastWatchURL: String?
-    
-    private let searchBar = UISearchBar()
-    private var progressView = UIProgressView(progressViewStyle: .default)
     private var pendingMediaURL: URL?
     private var pendingMediaType: String?
     
-    private lazy var backButton: UIButton = {
-        let btn = UIButton(type: .system)
-        btn.setImage(UIImage(systemName: "chevron.backward"), for: .normal)
-        btn.backgroundColor = .white
-        btn.tintColor = UIColor.blue
-        btn.addTarget(self, action: #selector(handleBackButton), for: .touchUpInside)
-        btn.translatesAutoresizingMaskIntoConstraints = false
-        return btn
-    }()
+    // MARK: - UI Components
     
-    weak var delegate: BrowserControllerDelegate?
-    
-    //MARK: - LifeCycle
-    
-    override func loadView() {
-        view = UIView()
-    }
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        configureWebView()
-        configureUI()
-        configureSearchBar()
-        
-    }
-    
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        view.endEditing(true) // cleanly closes the keyboard
-    }
-    
-    //MARK: - HelperFunctions
-    
-    private func configureUI() {
-        view.addSubview(webView)
-        
-        webView.translatesAutoresizingMaskIntoConstraints = false
-        
-        NSLayoutConstraint.activate([
-            webView.topAnchor.constraint(equalTo: view.topAnchor),
-            webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            webView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 54),
-        ])
-    }
-    
-    private func setupRealm() {
-        
-        let config = Realm.Configuration(
-            schemaVersion: 1,
-            migrationBlock: { migration, oldSchemaVersion in
-                // Handle migration if needed
-            }
-        )
-        Realm.Configuration.defaultConfiguration = config
-            
-    }
-    
-    private func configureWebView() {
-        
-        // 1. Create a user-content controller and add your scripts
-        let userContent = WKUserContentController()
-        userContent.addUserScript(WebViewScripts.trackerScript)
-        userContent.addUserScript(WebViewScripts.jsUserScript)
-        userContent.addUserScript(WebViewScripts.mediaScript)
-        userContent.add(self, name: "pageURL")
-        userContent.add(self, name: "mediaEvent")
-        
-        // 2. Create a WKWebViewConfiguration that uses it
-        let config = WKWebViewConfiguration()
-        config.userContentController = userContent
-        config.allowsInlineMediaPlayback = true
-        config.mediaTypesRequiringUserActionForPlayback = []  // for autoplay
-        
-        webView = WKWebView(frame: .zero, configuration: config)
-        webView.navigationDelegate = self
-        
-        webView.addObserver(self,
-                            forKeyPath: #keyPath(WKWebView.estimatedProgress),
-                            options: .new,
-                            context: nil)
-        
-        load("https://www.youtube.com")
-        
-    }
-    
-    private func load(_ input: String) {
-        var s = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !s.contains("://") {
-            // Treat as URL or search
-            if s.contains(".") { s = "https://\(s)" }
-            else {
-                let q = s.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? s
-                s = "https://www.google.com/search?q=\(q)"
-            }
-        }
-        if let url = URL(string: s) { webView.load(URLRequest(url: url)) }
-    
-    }
-    
-    private func configureSearchBar() {
+    private let searchBar: UISearchBar = {
+        let searchBar = UISearchBar()
         searchBar.placeholder = "Enter URL"
-        searchBar.delegate = self
         searchBar.autocapitalizationType = .none
         searchBar.keyboardType = .URL
         searchBar.returnKeyType = .go
@@ -144,254 +46,379 @@ class BrowserController: UIViewController {
         searchBar.searchBarStyle = .minimal
         searchBar.backgroundImage = UIImage()
         searchBar.searchTextField.leftViewMode = .never
-        view.addSubview(searchBar)
+        return searchBar
+    }()
+    
+    private let progressView: UIProgressView = {
+        let progress = UIProgressView(progressViewStyle: .default)
+        progress.trackTintColor = .clear
+        progress.progressTintColor = .systemBlue
+        progress.translatesAutoresizingMaskIntoConstraints = false
+        return progress
+    }()
+    
+    private lazy var backButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "chevron.backward"), for: .normal)
+        button.backgroundColor = .white
+        button.tintColor = .systemBlue
+        button.addTarget(self, action: #selector(handleBackButton), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    // MARK: - Lifecycle
+    
+    override func loadView() {
+        view = UIView()
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupWebView()
+        setupUI()
+        setupSearchBar()
+        loadInitialPage()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        view.endEditing(true)
+    }
+    
+    deinit {
+        cleanupObservers()
+    }
+    
+    // MARK: - Setup
+    
+    private func setupWebView() {
+        // Create user content controller
+        let userContent = WKUserContentController()
+        userContent.addUserScript(WebViewScripts.trackerScript)
+        userContent.addUserScript(WebViewScripts.jsUserScript)
+        userContent.addUserScript(WebViewScripts.mediaScript)
+        userContent.add(self, name: "pageURL")
+        userContent.add(self, name: "mediaEvent")
         
-        progressView.trackTintColor = .clear
-        progressView.progressTintColor = .blue
-        progressView.translatesAutoresizingMaskIntoConstraints = false
+        // Create configuration
+        let config = WKWebViewConfiguration()
+        config.userContentController = userContent
+        config.allowsInlineMediaPlayback = true
+        config.mediaTypesRequiringUserActionForPlayback = []
         
+        // Initialize WebView
+        webView = WKWebView(frame: .zero, configuration: config)
+        webView.navigationDelegate = self
+        webView.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Add observer for progress
+        webView.addObserver(
+            self,
+            forKeyPath: #keyPath(WKWebView.estimatedProgress),
+            options: .new,
+            context: nil
+        )
+    }
+    
+    private func setupUI() {
+        view.backgroundColor = .systemBackground
+        
+        view.addSubview(webView)
         view.addSubview(progressView)
+        view.addSubview(searchBar)
         view.addSubview(backButton)
         
-        // searchBar pinned to bottom safe area
         NSLayoutConstraint.activate([
-            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 38),
-            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            searchBar.heightAnchor.constraint(equalToConstant: 54),
+            // WebView
+            webView.topAnchor.constraint(equalTo: view.topAnchor),
+            webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            webView.bottomAnchor.constraint(equalTo: searchBar.topAnchor),
             
+            // Progress View
             progressView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             progressView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             progressView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             progressView.heightAnchor.constraint(equalToConstant: 2),
             
+            // Back Button (Left side)
             backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            backButton.trailingAnchor.constraint(equalTo: searchBar.leadingAnchor),
-            backButton.centerYAnchor.constraint(equalTo: searchBar.centerYAnchor),
-            backButton.heightAnchor.constraint(equalToConstant: 54)
+            backButton.widthAnchor.constraint(equalToConstant: 54),
+            backButton.heightAnchor.constraint(equalToConstant: 54),
+            backButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            
+            // Search Bar (Right side, same height)
+            searchBar.leadingAnchor.constraint(equalTo: backButton.trailingAnchor),
+            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            searchBar.heightAnchor.constraint(equalTo: backButton.heightAnchor),
+            searchBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
         ])
-
-        // Keep the searchBar above the keyboard
+        
+        // Keep search bar above keyboard
         view.keyboardLayoutGuide.topAnchor.constraint(equalTo: searchBar.bottomAnchor).isActive = true
     }
     
-    private func downloadMedia(from url: String) {
+    private func setupSearchBar() {
+        searchBar.delegate = self
+    }
+    
+    private func loadInitialPage() {
+        loadURL("https://www.youtube.com")
+    }
+    
+    private func cleanupObservers() {
+        webView?.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress))
+    }
+    
+    // MARK: - Navigation
+    
+    private func loadURL(_ input: String) {
+        var urlString = input.trimmingCharacters(in: .whitespacesAndNewlines)
         
+        // Check if input has a scheme
+        if !urlString.contains("://") {
+            if urlString.contains(".") {
+                // Looks like a URL - add https
+                urlString = "https://\(urlString)"
+            } else {
+                // Treat as search query
+                let encodedQuery = urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? urlString
+                urlString = "https://www.google.com/search?q=\(encodedQuery)"
+            }
+        }
+        
+        guard let url = URL(string: urlString) else {
+            showMessage(withTitle: "Invalid URL", message: "Please enter a valid URL or search term")
+            return
+        }
+        
+        webView.load(URLRequest(url: url))
+    }
+    
+    // MARK: - KVO Observer
+    
+    override func observeValue(
+        forKeyPath keyPath: String?,
+        of object: Any?,
+        change: [NSKeyValueChangeKey : Any]?,
+        context: UnsafeMutableRawPointer?
+    ) {
+        if keyPath == #keyPath(WKWebView.estimatedProgress) {
+            updateProgress()
+        }
+    }
+    
+    private func updateProgress() {
+        let progress = Float(webView.estimatedProgress)
+        progressView.progress = progress
+        progressView.isHidden = progress >= 1.0
+    }
+    
+    // MARK: - Download Management
+    
+    private func downloadMedia(from url: String) {
         DownloadGuard.checkAndProceed(from: self) { [weak self] decision in
             guard let self = self else { return }
             
             switch decision {
-            case .proceed: performDownload(with: url)
-            case .cancelled: showMessage(withTitle: "Oop!", message: "Download failed!")
+            case .proceed:
+                self.performDownload(with: url)
+            case .cancelled:
+                self.showMessage(withTitle: "Cancelled", message: "Download was cancelled")
             }
         }
     }
     
     private func performDownload(with url: String) {
-        // FIXME: - ExtractAPI
         ExtractAPI.extract(from: url) { [weak self] result in
             guard let self = self else { return }
+            
             DispatchQueue.main.async {
                 switch result {
                 case .failure(let error):
-                    self.showAlert(title: "Oop!", message: "Extract Fail \(error)!")
-
-                case .success(let resp):
-                    if resp.isTooLong {
-                        self.showAlert(title: "Oop!", message: "Choose no longer than 10 minutes!")
-                        return
-                    }
-
-                    guard let safeUrl = URL(string: resp.url) else {
-                        return
-                    }
-
-                    print("Debug: extract success , ready to download.")
-                    DownloadManager.shared.enqueue(url: safeUrl, title: resp.title, thumbURL: resp.thumb, duration: resp.duration)
+                    print("Debug: Extract failed - \(error.localizedDescription)")
+                    self.showMessage(withTitle: "Oops!", message: "Failed to extract media information")
+                    
+                case .success(let response):
+                    self.handleExtractSuccess(response)
                 }
             }
         }
     }
     
-    private func showAlert(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
-    }
-    
-    deinit {
-        webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress))
-    }
-    
-    // MARK: – KVO for progress
-    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        if keyPath == "estimatedProgress" {
-            progressView.progress = Float(webView.estimatedProgress)
-            progressView.isHidden = webView.estimatedProgress >= 1
+    private func handleExtractSuccess(_ response: ExtractResponse) {
+        // Check duration limit
+        if response.isTooLong {
+            showMessage(withTitle: "Duration Limit", message: "Please choose media no longer than 10 minutes")
+            return
         }
-    }
-
-    //MARK: - Selector
-    @objc func handleBackButton() {
-        webView.goBack()
+        
+        // Validate URL
+        guard let mediaURL = URL(string: response.url) else {
+            showMessage(withTitle: "Invalid URL", message: "Could not parse media URL")
+            return
+        }
+        
+        print("Debug: Extract success - Ready to download")
+        print("Debug: Title: \(response.title)")
+        print("Debug: URL: \(response.url)")
+        print("Debug: Duration: \(response.duration)s")
+        
+        // Enqueue download
+        DownloadManager.shared.enqueue(
+            url: mediaURL,
+            title: response.title,
+            thumbURL: response.thumb,
+            duration: response.duration
+        )
     }
     
-    //MARK: - Media Download Prompt
+    // MARK: - Media Download Prompt
+    
     private func promptDownloadOptions(for url: String, mediaType: String, mediaTitle: String) {
+        let alert = UIAlertController(
+            title: "Download Media?",
+            message: "\(mediaType)\n\(mediaTitle)",
+            preferredStyle: .alert
+        )
         
-        let alert = UIAlertController(title: "Download Media?",
-                                      message: mediaType,
-                                      preferredStyle: .alert)
+        // Download Action
+        alert.addAction(UIAlertAction(title: "Download", style: .default) { [weak self] _ in
+            self?.downloadMedia(from: url)
+        })
         
-        alert.addAction(UIAlertAction(title: "Download", style: .default, handler: { _ in
-            self.downloadMedia(from: url)
-        }))
-        
-        alert.addAction(UIAlertAction(title: "Copy Link", style: .default, handler: { _ in
+        // Copy Link Action
+        alert.addAction(UIAlertAction(title: "Copy Link", style: .default) { [weak self] _ in
+            guard let self = self else { return }
             UIPasteboard.general.string = self.lastWatchURL
-            self.showAlert(title: "Success", message: "Link copied to clipboard")
-        }))
+            self.showMessage(withTitle: "Success", message: "Link copied to clipboard")
+        })
         
+        // Cancel Action
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         
         present(alert, animated: true)
     }
     
-    func playVideo(from url: URL) {
-        let player = AVPlayer(url: url)
-        let playerViewController = AVPlayerViewController()
-        playerViewController.player = player
-
-        // Present the video player
-        DispatchQueue.main.async {
-            self.present(playerViewController, animated: true) {
-                player.play()
-            }
+    // MARK: - Actions
+    
+    @objc private func handleBackButton() {
+        if webView.canGoBack {
+            webView.goBack()
         }
     }
-    
-    func playInApp(with url: String) {
-        ExtractAPI.extract(from: url) { [weak self] result in
-            guard let self = self else { return }
-            DispatchQueue.main.async {
-                switch result {
-                case .failure(let error):
-                    self.showAlert(title: "Oop!", message: "Extract Fail \(error)!")
-                    
-                case .success(let resp):
-                    if resp.isTooLong {
-                        self.showAlert(title: "Oop!", message: "Video longer than 10 minutes!")
-                        return
-                    }
-                    
-                    guard let url = URL(string: resp.url) else {
-                        return
-                    }
-                    
-                    // 1) Pause the page player to avoid double audio
-                    self.webView.evaluateJavaScript("document.querySelector('video,audio')?.pause()")
-                    
-                    self.playVideo(from: url)
-
-                }
-            }
-        }
-    }
-    
-    private func switchNowPlayingTab() {
-        if let tab = self.tabBarController {
-            // assume now playing is at index 2, adjust to your order
-            tab.selectedIndex = 2
-        }
-    }
-    
 }
 
-//MARK: - WKUserScriptHandler
+// MARK: - WKScriptMessageHandler
+
 extension BrowserController: WKScriptMessageHandler {
     
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+    func userContentController(
+        _ userContentController: WKUserContentController,
+        didReceive message: WKScriptMessage
+    ) {
+        guard let body = message.body as? [String: Any] else {
+            print("Debug: Invalid message body format")
+            return
+        }
         
-        guard let body = message.body as? [String: Any] else { return }
+        switch message.name {
+        case "mediaEvent":
+            handleMediaEvent(body)
+            
+        case "pageURL":
+            handlePageURL(body)
+            
+        default:
+            print("Debug: Unknown message name: \(message.name)")
+        }
+    }
+    
+    private func handleMediaEvent(_ body: [String: Any]) {
+        guard let mediaType = body["type"] as? String else {
+            print("Debug: Media event missing type")
+            return
+        }
         
-        if message.name == "mediaEvent" {
-            guard let mediaType = body["type"] as? String else { return }
-            let mediaTitle = body["title"] as? String ?? "nil"
-            
-            
-            
-            if let lastWatchURL = lastWatchURL {
-                DispatchQueue.main.async { [weak self] in
-                    self?.promptDownloadOptions(for: lastWatchURL, mediaType: mediaType, mediaTitle: mediaTitle)
-                }
-            }
-            
-        } else {
-            
-            if let dict = message.body as? [String: Any],
-               let href = dict["href"] as? String {
-//                let reason = dict["reason"] as? String ?? "-"
-                
-                lastWatchURL = href
-//                print("Debug: 🌐 pageURL:", href, "(reason:", reason, ")")
-            } else if let href = message.body as? String {
-                print("Debug: 🌐 pageURL:", href)
-            }
+        let mediaTitle = body["title"] as? String ?? "Untitled"
+        
+        guard let lastWatchURL = lastWatchURL else {
+            print("Debug: No lastWatchURL available")
+            return
+        }
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.promptDownloadOptions(
+                for: lastWatchURL,
+                mediaType: mediaType,
+                mediaTitle: mediaTitle
+            )
+        }
+    }
+    
+    private func handlePageURL(_ body: [String: Any]) {
+        if let href = body["href"] as? String {
+            lastWatchURL = href
+            print("Debug: 🌐 Page URL updated: \(href)")
+        } else if let href = body as? String {
+            lastWatchURL = href
+            print("Debug: 🌐 Page URL (string): \(href)")
         }
     }
 }
 
-// MARK: – WKNavigationDelegate
+// MARK: - WKNavigationDelegate
+
 extension BrowserController: WKNavigationDelegate {
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        // Update title
         title = webView.title
         
-        // Save to history
-//        if let u = webView.url {
-//            RealmService.shared.addHistory(url: u, title: webView.title ?? u.host ?? "Page")
-//            print("Debug: update now : \(webView.title ?? "")")
-//        }
+        // Update search bar
+        searchBar.text = webView.url?.absoluteString
+        
+        print("Debug: Page loaded - \(webView.title ?? "No title")")
     }
     
-}
-
-//MARK: - UITextFieldDelegate
-extension BrowserController: UITextFieldDelegate {
-    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        textField.resignFirstResponder()
-        if let text = textField.text, !text.isEmpty {
-            load(text)
-        }
-        return true
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        print("Debug: Navigation failed - \(error.localizedDescription)")
+        progressView.isHidden = true
+    }
+    
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        progressView.isHidden = false
+        print("Debug: Navigation started")
     }
 }
 
-//MARK: - UISearchResultUpdating
-extension BrowserController: UISearchResultsUpdating {
-    func updateSearchResults(for searchController: UISearchController) {
-//        searchBar.text = webView.url?.absoluteString
-    }
-}
+// MARK: - UISearchBarDelegate
 
-//MARK: - UISearchBarDelegate
 extension BrowserController: UISearchBarDelegate {
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        
         searchBar.resignFirstResponder()
-        guard var text = searchBar.text, !text.isEmpty else { return }
         
-        // Add scheme if missing
-        if !text.contains("://") {
-            text = "https://\(text).com"
-            print("Debug: searchBar text : \(text)")
-            
-            if let url = URL(string: text) {
-                webView.load(URLRequest(url: url))
-            }
+        guard let text = searchBar.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !text.isEmpty else {
+            return
         }
-//        guard let url = URL(string: text) else { return }
-//        webView.load(URLRequest(url: url))
+        
+        loadURL(text)
+    }
+    
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        // Select all text for easy editing
+        searchBar.searchTextField.selectAll(nil)
+    }
+}
+
+// MARK: - UISearchResultsUpdating
+
+extension BrowserController: UISearchResultsUpdating {
+    func updateSearchResults(for searchController: UISearchController) {
+        searchBar.text = webView.url?.absoluteString
     }
 }
 
