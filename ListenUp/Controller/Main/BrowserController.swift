@@ -361,9 +361,6 @@ extension BrowserController: WKScriptMessageHandler {
         if let href = body["href"] as? String {
             lastWatchURL = href
             print("Debug: 🌐 Page URL updated: \(href)")
-        } else if let href = body as? String {
-            lastWatchURL = href
-            print("Debug: 🌐 Page URL (string): \(href)")
         }
     }
 }

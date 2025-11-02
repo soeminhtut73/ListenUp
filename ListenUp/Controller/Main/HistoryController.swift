@@ -333,7 +333,7 @@ final class HistoryController: UIViewController {
     // MARK: - Action Sheet
     
     private func showActionSheet(for item: DownloadItem) {
-        print("Debug: selected item : \(item.title)")
+//        print("Debug: selected item : \(item.title)")
         let actionSheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
         // Convert action

@@ -226,12 +226,12 @@ class DownloadTableViewCell: UITableViewCell {
         
         // Add file size if available
         if item.fileSize > 0 {
-            detailComponents.append(formatFileSize(item.fileSize))
+            detailComponents.append(item.fileSize.fileSizeString)
         }
         
         // Add duration if available
         if item.duration > 0 {
-            detailComponents.append(formatDuration(item.duration))
+            detailComponents.append(item.duration.timeFormattedString)
         }
         
         // Add format if available
@@ -264,20 +264,6 @@ class DownloadTableViewCell: UITableViewCell {
             albumImageView.image = UIImage(systemName: "questionmark.video")
             albumImageView.contentMode = .center
         }
-    }
-    
-    // MARK: - Formatting Helpers
-    private func formatFileSize(_ bytes: Int64) -> String {
-        let formatter = ByteCountFormatter()
-        formatter.allowedUnits = [.useKB, .useMB, .useGB]
-        formatter.countStyle = .file
-        return formatter.string(fromByteCount: bytes)
-    }
-    
-    private func formatDuration(_ duration: TimeInterval) -> String {
-        let minutes = Int(duration) / 60
-        let seconds = Int(duration) % 60
-        return String(format: "%d:%02d", minutes, seconds)
     }
     
     // MARK: - Actions

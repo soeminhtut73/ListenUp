@@ -214,6 +214,25 @@ extension Notification.Name {
     static let playbackDidUpdate = Notification.Name("PlaybackManager.didUpdate")
 }
 
+//MARK: - Int64+fileSize
+extension Int64 {
+    var fileSizeString: String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useKB, .useMB, .useGB]
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: self)
+    }
+}
+
+//MARK: - TimeFormatter
+extension TimeInterval {
+    var timeFormattedString: String {
+        let minutes = Int(self) / 60
+        let seconds = Int(self) % 60
+        return String(format: "%d:%02d", minutes, seconds)
+    }
+}
+
 //MARK: - UIApplication
 extension UIApplication {
     /// Returns the key window for iOS 15+

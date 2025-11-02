@@ -202,8 +202,6 @@ class RingtoneDetailViewController: UIViewController {
         let separatorView = UIView()
         separatorView.backgroundColor = .black
         separatorView.translatesAutoresizingMaskIntoConstraints = false
-//        containerView.backgroundColor = .systemGray6
-//        containerView.layer.cornerRadius = 10
         
         let iconImageView = UIImageView()
         iconImageView.image = UIImage(systemName: icon)

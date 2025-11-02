@@ -40,7 +40,6 @@
 		04396CD02E99E509002B907A /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396CCF2E99E509002B907A /* NetworkMonitor.swift */; };
 		04396CD22E9A129D002B907A /* DownloadNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396CD12E9A129D002B907A /* DownloadNotificationManager.swift */; };
 		0461FED52E2A9D680052F966 /* WebViewScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0461FED42E2A9D680052F966 /* WebViewScripts.swift */; };
-		0461FEED2E2E756A0052F966 /* HistoryTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0461FEEC2E2E756A0052F966 /* HistoryTableViewCell.swift */; };
 		0461FEEF2E2E8C050052F966 /* CircularProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0461FEEE2E2E8C050052F966 /* CircularProgressView.swift */; };
 		04B16ABE2EA0E7F500332961 /* MusicCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04B16ABD2EA0E7F500332961 /* MusicCategory.swift */; };
 		04B16AC02EA0E90300332961 /* Ringtone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04B16ABF2EA0E90300332961 /* Ringtone.swift */; };
@@ -114,7 +113,6 @@
 		0440B27F2DF003DE00184BE2 /* ListenUpTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ListenUpTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0440B2892DF003DE00184BE2 /* ListenUpUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ListenUpUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0461FED42E2A9D680052F966 /* WebViewScripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewScripts.swift; sourceTree = "<group>"; };
-		0461FEEC2E2E756A0052F966 /* HistoryTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryTableViewCell.swift; sourceTree = "<group>"; };
 		0461FEEE2E2E8C050052F966 /* CircularProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularProgressView.swift; sourceTree = "<group>"; };
 		04B16ABD2EA0E7F500332961 /* MusicCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicCategory.swift; sourceTree = "<group>"; };
 		04B16ABF2EA0E90300332961 /* Ringtone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ringtone.swift; sourceTree = "<group>"; };
@@ -299,7 +297,6 @@
 		04D81B672EB39B7B003F9392 /* Cell */ = {
 			isa = PBXGroup;
 			children = (
-				0461FEEC2E2E756A0052F966 /* HistoryTableViewCell.swift */,
 				041BB0BB2EABC7B7004BC0D8 /* DownloadTableViewCell.swift */,
 				04B16AC82EA1196D00332961 /* RingtoneCell.swift */,
 			);
@@ -684,7 +681,6 @@
 				041469902DF415A3009D6EF9 /* Extension.swift in Sources */,
 				041BB0B82EAB643C004BC0D8 /* AudioConverter.swift in Sources */,
 				04B16ACB2EA125B300332961 /* RingtoneDetailViewController.swift in Sources */,
-				0461FEED2E2E756A0052F966 /* HistoryTableViewCell.swift in Sources */,
 				04396C912E893B69002B907A /* PlayingIndicatorView.swift in Sources */,
 				041C4AFF2E696B0B005B7DEC /* DownloadItem.swift in Sources */,
 				041BB0BC2EABC7B7004BC0D8 /* DownloadTableViewCell.swift in Sources */,
