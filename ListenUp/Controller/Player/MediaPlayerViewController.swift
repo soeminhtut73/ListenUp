@@ -16,48 +16,20 @@ enum LoopMode { case off, one, all }
 // MARK: - Media Player VC (Realm-aware)
 final class MediaPlayerViewController: UIViewController {
     
-    private let playerView = PlayerView()
+    var downloadsResults: Results<DownloadItem>!
+    
+    //MARK: - Singleton
     private var player = PlayerCenter.shared.player
     
+    //MARK: - Properties
     private let artworkView = UIImageView()
     
     private let controlsStack = UIStackView()
     private let timeRowStack = UIStackView()
     private let transportStack = UIStackView()
     private let optionButtonStack = UIStackView()
-
-    private var controlsOverlayConstraints: [NSLayoutConstraint] = []
-    private var controlsBelowConstraints: [NSLayoutConstraint] = []
-
-    // Optional gradient for readability in fullscreen
-    private var fullscreenGradient: CAGradientLayer?
-    
-    // Inject your live Results before presenting
-    var downloadsResults: Results<DownloadItem>!
-    
-    func startAt(url: URL?, mediaType: MediaType? = .video) {
-        pendingStartURL = url
-        
-        switch mediaType {
-        case .video:
-            artworkView.isHidden = true
-            videoView.isHidden = false
-        case.audio:
-            artworkView.isHidden = false
-            videoView.isHidden = true
-        case .none:
-            break
-        }
-        
-        if let url = url, let idx = playlist.firstIndex(where: { $0.url == url }) {
-            currentIndex = idx
-            startCurrent(replace: true)
-            pendingStartURL = nil
-        }
-    }
     
     // UI
-    private let closeButton = UIButton(type: .system)
     private let videoView = PlayerView()
     private let titleLabel = UILabel()
     private let slider = UISlider()
@@ -91,10 +63,6 @@ final class MediaPlayerViewController: UIViewController {
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        videoView.player = player
-        
-        // IMPORTANT: Configure audio session for background playback
-        configureAudioSession()
         
         setupUI()
         setupActions()
@@ -102,18 +70,35 @@ final class MediaPlayerViewController: UIViewController {
         startObservingDownloads()   // builds playlist & starts playback
         startAudioSessionObservers()
         setupRemoteCommandCenter()
+        configureAudioSession()
         observeBackgroundEvents()
         setupGesture()
-    }
-    
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        fullscreenGradient?.frame = videoView.bounds
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         try? AVAudioSession.sharedInstance().setActive(true)
+    }
+    
+    func startAt(url: URL?, mediaType: MediaType? = .video) {
+        pendingStartURL = url
+        
+        switch mediaType {
+        case .video:
+            artworkView.isHidden = true
+            videoView.isHidden = false
+        case.audio:
+            artworkView.isHidden = false
+            videoView.isHidden = true
+        case .none:
+            break
+        }
+        
+        if let url = url, let idx = playlist.firstIndex(where: { $0.url == url }) {
+            currentIndex = idx
+            startCurrent(replace: true)
+            pendingStartURL = nil
+        }
     }
     
     deinit {
@@ -227,11 +212,13 @@ final class MediaPlayerViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = Style.viewBackgroundColor
         
-        // Video View - Fullscreen
+        // Video area
+        videoView.player = player
         videoView.backgroundColor = .black
         videoView.playerLayer.videoGravity = .resizeAspectFill
         videoView.isUserInteractionEnabled = true
         
+        // Artwork overlay for audio
         artworkView.contentMode = .scaleAspectFit
         artworkView.image = UIImage(systemName: "music.note.list")
         artworkView.tintColor = .secondaryLabel
@@ -239,7 +226,7 @@ final class MediaPlayerViewController: UIViewController {
         artworkView.backgroundColor = .systemGray5
         artworkView.clipsToBounds = true
         
-        // Expand Button
+        // Expand control
         expandButton.setImage(UIImage(systemName: "arrow.down.left.and.arrow.up.right"), for: .normal)
         expandButton.tintColor = .white
         expandButton.backgroundColor = UIColor.black.withAlphaComponent(0.3)
@@ -247,18 +234,16 @@ final class MediaPlayerViewController: UIViewController {
         expandButton.addTarget(self, action: #selector(openLandscapeQuickControls), for: .touchUpInside)
         expandButton.clipsToBounds = true
         
-        // Title Label
+        // Labels / slider
         titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
         titleLabel.textColor = .label
         titleLabel.numberOfLines = 3
         titleLabel.textAlignment = .center
         
-        // Slider
-        slider.minimumTrackTintColor = UIColor.label
+        slider.minimumTrackTintColor = .label
         slider.maximumTrackTintColor = UIColor.black.withAlphaComponent(0.1)
         slider.setThumbImage(createThumbImage(), for: .normal)
         
-        // Time Labels
         currentLabel.font = .monospacedDigitSystemFont(ofSize: 12, weight: .medium)
         currentLabel.textColor = .label
         currentLabel.text = "0:00"
@@ -268,7 +253,7 @@ final class MediaPlayerViewController: UIViewController {
         totalLabel.textAlignment = .right
         totalLabel.text = "0:00"
         
-        // Transport Buttons - Smaller sizes
+        // Transport
         prevButton.setImage(UIImage(systemName: "backward.fill"), for: .normal)
         prevButton.tintColor = .label
         prevButton.contentHorizontalAlignment = .fill
@@ -286,25 +271,17 @@ final class MediaPlayerViewController: UIViewController {
         
         skipForwardButton.setImage(UIImage(systemName: "goforward.15"), for: .normal)
         skipForwardButton.tintColor = .label
-        skipForwardButton.contentHorizontalAlignment = .fill
-        skipForwardButton.contentVerticalAlignment = .fill
         
         skipBackwardButton.setImage(UIImage(systemName: "gobackward.15"), for: .normal)
         skipBackwardButton.tintColor = .label
-        skipBackwardButton.contentHorizontalAlignment = .fill
-        skipBackwardButton.contentVerticalAlignment = .fill
         
-        // Option Buttons
+        // Options
         shuffleButton.setImage(UIImage(systemName: "shuffle"), for: .normal)
         shuffleButton.tintColor = .secondaryLabel
-        shuffleButton.contentHorizontalAlignment = .fill
-        shuffleButton.contentVerticalAlignment = .fill
-        
         loopButton.setImage(UIImage(systemName: "repeat"), for: .normal)
         loopButton.tintColor = .secondaryLabel
-        loopButton.contentHorizontalAlignment = .fill
-        loopButton.contentVerticalAlignment = .fill
         
+        // Add subviews
         [videoView, artworkView, expandButton, titleLabel, slider,
          currentLabel, totalLabel, prevButton, playPauseButton,
          nextButton, shuffleButton, loopButton].forEach {
@@ -312,6 +289,7 @@ final class MediaPlayerViewController: UIViewController {
             view.addSubview($0)
         }
         
+        // Transport stack
         transportStack.axis = .horizontal
         transportStack.alignment = .center
         transportStack.distribution = .equalSpacing
@@ -325,6 +303,7 @@ final class MediaPlayerViewController: UIViewController {
         
         transportStack.setContentHuggingPriority(.required, for: .horizontal)
         transportStack.setContentCompressionResistancePriority(.required, for: .horizontal)
+        
         NSLayoutConstraint.activate([
             prevButton.widthAnchor.constraint(equalToConstant: 34),
             prevButton.heightAnchor.constraint(equalToConstant: 34),
@@ -332,13 +311,13 @@ final class MediaPlayerViewController: UIViewController {
             playPauseButton.heightAnchor.constraint(equalToConstant: 50),
             nextButton.widthAnchor.constraint(equalToConstant: 34),
             nextButton.heightAnchor.constraint(equalToConstant: 34),
-            
             skipBackwardButton.widthAnchor.constraint(equalToConstant: 34),
             skipBackwardButton.heightAnchor.constraint(equalToConstant: 34),
             skipForwardButton.widthAnchor.constraint(equalToConstant: 34),
             skipForwardButton.heightAnchor.constraint(equalToConstant: 34),
         ])
         
+        // Options row
         let leftSpacer = UIView()
         let rightSpacer = UIView()
         optionButtonStack.axis = .horizontal
@@ -355,25 +334,24 @@ final class MediaPlayerViewController: UIViewController {
             shuffleButton.heightAnchor.constraint(equalToConstant: 32),
             loopButton.widthAnchor.constraint(equalToConstant: 32),
             loopButton.heightAnchor.constraint(equalToConstant: 32),
-            
             leftSpacer.widthAnchor.constraint(equalToConstant: 30),
             rightSpacer.widthAnchor.constraint(equalToConstant: 30),
         ])
         
+        // Time row
         timeRowStack.axis = .horizontal
         timeRowStack.alignment = .center
         timeRowStack.distribution = .fill
         timeRowStack.spacing = 8
         timeRowStack.translatesAutoresizingMaskIntoConstraints = false
-        
         currentLabel.setContentHuggingPriority(.required, for: .horizontal)
         totalLabel.setContentHuggingPriority(.required, for: .horizontal)
         slider.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        
         timeRowStack.addArrangedSubview(currentLabel)
         timeRowStack.addArrangedSubview(slider)
         timeRowStack.addArrangedSubview(totalLabel)
         
+        // Column
         controlsStack.axis = .vertical
         controlsStack.alignment = .fill
         controlsStack.distribution = .fill
@@ -385,6 +363,7 @@ final class MediaPlayerViewController: UIViewController {
         controlsStack.addArrangedSubview(optionButtonStack)
         view.addSubview(controlsStack)
         
+        // Constraints
         NSLayoutConstraint.activate([
             titleLabel.heightAnchor.constraint(equalToConstant: 64),
             
@@ -396,7 +375,7 @@ final class MediaPlayerViewController: UIViewController {
             videoView.bottomAnchor.constraint(equalTo: view.centerYAnchor, constant: -20),
             videoView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             videoView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            videoView.heightAnchor.constraint(equalTo: videoView.widthAnchor, multiplier: 9.0/16.0),
+            videoView.heightAnchor.constraint(equalTo: videoView.widthAnchor, multiplier: 9.0 / 16.0),
             
             artworkView.centerYAnchor.constraint(equalTo: videoView.centerYAnchor),
             artworkView.centerXAnchor.constraint(equalTo: videoView.centerXAnchor),
@@ -428,8 +407,6 @@ final class MediaPlayerViewController: UIViewController {
     }
     
     private func setupActions() {
-        closeButton.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
-        
         prevButton.addTarget(self, action: #selector(prevTapped), for: .touchUpInside)
         playPauseButton.addTarget(self, action: #selector(playPauseTapped), for: .touchUpInside)
         nextButton.addTarget(self, action: #selector(nextTapped), for: .touchUpInside)
@@ -602,7 +579,7 @@ final class MediaPlayerViewController: UIViewController {
     @objc private func skipBack15Tapped() {
         PlayerCenter.shared.skipBackward15()
     }
-
+    
     @objc private func skipForward15Tapped() {
         PlayerCenter.shared.skipForward15()
     }

@@ -10,9 +10,15 @@ import AVFoundation
 import MediaPlayer
 import RealmSwift
 
+// MARK: - MiniPlayerContainerViewController
+
 class MiniPlayerContainerViewController: UIViewController {
     
+    // MARK: - Singleton
+    
     static let shared = MiniPlayerContainerViewController()
+    
+    // MARK: - Properties
     
     private var miniPlayerView: MiniPlayerView?
     private var miniPlayerBottomConstraint: NSLayoutConstraint?
@@ -20,6 +26,19 @@ class MiniPlayerContainerViewController: UIViewController {
     
     private let miniPlayerHeight: CGFloat = 65
     private var isShowing = false
+    
+    // MARK: - Realm Access
+    
+    private var realm: Realm? {
+        return try? Realm()
+    }
+    
+    private var downloadsResults: Results<DownloadItem>? {
+        return RealmService.shared.fetchAllMedia()
+            .sorted(byKeyPath: "createdAt", ascending: false)
+    }
+    
+    // MARK: - Initialization
     
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         super.init(nibName: nil, bundle: nil)
@@ -29,28 +48,81 @@ class MiniPlayerContainerViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    private var realm: Realm? {
-        return try? Realm()
+    deinit {
+        stopObservingPlayer()
     }
     
-    private var downloadsResults: Results<DownloadItem>? {
-        // This query is lazy - Realm doesn't load all items into memory
-        return RealmService.shared.fetchAllMedia().sorted(byKeyPath: "createdAt", ascending: false)
-    }
+    // MARK: - Show/Hide
     
-    func show(in tabBarController: UITabBarController) {
+    func show(in tabBarController: UITabBarController, animated: Bool = true) {
         guard !isShowing else { return }
         isShowing = true
-
+        
         // Create mini player
-        let miniPlayer = MiniPlayerView()
-        miniPlayer.translatesAutoresizingMaskIntoConstraints = false
+        let miniPlayer = createMiniPlayer()
+        miniPlayer.alpha = animated ? 0 : 1
         tabBarController.view.addSubview(miniPlayer)
         
-        // Position above tab bar
+        // Setup constraints
+        let bottomConstraint = setupConstraints(
+            for: miniPlayer,
+            in: tabBarController,
+            initialOffset: animated ? miniPlayerHeight : 0
+        )
+        
+        self.miniPlayerView = miniPlayer
+        self.miniPlayerBottomConstraint = bottomConstraint
+        
+        // Configure actions
+        configureMiniPlayerActions()
+        
+        // Start observing
+        startObservingPlayer()
+        
+        // Adjust tab bar
+        tabBarController.adjustForMiniPlayer(height: miniPlayerHeight, animated: animated)
+        
+        // Animate in
+        if animated {
+            animateShow(in: tabBarController, bottomConstraint: bottomConstraint, miniPlayer: miniPlayer)
+        } else {
+            bottomConstraint.constant = 0
+        }
+    }
+    
+    func hide(animated: Bool = true) {
+        guard isShowing, let miniPlayerView = miniPlayerView else { return }
+        isShowing = false
+        
+        // Adjust tab bar
+        if let tabBarController = miniPlayerView.window?.rootViewController as? UITabBarController {
+            tabBarController.adjustForMiniPlayer(height: 0, animated: animated)
+        }
+        
+        // Animate or immediate hide
+        if animated {
+            animateHide(miniPlayerView: miniPlayerView)
+        } else {
+            removeMiniPlayer()
+        }
+    }
+    
+    // MARK: - Setup
+    
+    private func createMiniPlayer() -> MiniPlayerView {
+        let miniPlayer = MiniPlayerView()
+        miniPlayer.translatesAutoresizingMaskIntoConstraints = false
+        return miniPlayer
+    }
+    
+    private func setupConstraints(
+        for miniPlayer: MiniPlayerView,
+        in tabBarController: UITabBarController,
+        initialOffset: CGFloat
+    ) -> NSLayoutConstraint {
         let bottomConstraint = miniPlayer.bottomAnchor.constraint(
             equalTo: tabBarController.tabBar.topAnchor,
-            constant: miniPlayerHeight // Initially hidden
+            constant: initialOffset
         )
         
         NSLayoutConstraint.activate([
@@ -60,53 +132,74 @@ class MiniPlayerContainerViewController: UIViewController {
             bottomConstraint
         ])
         
-        self.miniPlayerView = miniPlayer
-        self.miniPlayerBottomConstraint = bottomConstraint
-        
-        // Configure actions
-        miniPlayer.onTap = { [weak self] in
+        return bottomConstraint
+    }
+    
+    private func configureMiniPlayerActions() {
+        miniPlayerView?.onTap = { [weak self] in
             self?.expandToFullPlayer()
         }
         
-        miniPlayer.onPlayPause = { [weak self] in
+        miniPlayerView?.onPlayPause = { [weak self] in
             self?.togglePlayPause()
         }
-        
-        // Start observing player
-        startObservingPlayer()
-        
-        // Animate in
-        tabBarController.view.layoutIfNeeded()
-        UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut) {
-            bottomConstraint.constant = 0
-            tabBarController.view.layoutIfNeeded()
-        }
     }
     
-    func hide() {
-        guard isShowing, let miniPlayerView = miniPlayerView else { return }
-        isShowing = false
+    // MARK: - Animations
+    
+    private func animateShow(
+        in tabBarController: UITabBarController,
+        bottomConstraint: NSLayoutConstraint,
+        miniPlayer: MiniPlayerView
+    ) {
+        tabBarController.view.layoutIfNeeded()
         
-        UIView.animate(withDuration: 0.3, animations: {
-            self.miniPlayerBottomConstraint?.constant = self.miniPlayerHeight
-            miniPlayerView.superview?.layoutIfNeeded()
-        }) { _ in
-            miniPlayerView.removeFromSuperview()
-            self.miniPlayerView = nil
-            self.miniPlayerBottomConstraint = nil
-            self.stopObservingPlayer()
-        }
+        UIView.animate(
+            withDuration: 0.3,
+            delay: 0,
+            options: .curveEaseOut,
+            animations: {
+                bottomConstraint.constant = 0
+                miniPlayer.alpha = 1
+                tabBarController.view.layoutIfNeeded()
+            }
+        )
     }
+    
+    private func animateHide(miniPlayerView: MiniPlayerView) {
+        UIView.animate(
+            withDuration: 0.3,
+            animations: {
+                self.miniPlayerBottomConstraint?.constant = self.miniPlayerHeight
+                miniPlayerView.alpha = 0
+                miniPlayerView.superview?.layoutIfNeeded()
+            },
+            completion: { _ in
+                self.removeMiniPlayer()
+            }
+        )
+    }
+    
+    private func removeMiniPlayer() {
+        miniPlayerView?.removeFromSuperview()
+        miniPlayerView = nil
+        miniPlayerBottomConstraint = nil
+        stopObservingPlayer()
+    }
+    
+    // MARK: - Player Observation
     
     private func startObservingPlayer() {
-        let player = PlayerCenter.shared.player
         let interval = CMTime(seconds: 0.5, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
         
-        timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
+        timeObserver = PlayerCenter.shared.player.addPeriodicTimeObserver(
+            forInterval: interval,
+            queue: .main
+        ) { [weak self] _ in
             self?.updateMiniPlayerUI()
         }
         
-        // Observe player item changes
+        // Observe playback end
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(updateMiniPlayerUI),
@@ -120,6 +213,7 @@ class MiniPlayerContainerViewController: UIViewController {
             PlayerCenter.shared.player.removeTimeObserver(observer)
             timeObserver = nil
         }
+        
         NotificationCenter.default.removeObserver(self)
     }
     
@@ -132,8 +226,9 @@ class MiniPlayerContainerViewController: UIViewController {
         let progress = duration > 0 ? Float(currentTime / duration) : 0
         let isPlaying = player.timeControlStatus == .playing
         
-        // Get title from Now Playing info if available
-        let title = MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPMediaItemPropertyTitle] as? String ?? "Unknown"
+        // Get title from Now Playing info
+        let title = MPNowPlayingInfoCenter.default()
+            .nowPlayingInfo?[MPMediaItemPropertyTitle] as? String ?? "Unknown"
         
         miniPlayerView?.updateUI(
             title: title,
@@ -142,16 +237,20 @@ class MiniPlayerContainerViewController: UIViewController {
         )
     }
     
+    // MARK: - Actions
+    
     private func expandToFullPlayer() {
-        // Present the full player
-        guard let tabBarController = UIApplication.shared.rootTabBarController else { return }
+        guard let tabBarController = UIApplication.shared.rootTabBarController else {
+            print("❌ Tab bar controller not found")
+            return
+        }
         
-        // FIXME: - To update download result
         let playerVC = MediaPlayerViewController()
         playerVC.downloadsResults = downloadsResults
         
-        if let url = (PlayerCenter.shared.player.currentItem?.asset as? AVURLAsset)?.url {
-            playerVC.startAt(url: url)   // tells the full VC: “attach to this one”
+        // Attach to current playing URL
+        if let url = PlayerCenter.shared.currentURL {
+            playerVC.startAt(url: url)
         }
         
         playerVC.modalPresentationStyle = .overFullScreen
@@ -166,93 +265,7 @@ class MiniPlayerContainerViewController: UIViewController {
         } else {
             PlayerCenter.shared.player.play()
         }
+        
         updateMiniPlayerUI()
-    }
-}
-
-extension MiniPlayerContainerViewController {
-    
-    func show(in tabBarController: UITabBarController, animated: Bool = true) {
-        guard !isShowing else { return }
-        isShowing = true
-        
-        // Create mini player
-        let miniPlayer = MiniPlayerView()
-        miniPlayer.translatesAutoresizingMaskIntoConstraints = false
-        miniPlayer.alpha = 0
-        tabBarController.view.addSubview(miniPlayer)
-        
-        // Position above tab bar
-        let bottomConstraint = miniPlayer.bottomAnchor.constraint(
-            equalTo: tabBarController.tabBar.topAnchor,
-            constant: animated ? miniPlayerHeight : 0
-        )
-        
-        NSLayoutConstraint.activate([
-            miniPlayer.leadingAnchor.constraint(equalTo: tabBarController.view.leadingAnchor),
-            miniPlayer.trailingAnchor.constraint(equalTo: tabBarController.view.trailingAnchor),
-            miniPlayer.heightAnchor.constraint(equalToConstant: miniPlayerHeight),
-            bottomConstraint
-        ])
-        
-        self.miniPlayerView = miniPlayer
-        self.miniPlayerBottomConstraint = bottomConstraint
-        
-        // Configure actions
-        miniPlayer.onTap = { [weak self] in
-            self?.expandToFullPlayer()
-        }
-        
-        miniPlayer.onPlayPause = { [weak self] in
-            self?.togglePlayPause()
-        }
-        
-        // Start observing player
-        startObservingPlayer()
-        
-        // Adjust tab bar content
-        tabBarController.adjustForMiniPlayer(height: miniPlayerHeight, animated: animated)
-        
-        // Animate in
-        if animated {
-            tabBarController.view.layoutIfNeeded()
-            UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut) {
-                bottomConstraint.constant = 0
-                miniPlayer.alpha = 1
-                tabBarController.view.layoutIfNeeded()
-            }
-        } else {
-            bottomConstraint.constant = 0
-            miniPlayer.alpha = 1
-        }
-    }
-    
-    func hide(animated: Bool = true) {
-        guard isShowing, let miniPlayerView = miniPlayerView else { return }
-        isShowing = false
-        
-        // Find tab bar controller
-        if let tabBarController = miniPlayerView.window?.rootViewController as? UITabBarController {
-            tabBarController.adjustForMiniPlayer(height: 0, animated: animated)
-        }
-        
-        let completion = {
-            miniPlayerView.removeFromSuperview()
-            self.miniPlayerView = nil
-            self.miniPlayerBottomConstraint = nil
-            self.stopObservingPlayer()
-        }
-        
-        if animated {
-            UIView.animate(withDuration: 0.3, animations: {
-                self.miniPlayerBottomConstraint?.constant = self.miniPlayerHeight
-                miniPlayerView.alpha = 0
-                miniPlayerView.superview?.layoutIfNeeded()
-            }) { _ in
-                completion()
-            }
-        } else {
-            completion()
-        }
     }
 }

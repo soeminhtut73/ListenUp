@@ -10,9 +10,17 @@ import UIKit
 import AVFoundation
 import MediaPlayer
 
+// MARK: - PlayerCenter
+
 final class PlayerCenter {
+    
+    // MARK: - Singleton
+    
     static let shared = PlayerCenter()
-    var player = AVPlayer()
+    
+    // MARK: - Properties
+    
+    let player = AVPlayer()
     
     var currentURL: URL? {
         (player.currentItem?.asset as? AVURLAsset)?.url
@@ -22,82 +30,86 @@ final class PlayerCenter {
         player.rate > 0 && player.error == nil
     }
     
+    // MARK: - Initialization
+    
     private init() {
-        player = AVPlayer()
-        
-        // Background audio
         configureAudioSession()
-        
-        // (Optional) Remote commands
         setupRemoteCommands()
-        
-        // Handle interruptions (phone calls, Siri, etc.)
+        setupNotifications()
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    // MARK: - Setup
+    
+    private func setupNotifications() {
         NotificationCenter.default.addObserver(
-            self, selector: #selector(handleInterruption(_:)),
-            name: AVAudioSession.interruptionNotification, object: nil
+            self,
+            selector: #selector(handleInterruption(_:)),
+            name: AVAudioSession.interruptionNotification,
+            object: nil
         )
-    }
-    
-    func seek(by delta: Double) {
-        guard let item = player.currentItem else { return }
-        
-        let cur = player.currentTime().seconds
-        let dur = item.duration.seconds
-        var target = cur + delta
-        
-        if dur.isFinite {                      // VOD / local files
-            target = max(0, min(target, max(0, dur - 0.01)))
-        } else {                               // Live / indefinite
-            target = max(0, target)
-        }
-        
-        let wasPlaying = (player.timeControlStatus == .playing)
-        let t = CMTime(seconds: target, preferredTimescale: 600)
-        
-        player.seek(to: t, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
-            guard let self else { return }
-            if wasPlaying { self.player.play() } // resume if it was playing
-            self.updateElapsedTimeForNowPlaying()
-        }
-    }
-    
-    func skipForward15() { seek(by: 15) }
-    func skipBackward15() { seek(by: -15) }
-    
-    private func updateElapsedTimeForNowPlaying() {
-        var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
-        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = player.currentTime().seconds
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
     
     private func configureAudioSession() {
         let s = AVAudioSession.sharedInstance()
         do {
-            try s.setCategory(.playback, mode: .moviePlayback, options: [.allowAirPlay, .allowBluetooth])
+            try s.setCategory(.playback, mode: .moviePlayback, options: [.allowAirPlay, .allowBluetoothA2DP])
             try s.setActive(true)
         } catch { print("Audio session error:", error) }
     }
     
     private func setupRemoteCommands() {
-        let cmd = MPRemoteCommandCenter.shared()
-        cmd.playCommand.addTarget { [weak self] _ in self?.setPlaying(true);  return .success }
-        cmd.pauseCommand.addTarget { [weak self] _ in self?.setPlaying(false); return .success }
-        cmd.togglePlayPauseCommand.addTarget { [weak self] _ in
-            guard let p = self?.player else { return .commandFailed }
-            self?.setPlaying(p.timeControlStatus != .playing)
+        let commandCenter = MPRemoteCommandCenter.shared()
+        
+        // Play Command
+        commandCenter.playCommand.addTarget { [weak self] _ in
+            self?.setPlaying(true)
             return .success
         }
         
-        cmd.skipForwardCommand.preferredIntervals = [15]
-        cmd.skipBackwardCommand.preferredIntervals = [15]
-        cmd.skipForwardCommand.addTarget { [weak self] _ in self?.skipForward15();  return .success }
-        cmd.skipBackwardCommand.addTarget { [weak self] _ in self?.skipBackward15(); return .success }
+        // Pause Command
+        commandCenter.pauseCommand.addTarget { [weak self] _ in
+            self?.setPlaying(false)
+            return .success
+        }
+        
+        // Toggle Play/Pause Command
+        commandCenter.togglePlayPauseCommand.addTarget { [weak self] _ in
+            guard let self = self else { return .commandFailed }
+            self.setPlaying(self.player.timeControlStatus != .playing)
+            return .success
+        }
+        
+        // Skip Forward Command
+        commandCenter.skipForwardCommand.preferredIntervals = [15]
+        commandCenter.skipForwardCommand.addTarget { [weak self] _ in
+            self?.skipForward15()
+            return .success
+        }
+        
+        // Skip Backward Command
+        commandCenter.skipBackwardCommand.preferredIntervals = [15]
+        commandCenter.skipBackwardCommand.addTarget { [weak self] _ in
+            self?.skipBackward15()
+            return .success
+        }
     }
+    
+    // MARK: - Playback Control
     
     func play(url: URL) {
         let item = AVPlayerItem(url: url)
         player.replaceCurrentItem(with: item)
-        try? AVAudioSession.sharedInstance().setActive(true)
+        
+        do {
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            print("❌ Failed to activate audio session:", error)
+        }
+        
         player.play()
     }
     
@@ -115,42 +127,108 @@ final class PlayerCenter {
         } else {
             player.pause()
         }
-        // reflect in Control Center
-        MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyPlaybackRate] = playing ? 1.0 : 0.0
+        
+        // Update Control Center
+        updatePlaybackRate(isPlaying: playing)
     }
     
-    // Keep Control Center in sync
+    func isPlaying() -> Bool {
+        return player.rate > 0.0
+    }
+    
+    // MARK: - Seeking
+    
+    func seek(by delta: Double) {
+        guard let item = player.currentItem else { return }
+        
+        let currentTime = player.currentTime().seconds
+        let duration = item.duration.seconds
+        var targetTime = currentTime + delta
+        
+        // Handle finite duration (VOD/local files)
+        if duration.isFinite {
+            targetTime = max(0, min(targetTime, max(0, duration - 0.01)))
+        } else {
+            // Handle live/indefinite streams
+            targetTime = max(0, targetTime)
+        }
+        
+        let wasPlaying = (player.timeControlStatus == .playing)
+        let seekTime = CMTime(seconds: targetTime, preferredTimescale: 600)
+        
+        player.seek(to: seekTime, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] finished in
+            guard let self = self, finished else { return }
+            
+            if wasPlaying {
+                self.player.play()
+            }
+            
+            self.updateElapsedTimeForNowPlaying()
+        }
+    }
+    
+    func skipForward15() {
+        seek(by: 15)
+    }
+    
+    func skipBackward15() {
+        seek(by: -15)
+    }
+    
+    // MARK: - Now Playing Info
+    
     func updateNowPlaying(title: String, duration: Double, isPlaying: Bool) {
         var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
         info[MPMediaItemPropertyTitle] = title
         info[MPMediaItemPropertyPlaybackDuration] = duration
         info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = player.currentTime().seconds
-        info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0   // 👈 important
+        info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
     
-    func isPlaying() -> Bool {
-        player.rate > 0.0
+    private func updateElapsedTimeForNowPlaying() {
+        var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
+        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = player.currentTime().seconds
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
     
-    @objc private func handleInterruption(_ note: Notification) {
-        guard let info = note.userInfo,
-              let typeVal = info[AVAudioSessionInterruptionTypeKey] as? UInt,
-              let type = AVAudioSession.InterruptionType(rawValue: typeVal) else { return }
+    private func updatePlaybackRate(isPlaying: Bool) {
+        MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
+    }
+    
+    // MARK: - Interruption Handling
+    
+    @objc private func handleInterruption(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let interruptionType = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+            return
+        }
         
-        switch type {
+        switch interruptionType {
         case .began:
-            // Don’t force pause in Control Center; system may do it.
-            MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyPlaybackRate] = 0.0
+            handleInterruptionBegan()
+            
         case .ended:
-            // Resume if the system suggests
-            let shouldResume = (info[AVAudioSessionInterruptionOptionKey] as? UInt).map {
-                AVAudioSession.InterruptionOptions(rawValue: $0).contains(.shouldResume)
-            } ?? false
-            if shouldResume { setPlaying(true) }
-        @unknown default: break
+            handleInterruptionEnded(userInfo: userInfo)
+            
+        @unknown default:
+            break
+        }
+    }
+    
+    private func handleInterruptionBegan() {
+        // Update Control Center - system may pause automatically
+        updatePlaybackRate(isPlaying: false)
+    }
+    
+    private func handleInterruptionEnded(userInfo: [AnyHashable: Any]) {
+        // Check if we should resume playback
+        let shouldResume = (userInfo[AVAudioSessionInterruptionOptionKey] as? UInt)
+            .map { AVAudioSession.InterruptionOptions(rawValue: $0).contains(.shouldResume) } ?? false
+        
+        if shouldResume {
+            setPlaying(true)
         }
     }
 }
-
-
