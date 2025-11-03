@@ -11,8 +11,6 @@ import AVFoundation
 import RealmSwift
 import MediaPlayer
 
-enum LoopMode { case off, one, all }
-
 // MARK: - Media Player VC (Realm-aware)
 final class MediaPlayerViewController: UIViewController {
     
@@ -52,24 +50,19 @@ final class MediaPlayerViewController: UIViewController {
     private var token: NotificationToken?
     private var playlist: [MediaItem] = []
     private var currentIndex: Int = 0
-    private var pendingStartURL: URL?   // set by startAt(url:)
-    private var shuffleOn: Bool = false { didSet { updateShuffleUI() } }
-    private var loopMode: LoopMode = .all { didSet { updateLoopUI() } }
-    
-    // Audio session observers
-    private var interruptionObserver: Any?
-    private var routeObserver: Any?
+    private var pendingStartURL: URL?
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupUI()
+        updateShuffleUI()
+        updateLoopUI()
         setupActions()
         wirePlayer()
-        startObservingDownloads()   // builds playlist & starts playback
+        startObservingDownloads() 
         startAudioSessionObservers()
-        setupRemoteCommandCenter()
         configureAudioSession()
         observeBackgroundEvents()
         setupGesture()
@@ -105,14 +98,6 @@ final class MediaPlayerViewController: UIViewController {
         if let o = timeObs { player.removeTimeObserver(o) }
         NotificationCenter.default.removeObserver(self)
         token?.invalidate()
-        
-        // Clean up audio session observers
-        if let obs = interruptionObserver {
-            NotificationCenter.default.removeObserver(obs)
-        }
-        if let obs = routeObserver {
-            NotificationCenter.default.removeObserver(obs)
-        }
     }
     
     // MARK: - Build playlist from Results
@@ -167,6 +152,17 @@ final class MediaPlayerViewController: UIViewController {
             snap.removeFromSuperview()
             self.present(vc, animated: false)
         }
+    }
+    
+    //MARK: - AudioSessionObserver
+    private func startAudioSessionObservers() {
+        PlayerCenter.shared.setupRemoteCommands()
+        
+        let nc = NotificationCenter.default
+        nc.addObserver(self, selector: #selector(handleCenterNext), name: .playerCenterNextRequested, object: nil)
+        nc.addObserver(self, selector: #selector(handleCenterPrev), name: .playerCenterPrevRequested, object: nil)
+        nc.addObserver(self, selector: #selector(centerLoopChanged), name: .playerCenterLoopModeDidChange, object: nil)
+        nc.addObserver(self, selector: #selector(centerShuffleChanged), name: .playerCenterShuffleDidChange, object: nil)
     }
     
     // MARK: - Observe Realm live changes
@@ -420,11 +416,6 @@ final class MediaPlayerViewController: UIViewController {
         slider.addTarget(self, action: #selector(beginSeek), for: .touchDown)
         slider.addTarget(self, action: #selector(endSeek), for: [.touchUpInside, .touchUpOutside, .touchCancel])
         slider.addTarget(self, action: #selector(seekChanged), for: .valueChanged)
-        
-        NotificationCenter.default.addObserver(self,
-                                               selector: #selector(itemDidEnd(_:)),
-                                               name: .AVPlayerItemDidPlayToEndTime,
-                                               object: nil)
     }
     
     private func wirePlayer() {
@@ -496,7 +487,6 @@ final class MediaPlayerViewController: UIViewController {
                     self.view.alpha = 1.0
                 }
             }
-            
         default:
             break
         }
@@ -545,7 +535,7 @@ final class MediaPlayerViewController: UIViewController {
     
     @objc private func prevTapped() {
         guard !playlist.isEmpty else { return }
-        if shuffleOn {
+        if PlayerCenter.shared.shuffleOn {
             currentIndex = Int.random(in: 0..<playlist.count)
         } else {
             currentIndex = (currentIndex - 1 + playlist.count) % playlist.count
@@ -554,8 +544,9 @@ final class MediaPlayerViewController: UIViewController {
     }
     
     @objc private func nextTapped() {
+        print("Debug: nextTapped action got fired")
         guard !playlist.isEmpty else { return }
-        if shuffleOn {
+        if PlayerCenter.shared.shuffleOn {
             currentIndex = Int.random(in: 0..<playlist.count)
         } else {
             currentIndex = (currentIndex + 1) % playlist.count
@@ -619,44 +610,33 @@ final class MediaPlayerViewController: UIViewController {
     }
     
     // MARK: - Shuffle / Loop
-    @objc private func shuffleTapped() { shuffleOn.toggle() }
-    private func updateShuffleUI() { shuffleButton.tintColor = shuffleOn ? .systemBlue : .secondaryLabel }
+    private func updateShuffleUI() {
+        let on = PlayerCenter.shared.shuffleOn
+        shuffleButton.tintColor = on ? .systemBlue : .secondaryLabel
+    }
+    
+    private func updateLoopUI() {
+        let mode = PlayerCenter.shared.loopMode
+        let icon = (mode == .one) ? "repeat.1" : "repeat"
+        loopButton.setImage(UIImage(systemName: icon), for: .normal)
+        loopButton.tintColor = (mode == .off) ? .secondaryLabel : .systemBlue
+    }
+    
+    @objc private func shuffleTapped() {
+        PlayerCenter.shared.toggleShuffle()
+        updateShuffleUI()
+    }
     
     @objc private func loopTapped() {
-        switch loopMode {
-        case .off: loopMode = .one
-        case .one: loopMode = .all
-        case .all: loopMode = .off
-        }
-    }
-    private func updateLoopUI() {
-        let icon = (loopMode == .one) ? "repeat.1" : "repeat"
-        loopButton.setImage(UIImage(systemName: icon), for: .normal)
-        loopButton.tintColor = (loopMode == .off) ? .secondaryLabel : .systemBlue
+        PlayerCenter.shared.cycleLoopMode()
+        updateLoopUI()
     }
     
     // MARK: - End-of-item handling
-    @objc private func itemDidEnd(_ note: Notification) {
-        guard note.object as? AVPlayerItem === player.currentItem else { return }
-        switch loopMode {
-        case .one:
-            player.seek(to: .zero)
-            player.play()
-        case .all:
-            nextTapped()
-        case .off:
-            refreshPlayIcon()
-        }
-    }
-    
-    // MARK: - Close
-    @objc private func closeTapped() {
-        dismiss(animated: true) {
-            if let tabBarController = UIApplication.shared.rootTabBarController {
-                MiniPlayerContainerViewController.shared.show(in: tabBarController)
-            }
-        }
-    }
+    @objc private func handleCenterNext() { nextTapped() }
+    @objc private func handleCenterPrev() { prevTapped() }
+    @objc private func centerLoopChanged() { updateLoopUI() }
+    @objc private func centerShuffleChanged() { updateShuffleUI() }
     
     // MARK: - Background Audio Setup (CRITICAL FOR BACKGROUND PLAYBACK)
     private func configureAudioSession() {
@@ -668,117 +648,6 @@ final class MediaPlayerViewController: UIViewController {
             print("Audio session configured for background playback")
         } catch {
             print("Audio session error: \(error)")
-        }
-    }
-    
-    // MARK: - Audio Session Observers
-    private func startAudioSessionObservers() {
-        let nc = NotificationCenter.default
-        
-        // Handle interruptions (phone calls, etc.)
-        interruptionObserver = nc.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
-            guard let self else { return }
-            guard let typeRaw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
-                  let type = AVAudioSession.InterruptionType(rawValue: typeRaw) else { return }
-            
-            switch type {
-            case .began:
-                // Interruption began - pause playback
-                self.player.pause()
-                self.updateNowPlayingPlaybackRate(0.0)
-            case .ended:
-                // Interruption ended - check if we should resume
-                let shouldResume = (note.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt)
-                    .flatMap(AVAudioSession.InterruptionOptions.init(rawValue:))?
-                    .contains(.shouldResume) ?? false
-                if shouldResume {
-                    do {
-                        try AVAudioSession.sharedInstance().setActive(true)
-                        self.player.play()
-                        self.updateNowPlayingPlaybackRate(1.0)
-                    } catch {
-                        print("Failed to reactivate audio session: \(error)")
-                    }
-                }
-            @unknown default: break
-            }
-        }
-        
-        // Handle route changes (headphone disconnect, etc.)
-        routeObserver = nc.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] note in
-            guard let self else { return }
-            if let reasonRaw = note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
-               let reason = AVAudioSession.RouteChangeReason(rawValue: reasonRaw),
-               reason == .oldDeviceUnavailable {
-                // Headphones disconnected - pause playback
-                self.player.pause()
-                self.updateNowPlayingPlaybackRate(0.0)
-            }
-        }
-    }
-    
-    // MARK: - Remote Command Center Setup
-    private func setupRemoteCommandCenter() {
-        let commandCenter = MPRemoteCommandCenter.shared()
-        
-        // Play command
-        commandCenter.playCommand.isEnabled = true
-        commandCenter.playCommand.addTarget { [weak self] _ in
-            guard let self else { return .commandFailed }
-            if !self.playlist.isEmpty {
-                self.player.play()
-                self.updateNowPlayingPlaybackRate(1.0)
-                return .success
-            }
-            return .commandFailed
-        }
-        
-        // Pause command
-        commandCenter.pauseCommand.isEnabled = true
-        commandCenter.pauseCommand.addTarget { [weak self] _ in
-            guard let self else { return .commandFailed }
-            self.player.pause()
-            self.updateNowPlayingPlaybackRate(0.0)
-            return .success
-        }
-        
-        // Next track command
-        commandCenter.nextTrackCommand.isEnabled = true
-        commandCenter.nextTrackCommand.addTarget { [weak self] _ in
-            guard let self else { return .commandFailed }
-            self.nextTapped()
-            return .success
-        }
-        
-        // Previous track command
-        commandCenter.previousTrackCommand.isEnabled = true
-        commandCenter.previousTrackCommand.addTarget { [weak self] _ in
-            guard let self else { return .commandFailed }
-            self.prevTapped()
-            return .success
-        }
-        
-        
-        
-        // Change playback position command (scrubbing)
-        commandCenter.changePlaybackPositionCommand.isEnabled = true
-        commandCenter.changePlaybackPositionCommand.addTarget { [weak self] event in
-            guard let self else { return .commandFailed }
-            if let event = event as? MPChangePlaybackPositionCommandEvent {
-                let time = CMTime(seconds: event.positionTime, preferredTimescale: 600)
-                self.player.seek(to: time)
-                return .success
-            }
-            return .commandFailed
-        }
-    }
-    
-    // Helper to update Now Playing info center
-    private func updateNowPlayingPlaybackRate(_ rate: Float) {
-        if var info = MPNowPlayingInfoCenter.default().nowPlayingInfo {
-            info[MPNowPlayingInfoPropertyPlaybackRate] = rate
-            info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = player.currentTime().seconds
-            MPNowPlayingInfoCenter.default().nowPlayingInfo = info
         }
     }
 }

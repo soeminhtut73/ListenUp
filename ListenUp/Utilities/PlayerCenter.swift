@@ -10,8 +10,18 @@ import UIKit
 import AVFoundation
 import MediaPlayer
 
-// MARK: - PlayerCenter
+// MARK: - Notifications surfaced by PlayerCenter
+extension Notification.Name {
+    static let playerCenterNextRequested     = Notification.Name("playerCenterNextRequested")
+    static let playerCenterPrevRequested     = Notification.Name("playerCenterPrevRequested")
+    static let playerCenterLoopModeDidChange = Notification.Name("playerCenterLoopModeDidChange")
+    static let playerCenterShuffleDidChange  = Notification.Name("playerCenterShuffleDidChange")
+}
 
+enum LoopMode { case off, one, all }
+
+// MARK: - PlayerCenter
+//@MainActor
 final class PlayerCenter {
     
     // MARK: - Singleton
@@ -22,6 +32,8 @@ final class PlayerCenter {
     
     let player = AVPlayer()
     
+    private var remoteCommandsSetup = false
+    
     var currentURL: URL? {
         (player.currentItem?.asset as? AVURLAsset)?.url
     }
@@ -30,17 +42,30 @@ final class PlayerCenter {
         player.rate > 0 && player.error == nil
     }
     
+    private(set) var loopMode: LoopMode = .all {
+        didSet {
+            NotificationCenter.default.post(name: .playerCenterLoopModeDidChange, object: self)
+        }
+    }
+    
+    private(set) var shuffleOn: Bool = false {
+        didSet {
+            NotificationCenter.default.post(name: .playerCenterShuffleDidChange, object: self)
+        }
+    }
+    
     // MARK: - Initialization
     
     private init() {
+//        observeEndOfItem()
         configureAudioSession()
         setupRemoteCommands()
         setupNotifications()
     }
     
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
+//    deinit {
+//        NotificationCenter.default.removeObserver(self)
+//    }
     
     // MARK: - Setup
     
@@ -61,41 +86,120 @@ final class PlayerCenter {
         } catch { print("Audio session error:", error) }
     }
     
-    private func setupRemoteCommands() {
-        let commandCenter = MPRemoteCommandCenter.shared()
+    func setupRemoteCommands() {
+        guard !remoteCommandsSetup else { return }
+        remoteCommandsSetup = true
         
-        // Play Command
-        commandCenter.playCommand.addTarget { [weak self] _ in
-            self?.setPlaying(true)
+        let cc = MPRemoteCommandCenter.shared()
+        
+        cc.playCommand.isEnabled = true
+        cc.playCommand.addTarget { [weak self] _ in
+            guard let self else { return .commandFailed }
+            self.player.play()
+            self.updateNowPlayingPlaybackRate(1.0)
             return .success
         }
         
-        // Pause Command
-        commandCenter.pauseCommand.addTarget { [weak self] _ in
-            self?.setPlaying(false)
+        cc.pauseCommand.isEnabled = true
+        cc.pauseCommand.addTarget { [weak self] _ in
+            guard let self else { return .commandFailed }
+            self.player.pause()
+            self.updateNowPlayingPlaybackRate(0.0)
             return .success
         }
         
-        // Toggle Play/Pause Command
-        commandCenter.togglePlayPauseCommand.addTarget { [weak self] _ in
-            guard let self = self else { return .commandFailed }
-            self.setPlaying(self.player.timeControlStatus != .playing)
+        cc.nextTrackCommand.isEnabled = true
+        cc.nextTrackCommand.addTarget { [weak self] _ in
+            guard self != nil else { return .commandFailed }
+            NotificationCenter.default.post(name: .playerCenterNextRequested, object: nil)
             return .success
         }
         
-        // Skip Forward Command
-        commandCenter.skipForwardCommand.preferredIntervals = [15]
-        commandCenter.skipForwardCommand.addTarget { [weak self] _ in
-            self?.skipForward15()
+        cc.previousTrackCommand.isEnabled = true
+        cc.previousTrackCommand.addTarget { [weak self] _ in
+            guard self != nil else { return .commandFailed }
+            NotificationCenter.default.post(name: .playerCenterPrevRequested, object: nil)
             return .success
         }
         
-        // Skip Backward Command
-        commandCenter.skipBackwardCommand.preferredIntervals = [15]
-        commandCenter.skipBackwardCommand.addTarget { [weak self] _ in
-            self?.skipBackward15()
+        cc.changePlaybackPositionCommand.isEnabled = true
+        cc.changePlaybackPositionCommand.addTarget { [weak self] event in
+            guard let self, let e = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
+            let time = CMTime(seconds: e.positionTime, preferredTimescale: 600)
+            self.player.seek(to: time)
             return .success
         }
+        
+        // End-of-item policy -> handled here
+        NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: nil, queue: .main
+        ) { [weak self] note in
+            guard let self = self else { return }
+            guard note.object as? AVPlayerItem === self.player.currentItem else { return }
+            print("Debug: loopMode : \(loopMode)")
+            switch self.loopMode {  // ✅ Now safe to access
+            case .one:
+                self.player.seek(to: .zero)
+                self.player.play()
+            case .all:
+                NotificationCenter.default.post(name: .playerCenterNextRequested, object: nil)
+            case .off:
+                break
+                
+            }
+        }
+    }
+    
+    //MARK: - End of item observation
+    
+//    private func observeEndOfItem() {
+//        NotificationCenter.default.addObserver(
+//            forName: .AVPlayerItemDidPlayToEndTime,
+//            object: nil,
+//            queue: .main
+//        ) { [weak self] note in
+//            guard let self else { return }
+//            // make sure it's *our* player’s item
+//            guard note.object as? AVPlayerItem === self.player.currentItem else { return }
+//            
+//            switch self.loopMode {
+//            case .one:
+//                // just replay the same item
+//                self.player.seek(to: .zero)
+//                self.player.play()
+//                
+//            case .all:
+//                // tell whoever owns the playlist to move to next
+//                NotificationCenter.default.post(name: .playerCenterNextRequested, object: nil)
+//                
+//            case .off:
+//                // do nothing: playback stops at end
+//                break
+//            }
+//        }
+//    }
+    
+    //MARK: - Configure loop/shuffle mode
+    
+    func toggleShuffle() {
+        shuffleOn.toggle()
+    }
+    
+    func setShuffle(_ on: Bool) {
+        shuffleOn = on
+    }
+    
+    func cycleLoopMode() {
+        switch loopMode {
+        case .off: loopMode = .one
+        case .one: loopMode = .all
+        case .all: loopMode = .off
+        }
+    }
+    
+    func setLoopMode(_ mode: LoopMode) {
+        loopMode = mode
     }
     
     // MARK: - Playback Control
@@ -184,6 +288,14 @@ final class PlayerCenter {
         info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = player.currentTime().seconds
         info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+    }
+    
+    private func updateNowPlayingPlaybackRate(_ rate: Float) {
+        if var info = MPNowPlayingInfoCenter.default().nowPlayingInfo {
+            info[MPNowPlayingInfoPropertyPlaybackRate] = rate
+            info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = player.currentTime().seconds
+            MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+        }
     }
     
     private func updateElapsedTimeForNowPlaying() {

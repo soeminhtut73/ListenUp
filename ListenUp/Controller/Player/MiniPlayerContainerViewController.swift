@@ -10,36 +10,30 @@ import AVFoundation
 import MediaPlayer
 import RealmSwift
 
-// MARK: - MiniPlayerContainerViewController
-
-class MiniPlayerContainerViewController: UIViewController {
+final class MiniPlayerContainerViewController: UIViewController {
     
     // MARK: - Singleton
-    
     static let shared = MiniPlayerContainerViewController()
     
-    // MARK: - Properties
-    
+    // MARK: - UI
     private var miniPlayerView: MiniPlayerView?
     private var miniPlayerBottomConstraint: NSLayoutConstraint?
-    private var timeObserver: Any?
-    
     private let miniPlayerHeight: CGFloat = 65
+    
+    // MARK: - Player observation
+    private var timeObserver: Any?
+    private var notiTokens: [NSObjectProtocol] = []
+    
+    // MARK: - State
     private var isShowing = false
     
     // MARK: - Realm Access
-    
-    private var realm: Realm? {
-        return try? Realm()
-    }
-    
     private var downloadsResults: Results<DownloadItem>? {
-        return RealmService.shared.fetchAllMedia()
+        RealmService.shared.fetchAllMedia()
             .sorted(byKeyPath: "createdAt", ascending: false)
     }
     
-    // MARK: - Initialization
-    
+    // MARK: - Init
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         super.init(nibName: nil, bundle: nil)
     }
@@ -52,18 +46,19 @@ class MiniPlayerContainerViewController: UIViewController {
         stopObservingPlayer()
     }
     
-    // MARK: - Show/Hide
+    // MARK: - Public show / hide
     
     func show(in tabBarController: UITabBarController, animated: Bool = true) {
         guard !isShowing else { return }
         isShowing = true
         
-        // Create mini player
+        // Make sure remote commands are centralized
+        PlayerCenter.shared.setupRemoteCommands()
+        
         let miniPlayer = createMiniPlayer()
         miniPlayer.alpha = animated ? 0 : 1
         tabBarController.view.addSubview(miniPlayer)
         
-        // Setup constraints
         let bottomConstraint = setupConstraints(
             for: miniPlayer,
             in: tabBarController,
@@ -73,16 +68,11 @@ class MiniPlayerContainerViewController: UIViewController {
         self.miniPlayerView = miniPlayer
         self.miniPlayerBottomConstraint = bottomConstraint
         
-        // Configure actions
         configureMiniPlayerActions()
-        
-        // Start observing
         startObservingPlayer()
         
-        // Adjust tab bar
         tabBarController.adjustForMiniPlayer(height: miniPlayerHeight, animated: animated)
         
-        // Animate in
         if animated {
             animateShow(in: tabBarController, bottomConstraint: bottomConstraint, miniPlayer: miniPlayer)
         } else {
@@ -94,12 +84,11 @@ class MiniPlayerContainerViewController: UIViewController {
         guard isShowing, let miniPlayerView = miniPlayerView else { return }
         isShowing = false
         
-        // Adjust tab bar
+        // Adjust tab bar if possible
         if let tabBarController = miniPlayerView.window?.rootViewController as? UITabBarController {
             tabBarController.adjustForMiniPlayer(height: 0, animated: animated)
         }
         
-        // Animate or immediate hide
         if animated {
             animateHide(miniPlayerView: miniPlayerView)
         } else {
@@ -190,8 +179,8 @@ class MiniPlayerContainerViewController: UIViewController {
     // MARK: - Player Observation
     
     private func startObservingPlayer() {
+        // 1) periodic progress (you already had this)
         let interval = CMTime(seconds: 0.5, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
-        
         timeObserver = PlayerCenter.shared.player.addPeriodicTimeObserver(
             forInterval: interval,
             queue: .main
@@ -199,8 +188,29 @@ class MiniPlayerContainerViewController: UIViewController {
             self?.updateMiniPlayerUI()
         }
         
-        // Observe playback end
-        NotificationCenter.default.addObserver(
+        // 2) central “next/prev requested” from PlayerCenter
+        let nc = NotificationCenter.default
+        
+        let nextTok = nc.addObserver(
+            forName: .playerCenterNextRequested,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.playRelative(offset: 1)
+        }
+        
+        let prevTok = nc.addObserver(
+            forName: .playerCenterPrevRequested,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.playRelative(offset: -1)
+        }
+        
+        notiTokens = [nextTok, prevTok]
+        
+        // 3) still listen to end → just to refresh
+        nc.addObserver(
             self,
             selector: #selector(updateMiniPlayerUI),
             name: .AVPlayerItemDidPlayToEndTime,
@@ -213,6 +223,11 @@ class MiniPlayerContainerViewController: UIViewController {
             PlayerCenter.shared.player.removeTimeObserver(observer)
             timeObserver = nil
         }
+        
+        for tok in notiTokens {
+            NotificationCenter.default.removeObserver(tok)
+        }
+        notiTokens.removeAll()
         
         NotificationCenter.default.removeObserver(self)
     }
@@ -237,6 +252,46 @@ class MiniPlayerContainerViewController: UIViewController {
         )
     }
     
+    // MARK: - Playlist navigation (for next/prev when full player is gone)
+    
+    /// Plays the item relative to current playing URL inside downloadsResults
+    private func playRelative(offset: Int) {
+        guard
+            let results = downloadsResults,
+            let currentURL = PlayerCenter.shared.currentURL
+        else { return }
+        
+        // find current index in Realm list
+        let currentIndex = results.firstIndex { item in
+            guard let rel = item.localPath,
+                  let url = FileHelper.fileURL(for: rel)
+            else { return false }
+            return url == currentURL
+        }
+        
+        guard let idx = currentIndex else { return }
+        
+        let targetIndex = idx + offset
+        
+        // wrap for "all" style behaviour
+        let finalIndex: Int
+        if targetIndex < 0 {
+            finalIndex = results.count - 1
+        } else if targetIndex >= results.count {
+            finalIndex = 0
+        } else {
+            finalIndex = targetIndex
+        }
+        
+        let targetItem = results[finalIndex]
+        guard let rel = targetItem.localPath,
+              let url = FileHelper.fileURL(for: rel)
+        else { return }
+        
+        PlayerCenter.shared.play(url: url)
+        updateMiniPlayerUI()
+    }
+    
     // MARK: - Actions
     
     private func expandToFullPlayer() {
@@ -248,7 +303,6 @@ class MiniPlayerContainerViewController: UIViewController {
         let playerVC = MediaPlayerViewController()
         playerVC.downloadsResults = downloadsResults
         
-        // Attach to current playing URL
         if let url = PlayerCenter.shared.currentURL {
             playerVC.startAt(url: url)
         }
@@ -265,7 +319,6 @@ class MiniPlayerContainerViewController: UIViewController {
         } else {
             PlayerCenter.shared.player.play()
         }
-        
         updateMiniPlayerUI()
     }
 }
