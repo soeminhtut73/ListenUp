@@ -14,7 +14,7 @@ class AudioConverter {
     private init() {}
     
     /// Converts a 30s audio clip from a given local video URL and saves it as an AudioItem in Realm.
-    func convertToAudio(with title: String, with thumbnailURL: String, from videoURL: URL, startTime: TimeInterval, completion: @escaping (Result<URL, Error>) -> Void) {
+    func convertToAudio(with title: String, from videoURL: URL, startTime: TimeInterval, completion: @escaping (Result<URL, Error>) -> Void) {
         
         // Define output .m4a file path in app Documents directory
         let audioDir = FileHelper.audiosDir()
@@ -44,7 +44,6 @@ class AudioConverter {
                         newItem.title = title
                         newItem.localPath = "audios/" + outputURL.lastPathComponent
                         newItem.fileSize = fileSize
-                        newItem.thumbURL = thumbnailURL
                         newItem.duration = seconds
                         newItem.createdAt = Date()
                         newItem.mediaType = .audio
