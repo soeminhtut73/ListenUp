@@ -108,7 +108,7 @@ final class MediaPlayerViewController: UIViewController {
         return results.compactMap { d -> MediaItem? in
             guard let rel = d.localPath, !rel.isEmpty else { return nil }
             guard d.status == .completed else { return nil }
-            return MediaItem(title: d.title, url: docs.appendingPathComponent(rel), duration: d.duration)
+            return MediaItem(id: d.id, title: d.title, url: docs.appendingPathComponent(rel), duration: d.duration)
         }
     }
     
@@ -501,7 +501,7 @@ final class MediaPlayerViewController: UIViewController {
         if replace {
             let currentURL = (PlayerCenter.shared.player.currentItem?.asset as? AVURLAsset)?.url
             if currentURL != item.url {
-                PlayerCenter.shared.play(url: item.url)   // only replace if different
+                PlayerCenter.shared.play(url: item.url, itemID: item.id)   // only replace if different
             } else {
                 PlayerCenter.shared.player.play()
             }

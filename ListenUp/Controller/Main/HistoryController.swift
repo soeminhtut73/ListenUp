@@ -32,7 +32,6 @@ final class HistoryController: UIViewController {
     private var sortButton: UIBarButtonItem!
     
     // Player Observation
-    private var lastPlayingIndexPath: IndexPath?
     private var playerRateKVO: NSKeyValueObservation?
     private var playerItemKVO: NSKeyValueObservation?
     private var lastObservedRate: Float = 0
@@ -75,6 +74,13 @@ final class HistoryController: UIViewController {
         configureToken()
         startObservingPlayer()
         setupNotifications()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        if tableView.window != nil {
+            reloadPlayingRows()
+        }
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -287,7 +293,6 @@ final class HistoryController: UIViewController {
             return
         }
         
-        // Debounce: Wait 0.3s before searching
         let workItem = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
             self.performSearch(with: raw)
@@ -305,10 +310,10 @@ final class HistoryController: UIViewController {
         guard !tokens.isEmpty else {
             searchResults = results
             tableView.reloadData()
+            reloadPlayingRows()
             return
         }
         
-        // Optimized: Build single predicate string
         let predicateString = tokens
             .map { "title CONTAINS[c] '\($0)'" }
             .joined(separator: " AND ")
@@ -316,38 +321,27 @@ final class HistoryController: UIViewController {
         let predicate = NSPredicate(format: predicateString)
         searchResults = results.filter(predicate)
         
-        // Animate changes if possible
         tableView.reloadData()
+        reloadPlayingRows()
     }
     
     // MARK: - Playing Indicator
     
-    private func currentItemIndexPath() -> IndexPath? {
-        guard let playing = PlayerCenter.shared.currentURL?.standardizedFileURL else { return nil }
-        for (row, item) in searchResults.enumerated() {
-            if let url = FileHelper.fileURL(for: item.localPath), url.standardizedFileURL == playing {
-                return IndexPath(row: row, section: 0)
-            }
-        }
-        return nil
+    private func isItemPlaying(_ item: DownloadItem) -> Bool {
+        return PlayerCenter.shared.currentPlayingItemId == item.id
     }
-    
     private func reloadPlayingRows() {
-        let newIdx = currentItemIndexPath()
-        
-        if let old = lastPlayingIndexPath,
-           let cell = tableView.cellForRow(at: old) as? DownloadTableViewCell {
-            cell.setPlaying(false)
+        for cell in tableView.visibleCells {
+            guard
+                let indexPath = tableView.indexPath(for: cell),
+                let item = searchResults?[indexPath.row] ?? results?[indexPath.row],
+                let playingCell = cell as? DownloadTableViewCell
+            else { continue }
+            
+            let isCurrent = isItemPlaying(item)
+            print("Debug: reloadPlaying : \(isCurrent && PlayerCenter.shared.isActuallyPlaying)")
+            playingCell.setPlaying(isCurrent && PlayerCenter.shared.isActuallyPlaying)
         }
-        
-        if let new = newIdx,
-           let cell = tableView.cellForRow(at: new) as? DownloadTableViewCell {
-//            let item = searchResults[new.row]
-            let isPlaying = PlayerCenter.shared.isActuallyPlaying
-            cell.setPlaying(isPlaying)
-        }
-        
-        lastPlayingIndexPath = newIdx
     }
     
     // MARK: - Player Observation
@@ -518,12 +512,10 @@ final class HistoryController: UIViewController {
     
     @objc private func deleteButtonTapped() {
         if !tableView.isEditing {
-            // First press → enter selection mode
             enterSelectionMode()
             return
         }
         
-        // Second press → confirm & delete selected rows
         let count = selectionCount
         guard count > 0 else { return }
         
@@ -587,6 +579,9 @@ extension HistoryController: UITableViewDataSource {
         cell.delegate = self
         cell.configure(with: item, mode: .video)
         
+        let isCurrent = isItemPlaying(item)
+        cell.setPlaying(isCurrent && PlayerCenter.shared.isActuallyPlaying)
+        
         return cell
     }
 }
@@ -608,7 +603,7 @@ extension HistoryController: UITableViewDelegate {
         guard item.status == .completed, let url = item.localPath else { return }
         let fileURL = FileHelper.fileURL(for: url)
         
-        MiniPlayerContainerViewController.shared.hide()
+        PlayerCenter.shared.setCurrentPlayingItem(id: item.id)
         
         let vc = MediaPlayerViewController()
         vc.downloadsResults = searchResults

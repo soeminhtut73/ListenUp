@@ -8,6 +8,7 @@
 import Foundation
 
 struct MediaItem {
+    let id: String
     let title: String
     let url: URL  
     let duration: TimeInterval

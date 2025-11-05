@@ -101,6 +101,7 @@ class DownloadTableViewCell: UITableViewCell {
         circularProgressView.reset(animated: false)
         detailLabel.text = nil
         titleLabel.textColor = .label
+        playingIndicator.stop()
         setPlaying(false)
     }
 
@@ -121,6 +122,10 @@ class DownloadTableViewCell: UITableViewCell {
         stackView.spacing = 6
         stackView.distribution = .fillProportionally
         
+        playingIndicator.barColor = .label
+        playingIndicator.barCount = 4
+        playingIndicator.backgroundColor = .clear
+        
         [albumImageView, stackView, optionButton, circularProgressView, playingIndicator].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview($0)
@@ -137,8 +142,8 @@ class DownloadTableViewCell: UITableViewCell {
             // Playing indicator (over album)
             playingIndicator.centerXAnchor.constraint(equalTo: albumImageView.centerXAnchor),
             playingIndicator.centerYAnchor.constraint(equalTo: albumImageView.centerYAnchor),
-            playingIndicator.widthAnchor.constraint(equalToConstant: 36),
-            playingIndicator.heightAnchor.constraint(equalToConstant: 36),
+            playingIndicator.widthAnchor.constraint(equalToConstant: 24),
+            playingIndicator.heightAnchor.constraint(equalToConstant: 24),
             
             // Circular progress (over album)
             circularProgressView.centerXAnchor.constraint(equalTo: albumImageView.centerXAnchor),
@@ -238,30 +243,20 @@ class DownloadTableViewCell: UITableViewCell {
         if !item.format.isEmpty {
             detailComponents.append(item.format.uppercased())
         }
-        
-        // Mode-specific details
-        switch mode {
-        case .video:
-            // Could add video-specific info like resolution
-            break
-        case .audio:
-            // Could add audio-specific info like bitrate
-            break
-        }
-        
+
         detailLabel.text = detailComponents.isEmpty ? "Unknown size" : detailComponents.joined(separator: " | ")
     }
     
     // MARK: - Thumbnail Configuration
     private func configureThumbnail(for item: DownloadItem, mode: DownloadCellDisplayMode) {
-        if let url = URL(string: item.thumbURL), !item.thumbURL.isEmpty {
+        if let url = URL(string: item.thumbURL), !item.thumbURL.isEmpty, mode == .video {
             albumImageView.sd_setImage(
                 with: url,
                 placeholderImage: UIImage(systemName: "play.rectangle.fill"),
                 options: [.retryFailed, .continueInBackground]
             )
         } else {
-            albumImageView.image = UIImage(systemName: "questionmark.video")
+            albumImageView.image = UIImage(systemName: "music.note")
             albumImageView.contentMode = .center
         }
     }
@@ -277,11 +272,11 @@ class DownloadTableViewCell: UITableViewCell {
     func setPlaying(_ isPlaying: Bool) {
         if isPlaying {
             playingIndicator.isHidden = false
-            albumImageView.isHidden = true
+            albumImageView.layer.opacity = 0.5
             playingIndicator.start()
         } else {
             playingIndicator.stop()
-            albumImageView.isHidden = false
+            albumImageView.layer.opacity = 1
             playingIndicator.isHidden = true
         }
     }

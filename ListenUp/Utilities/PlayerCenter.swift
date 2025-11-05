@@ -42,6 +42,8 @@ final class PlayerCenter {
         player.rate > 0 && player.error == nil
     }
     
+    private(set) var currentPlayingItemId: String?
+    
     private(set) var loopMode: LoopMode = .all {
         didSet {
             NotificationCenter.default.post(name: .playerCenterLoopModeDidChange, object: self)
@@ -57,15 +59,11 @@ final class PlayerCenter {
     // MARK: - Initialization
     
     private init() {
-//        observeEndOfItem()
         configureAudioSession()
         setupRemoteCommands()
         setupNotifications()
     }
     
-//    deinit {
-//        NotificationCenter.default.removeObserver(self)
-//    }
     
     // MARK: - Setup
     
@@ -151,35 +149,6 @@ final class PlayerCenter {
         }
     }
     
-    //MARK: - End of item observation
-    
-//    private func observeEndOfItem() {
-//        NotificationCenter.default.addObserver(
-//            forName: .AVPlayerItemDidPlayToEndTime,
-//            object: nil,
-//            queue: .main
-//        ) { [weak self] note in
-//            guard let self else { return }
-//            // make sure it's *our* player’s item
-//            guard note.object as? AVPlayerItem === self.player.currentItem else { return }
-//            
-//            switch self.loopMode {
-//            case .one:
-//                // just replay the same item
-//                self.player.seek(to: .zero)
-//                self.player.play()
-//                
-//            case .all:
-//                // tell whoever owns the playlist to move to next
-//                NotificationCenter.default.post(name: .playerCenterNextRequested, object: nil)
-//                
-//            case .off:
-//                // do nothing: playback stops at end
-//                break
-//            }
-//        }
-//    }
-    
     //MARK: - Configure loop/shuffle mode
     
     func toggleShuffle() {
@@ -204,7 +173,7 @@ final class PlayerCenter {
     
     // MARK: - Playback Control
     
-    func play(url: URL) {
+    func play(url: URL, itemID: String? = nil) {
         let item = AVPlayerItem(url: url)
         player.replaceCurrentItem(with: item)
         
@@ -215,6 +184,7 @@ final class PlayerCenter {
         }
         
         player.play()
+        currentPlayingItemId = itemID
     }
     
     func pause() {
@@ -223,6 +193,7 @@ final class PlayerCenter {
     
     func stop() {
         player.pause()
+        currentPlayingItemId = nil
     }
     
     func setPlaying(_ playing: Bool) {
@@ -238,6 +209,10 @@ final class PlayerCenter {
     
     func isPlaying() -> Bool {
         return player.rate > 0.0
+    }
+    
+    func setCurrentPlayingItem(id: String) {
+        currentPlayingItemId = id
     }
     
     // MARK: - Seeking
