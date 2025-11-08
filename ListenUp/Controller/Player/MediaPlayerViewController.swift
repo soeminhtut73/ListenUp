@@ -63,7 +63,6 @@ final class MediaPlayerViewController: UIViewController {
         wirePlayer()
         startObservingDownloads() 
         startAudioSessionObservers()
-        configureAudioSession()
         observeBackgroundEvents()
         setupGesture()
     }
@@ -136,7 +135,6 @@ final class MediaPlayerViewController: UIViewController {
         snap.backgroundColor = .black
         window.addSubview(snap)
         
-        // Detach inline player so only one layer renders
         videoView.player = nil
         
         let target = window.bounds
@@ -178,7 +176,6 @@ final class MediaPlayerViewController: UIViewController {
             
             self.playlist = self.buildItems(from: self.downloadsResults)
             
-            // Establish current index: prefer pendingStartURL (first time), else keep oldURL if it still exists.
             if let want = self.pendingStartURL, let idx = self.playlist.firstIndex(where: { $0.url == want }) {
                 self.currentIndex = idx
                 self.pendingStartURL = nil
@@ -235,10 +232,6 @@ final class MediaPlayerViewController: UIViewController {
         titleLabel.textColor = .label
         titleLabel.numberOfLines = 3
         titleLabel.textAlignment = .center
-        
-        slider.minimumTrackTintColor = .label
-        slider.maximumTrackTintColor = UIColor.black.withAlphaComponent(0.1)
-        slider.setThumbImage(createThumbImage(), for: .normal)
         
         currentLabel.font = .monospacedDigitSystemFont(ofSize: 12, weight: .medium)
         currentLabel.textColor = .label
@@ -384,17 +377,6 @@ final class MediaPlayerViewController: UIViewController {
         ])
     }
     
-    private func createThumbImage() -> UIImage? {
-        let size = CGSize(width: 20, height: 20)
-        UIGraphicsBeginImageContextWithOptions(size, false, 0)
-        let context = UIGraphicsGetCurrentContext()
-        context?.setFillColor(UIColor.systemBlue.cgColor)
-        context?.fillEllipse(in: CGRect(origin: .zero, size: size))
-        let image = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        return image
-    }
-    
     private func configure(button: UIButton, icon: String) {
         button.setImage(UIImage(systemName: icon), for: .normal)
         button.tintColor = .white
@@ -473,12 +455,7 @@ final class MediaPlayerViewController: UIViewController {
                     self.view.transform = CGAffineTransform(translationX: 0, y: self.view.frame.height)
                     self.view.alpha = 0
                 }) { _ in
-                    self.dismiss(animated: false) {
-                        // Show mini player after dismissal
-                        if let tabBarController = UIApplication.shared.rootTabBarController {
-                            MiniPlayerContainerViewController.shared.show(in: tabBarController)
-                        }
-                    }
+                    self.dismiss(animated: false)
                 }
             } else {
                 // Snap back to original position
@@ -501,7 +478,8 @@ final class MediaPlayerViewController: UIViewController {
         if replace {
             let currentURL = (PlayerCenter.shared.player.currentItem?.asset as? AVURLAsset)?.url
             if currentURL != item.url {
-                PlayerCenter.shared.play(url: item.url, itemID: item.id)   // only replace if different
+                PlayerCenter.shared.play(url: item.url, itemID: item.id)
+
             } else {
                 PlayerCenter.shared.player.play()
             }
@@ -511,6 +489,8 @@ final class MediaPlayerViewController: UIViewController {
         
         refreshPlayIcon()
         updateLoopUI()
+        
+        MiniPlayerController.shared.setPlaylist(with: downloadsResults)
         
         PlayerCenter.shared.updateNowPlaying(title: item.title,
                                              duration: duration,
@@ -544,7 +524,6 @@ final class MediaPlayerViewController: UIViewController {
     }
     
     @objc private func nextTapped() {
-        print("Debug: nextTapped action got fired")
         guard !playlist.isEmpty else { return }
         if PlayerCenter.shared.shuffleOn {
             currentIndex = Int.random(in: 0..<playlist.count)
@@ -583,17 +562,11 @@ final class MediaPlayerViewController: UIViewController {
     // MARK: - Seek / time
     private func updateTimeUI(current: Double, total: Double) {
         let totalSafe = (total.isFinite && total > 0) ? total : 0
-        currentLabel.text = formatTime(current)
-        totalLabel.text = formatTime(totalSafe)
+        currentLabel.text = current.timeFormattedString
+        totalLabel.text = totalSafe.timeFormattedString
         slider.minimumValue = 0
         slider.maximumValue = Float(totalSafe)
         if !isSeeking { slider.value = Float(current) }
-    }
-    
-    private func formatTime(_ t: Double) -> String {
-        guard t.isFinite && t >= 0 else { return "00:00" }
-        let s = Int(t)
-        return String(format: "%02d:%02d", s/60, s%60)
     }
     
     @objc private func beginSeek() { isSeeking = true }
@@ -606,7 +579,7 @@ final class MediaPlayerViewController: UIViewController {
     }
     
     @objc private func seekChanged() {
-        currentLabel.text = formatTime(Double(slider.value))
+        currentLabel.text = Double(slider.value).timeFormattedString
     }
     
     // MARK: - Shuffle / Loop
@@ -637,17 +610,4 @@ final class MediaPlayerViewController: UIViewController {
     @objc private func handleCenterPrev() { prevTapped() }
     @objc private func centerLoopChanged() { updateLoopUI() }
     @objc private func centerShuffleChanged() { updateShuffleUI() }
-    
-    // MARK: - Background Audio Setup (CRITICAL FOR BACKGROUND PLAYBACK)
-    private func configureAudioSession() {
-        let session = AVAudioSession.sharedInstance()
-        do {
-            // Use .playback category for background audio
-            try session.setCategory(.playback, mode: .default)
-            try session.setActive(true)
-            print("Audio session configured for background playback")
-        } catch {
-            print("Audio session error: \(error)")
-        }
-    }
 }

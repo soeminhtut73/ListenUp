@@ -10,14 +10,6 @@ import UIKit
 import AVFoundation
 import MediaPlayer
 
-// MARK: - Notifications surfaced by PlayerCenter
-extension Notification.Name {
-    static let playerCenterNextRequested     = Notification.Name("playerCenterNextRequested")
-    static let playerCenterPrevRequested     = Notification.Name("playerCenterPrevRequested")
-    static let playerCenterLoopModeDidChange = Notification.Name("playerCenterLoopModeDidChange")
-    static let playerCenterShuffleDidChange  = Notification.Name("playerCenterShuffleDidChange")
-}
-
 enum LoopMode { case off, one, all }
 
 // MARK: - PlayerCenter
@@ -135,13 +127,14 @@ final class PlayerCenter {
         ) { [weak self] note in
             guard let self = self else { return }
             guard note.object as? AVPlayerItem === self.player.currentItem else { return }
-            print("Debug: loopMode : \(loopMode)")
-            switch self.loopMode {  // ✅ Now safe to access
+            
+            switch self.loopMode {
             case .one:
                 self.player.seek(to: .zero)
                 self.player.play()
             case .all:
                 NotificationCenter.default.post(name: .playerCenterNextRequested, object: nil)
+                NotificationCenter.default.post(name: .playerCenterItemChanged, object: nil)
             case .off:
                 break
                 
@@ -177,14 +170,15 @@ final class PlayerCenter {
         let item = AVPlayerItem(url: url)
         player.replaceCurrentItem(with: item)
         
-        do {
-            try AVAudioSession.sharedInstance().setActive(true)
-        } catch {
-            print("❌ Failed to activate audio session:", error)
-        }
+//        do {
+//            try AVAudioSession.sharedInstance().setActive(true)
+//        } catch {
+//            print("❌ Failed to activate audio session:", error)
+//        }
         
         player.play()
         currentPlayingItemId = itemID
+        NotificationCenter.default.post(name: .playerCenterItemChanged, object: nil)
     }
     
     func pause() {
@@ -202,8 +196,7 @@ final class PlayerCenter {
         } else {
             player.pause()
         }
-        
-        // Update Control Center
+
         updatePlaybackRate(isPlaying: playing)
     }
     

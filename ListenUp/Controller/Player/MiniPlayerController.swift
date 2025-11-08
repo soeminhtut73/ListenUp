@@ -1,8 +1,8 @@
 //
-//  MiniPlayerContainerViewController.swift
+//  MiniPlayerController.swift
 //  ListenUp
 //
-//  Created by S M H  on 23/09/2025.
+//  Created by S M H  on 06/11/2025.
 //
 
 import UIKit
@@ -10,13 +10,17 @@ import AVFoundation
 import MediaPlayer
 import RealmSwift
 
-final class MiniPlayerContainerViewController: UIViewController {
+protocol MiniPlayerAdjustable: AnyObject {
+    func setMiniPlayerVisible(_ visible: Bool, height: CGFloat)
+}
+
+final class MiniPlayerController: UIViewController {
     
     // MARK: - Singleton
-    static let shared = MiniPlayerContainerViewController()
+    static let shared = MiniPlayerController()
     
     // MARK: - UI
-    private var miniPlayerView: MiniPlayerView?
+    private var miniPlayerView: MiniPlayerView!
     private var miniPlayerBottomConstraint: NSLayoutConstraint?
     private let miniPlayerHeight: CGFloat = 65
     
@@ -24,14 +28,8 @@ final class MiniPlayerContainerViewController: UIViewController {
     private var timeObserver: Any?
     private var notiTokens: [NSObjectProtocol] = []
     
-    // MARK: - State
-    private var isShowing = false
-    
     // MARK: - Realm Access
-    private var downloadsResults: Results<DownloadItem>? {
-        RealmService.shared.fetchAllMedia()
-            .sorted(byKeyPath: "createdAt", ascending: false)
-    }
+    private var downloadsResults: Results<DownloadItem>!
     
     // MARK: - Init
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
@@ -46,53 +44,38 @@ final class MiniPlayerContainerViewController: UIViewController {
         stopObservingPlayer()
     }
     
-    // MARK: - Public show / hide
+    // MARK: - Lifecycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.isUserInteractionEnabled = false   // container itself doesn’t need touches
+    }
     
-    func show(in tabBarController: UITabBarController, animated: Bool = true) {
-        guard !isShowing else { return }
-        isShowing = true
+    func setPlaylist(with playlists: Results<DownloadItem>) {
+        downloadsResults = playlists
+    }
+    
+    // call this once after tab bar is ready (e.g. from SceneDelegate/app entry)
+    func attach(to tabBarController: UITabBarController) {
+        if miniPlayerView != nil { return }
         
-        // Make sure remote commands are centralized
         PlayerCenter.shared.setupRemoteCommands()
         
-        let miniPlayer = createMiniPlayer()
-        miniPlayer.alpha = animated ? 0 : 1
-        tabBarController.view.addSubview(miniPlayer)
-        
+        let mini = createMiniPlayer()
+        tabBarController.view.addSubview(mini)
         let bottomConstraint = setupConstraints(
-            for: miniPlayer,
-            in: tabBarController,
-            initialOffset: animated ? miniPlayerHeight : 0
+            for: mini,
+            in: tabBarController
         )
         
-        self.miniPlayerView = miniPlayer
+        self.miniPlayerView = mini
         self.miniPlayerBottomConstraint = bottomConstraint
         
         configureMiniPlayerActions()
         startObservingPlayer()
         
-        tabBarController.adjustForMiniPlayer(height: miniPlayerHeight, animated: animated)
-        
-        if animated {
-            animateShow(in: tabBarController, bottomConstraint: bottomConstraint, miniPlayer: miniPlayer)
-        } else {
-            bottomConstraint.constant = 0
-        }
-    }
-    
-    func hide(animated: Bool = true) {
-        guard isShowing, let miniPlayerView = miniPlayerView else { return }
-        isShowing = false
-        
-        // Adjust tab bar if possible
-        if let tabBarController = miniPlayerView.window?.rootViewController as? UITabBarController {
-            tabBarController.adjustForMiniPlayer(height: 0, animated: animated)
-        }
-        
-        if animated {
-            animateHide(miniPlayerView: miniPlayerView)
-        } else {
-            removeMiniPlayer()
+        // optionally tell current screen to leave room for it
+        if let top = (tabBarController.selectedViewController as? UINavigationController)?.topViewController as? MiniPlayerAdjustable {
+            top.setMiniPlayerVisible(true, height: miniPlayerHeight)
         }
     }
     
@@ -106,12 +89,11 @@ final class MiniPlayerContainerViewController: UIViewController {
     
     private func setupConstraints(
         for miniPlayer: MiniPlayerView,
-        in tabBarController: UITabBarController,
-        initialOffset: CGFloat
+        in tabBarController: UITabBarController
     ) -> NSLayoutConstraint {
         let bottomConstraint = miniPlayer.bottomAnchor.constraint(
             equalTo: tabBarController.tabBar.topAnchor,
-            constant: initialOffset
+            constant: 0
         )
         
         NSLayoutConstraint.activate([
@@ -125,61 +107,19 @@ final class MiniPlayerContainerViewController: UIViewController {
     }
     
     private func configureMiniPlayerActions() {
-        miniPlayerView?.onTap = { [weak self] in
+        miniPlayerView.onTap = { [weak self] in
             self?.expandToFullPlayer()
         }
         
-        miniPlayerView?.onPlayPause = { [weak self] in
+        miniPlayerView.onPlayPause = { [weak self] in
             self?.togglePlayPause()
         }
-    }
-    
-    // MARK: - Animations
-    
-    private func animateShow(
-        in tabBarController: UITabBarController,
-        bottomConstraint: NSLayoutConstraint,
-        miniPlayer: MiniPlayerView
-    ) {
-        tabBarController.view.layoutIfNeeded()
-        
-        UIView.animate(
-            withDuration: 0.3,
-            delay: 0,
-            options: .curveEaseOut,
-            animations: {
-                bottomConstraint.constant = 0
-                miniPlayer.alpha = 1
-                tabBarController.view.layoutIfNeeded()
-            }
-        )
-    }
-    
-    private func animateHide(miniPlayerView: MiniPlayerView) {
-        UIView.animate(
-            withDuration: 0.3,
-            animations: {
-                self.miniPlayerBottomConstraint?.constant = self.miniPlayerHeight
-                miniPlayerView.alpha = 0
-                miniPlayerView.superview?.layoutIfNeeded()
-            },
-            completion: { _ in
-                self.removeMiniPlayer()
-            }
-        )
-    }
-    
-    private func removeMiniPlayer() {
-        miniPlayerView?.removeFromSuperview()
-        miniPlayerView = nil
-        miniPlayerBottomConstraint = nil
-        stopObservingPlayer()
     }
     
     // MARK: - Player Observation
     
     private func startObservingPlayer() {
-        // 1) periodic progress (you already had this)
+        // periodic progress
         let interval = CMTime(seconds: 0.5, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
         timeObserver = PlayerCenter.shared.player.addPeriodicTimeObserver(
             forInterval: interval,
@@ -188,7 +128,7 @@ final class MiniPlayerContainerViewController: UIViewController {
             self?.updateMiniPlayerUI()
         }
         
-        // 2) central “next/prev requested” from PlayerCenter
+        // listen to PlayerCenter “next/prev” so we can advance even when full player is gone
         let nc = NotificationCenter.default
         
         let nextTok = nc.addObserver(
@@ -209,7 +149,7 @@ final class MiniPlayerContainerViewController: UIViewController {
         
         notiTokens = [nextTok, prevTok]
         
-        // 3) still listen to end → just to refresh
+        // refresh on end
         nc.addObserver(
             self,
             selector: #selector(updateMiniPlayerUI),
@@ -234,34 +174,35 @@ final class MiniPlayerContainerViewController: UIViewController {
     
     @objc private func updateMiniPlayerUI() {
         let player = PlayerCenter.shared.player
-        guard let currentItem = player.currentItem else { return }
+        guard let currentItem = player.currentItem else {
+            miniPlayerView.updateUI(title: "Not playing", isPlaying: false, progress: 0)
+            return
+        }
         
         let currentTime = player.currentTime().seconds
         let duration = currentItem.duration.seconds
         let progress = duration > 0 ? Float(currentTime / duration) : 0
         let isPlaying = player.timeControlStatus == .playing
         
-        // Get title from Now Playing info
         let title = MPNowPlayingInfoCenter.default()
             .nowPlayingInfo?[MPMediaItemPropertyTitle] as? String ?? "Unknown"
         
-        miniPlayerView?.updateUI(
+        miniPlayerView.updateUI(
             title: title,
             isPlaying: isPlaying,
             progress: progress
         )
     }
     
-    // MARK: - Playlist navigation (for next/prev when full player is gone)
+    // MARK: - Playlist navigation
     
-    /// Plays the item relative to current playing URL inside downloadsResults
     private func playRelative(offset: Int) {
         guard
             let results = downloadsResults,
             let currentURL = PlayerCenter.shared.currentURL
         else { return }
         
-        // find current index in Realm list
+        
         let currentIndex = results.firstIndex { item in
             guard let rel = item.localPath,
                   let url = FileHelper.fileURL(for: rel)
@@ -272,8 +213,6 @@ final class MiniPlayerContainerViewController: UIViewController {
         guard let idx = currentIndex else { return }
         
         let targetIndex = idx + offset
-        
-        // wrap for "all" style behaviour
         let finalIndex: Int
         if targetIndex < 0 {
             finalIndex = results.count - 1
@@ -288,7 +227,8 @@ final class MiniPlayerContainerViewController: UIViewController {
               let url = FileHelper.fileURL(for: rel)
         else { return }
         
-        PlayerCenter.shared.play(url: url)
+        // pass id if you added that to PlayerCenter
+        PlayerCenter.shared.play(url: url, itemID: targetItem.id)
         updateMiniPlayerUI()
     }
     
@@ -321,4 +261,5 @@ final class MiniPlayerContainerViewController: UIViewController {
         }
         updateMiniPlayerUI()
     }
+    
 }

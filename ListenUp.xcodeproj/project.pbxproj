@@ -31,7 +31,6 @@
 		041C4AF72E693EDC005B7DEC /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041C4AF62E693EDC005B7DEC /* DownloadManager.swift */; };
 		041C4AFF2E696B0B005B7DEC /* DownloadItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041C4AFE2E696B0B005B7DEC /* DownloadItem.swift */; };
 		04396C692E824EC4002B907A /* MiniPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396C682E824EC4002B907A /* MiniPlayerView.swift */; };
-		04396C6C2E824FA1002B907A /* MiniPlayerContainerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396C6B2E824FA1002B907A /* MiniPlayerContainerViewController.swift */; };
 		04396C912E893B69002B907A /* PlayingIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396C902E893B69002B907A /* PlayingIndicatorView.swift */; };
 		04396C9F2E8D0833002B907A /* FileHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396C9E2E8D0833002B907A /* FileHelper.swift */; };
 		04396CCA2E961CAA002B907A /* SettingsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396CC92E961CAA002B907A /* SettingsController.swift */; };
@@ -51,6 +50,7 @@
 		04C00F502E77B30400104CD9 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C00F4F2E77B30400104CD9 /* PlayerView.swift */; };
 		04C00F522E77B34F00104CD9 /* MediaPlayerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C00F512E77B34F00104CD9 /* MediaPlayerViewController.swift */; };
 		04C00F542E77FD5300104CD9 /* PlayerCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C00F532E77FD5300104CD9 /* PlayerCenter.swift */; };
+		04CB2A7F2EBCAB130065FAAB /* MiniPlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04CB2A7E2EBCAB130065FAAB /* MiniPlayerController.swift */; };
 		04D81B642EB39ADA003F9392 /* MediaItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04D81B632EB39ADA003F9392 /* MediaItem.swift */; };
 		04D81BAD2EB47FA1003F9392 /* FormatterHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04D81BAC2EB47F9A003F9392 /* FormatterHelper.swift */; };
 		490DF94C2B40AA0E2D8FBA51 /* Pods_ListenUpTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6A1B391BE616A1989A549AB /* Pods_ListenUpTests.framework */; };
@@ -101,7 +101,6 @@
 		041C4AF62E693EDC005B7DEC /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
 		041C4AFE2E696B0B005B7DEC /* DownloadItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadItem.swift; sourceTree = "<group>"; };
 		04396C682E824EC4002B907A /* MiniPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerView.swift; sourceTree = "<group>"; };
-		04396C6B2E824FA1002B907A /* MiniPlayerContainerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerContainerViewController.swift; sourceTree = "<group>"; };
 		04396C902E893B69002B907A /* PlayingIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayingIndicatorView.swift; sourceTree = "<group>"; };
 		04396C9E2E8D0833002B907A /* FileHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileHelper.swift; sourceTree = "<group>"; };
 		04396CC92E961CAA002B907A /* SettingsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsController.swift; sourceTree = "<group>"; };
@@ -124,6 +123,7 @@
 		04C00F4F2E77B30400104CD9 /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
 		04C00F512E77B34F00104CD9 /* MediaPlayerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaPlayerViewController.swift; sourceTree = "<group>"; };
 		04C00F532E77FD5300104CD9 /* PlayerCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCenter.swift; sourceTree = "<group>"; };
+		04CB2A7E2EBCAB130065FAAB /* MiniPlayerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerController.swift; sourceTree = "<group>"; };
 		04D81B632EB39ADA003F9392 /* MediaItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaItem.swift; sourceTree = "<group>"; };
 		04D81BAC2EB47F9A003F9392 /* FormatterHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatterHelper.swift; sourceTree = "<group>"; };
 		0F3EF8745F5BB7CD67BB0237 /* Pods-ListenUp-ListenUpUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ListenUp-ListenUpUITests.debug.xcconfig"; path = "Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests.debug.xcconfig"; sourceTree = "<group>"; };
@@ -339,9 +339,9 @@
 		04D81B6B2EB3A70F003F9392 /* Player */ = {
 			isa = PBXGroup;
 			children = (
-				04396C6B2E824FA1002B907A /* MiniPlayerContainerViewController.swift */,
 				041BB0EB2EB0C202004BC0D8 /* QuickLandscapePlayerViewController.swift */,
 				04C00F512E77B34F00104CD9 /* MediaPlayerViewController.swift */,
+				04CB2A7E2EBCAB130065FAAB /* MiniPlayerController.swift */,
 			);
 			path = Player;
 			sourceTree = "<group>";
@@ -667,9 +667,9 @@
 				04396CD22E9A129D002B907A /* DownloadNotificationManager.swift in Sources */,
 				04396C692E824EC4002B907A /* MiniPlayerView.swift in Sources */,
 				0461FED52E2A9D680052F966 /* WebViewScripts.swift in Sources */,
-				04396C6C2E824FA1002B907A /* MiniPlayerContainerViewController.swift in Sources */,
 				04396CCA2E961CAA002B907A /* SettingsController.swift in Sources */,
 				041BB0BE2EACD60A004BC0D8 /* AudioController.swift in Sources */,
+				04CB2A7F2EBCAB130065FAAB /* MiniPlayerController.swift in Sources */,
 				04D81B642EB39ADA003F9392 /* MediaItem.swift in Sources */,
 				04B16AC92EA1196D00332961 /* RingtoneCell.swift in Sources */,
 				041469712DF00978009D6EF9 /* SceneDelegate.swift in Sources */,

@@ -68,6 +68,7 @@ final class HistoryController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        hideKeyboardWhenTappedAround()
         setupNavigationBar()
         setupSearch()
         fetchResult()
@@ -78,6 +79,11 @@ final class HistoryController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        
+        if let tabBar = self.tabBarController {
+            MiniPlayerController.shared.attach(to: tabBar)
+        }
+        
         if tableView.window != nil {
             reloadPlayingRows()
         }
@@ -117,6 +123,7 @@ final class HistoryController: UIViewController {
         
         tableView.dataSource = self
         tableView.delegate = self
+        tableView.contentInsetAdjustmentBehavior = .always
         tableView.allowsMultipleSelectionDuringEditing = true
     }
     
@@ -165,10 +172,25 @@ final class HistoryController: UIViewController {
     }
     
     private func setupNotifications() {
-        NotificationCenter.default.addObserver(
+        let nc = NotificationCenter.default
+        
+        nc.addObserver(
             self,
             selector: #selector(appDidBecomeActive),
             name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+        
+        nc.addObserver(
+            self,
+            selector: #selector(playerItemChanged),
+            name: .playerCenterNextRequested,
+            object: nil)
+        
+        nc.addObserver(
+            self,
+            selector: #selector(playerItemChanged(_:)),
+            name: .playerCenterItemChanged,
             object: nil
         )
     }
@@ -330,7 +352,10 @@ final class HistoryController: UIViewController {
     private func isItemPlaying(_ item: DownloadItem) -> Bool {
         return PlayerCenter.shared.currentPlayingItemId == item.id
     }
+    
     private func reloadPlayingRows() {
+        guard tableView.window != nil else { return }
+        
         for cell in tableView.visibleCells {
             guard
                 let indexPath = tableView.indexPath(for: cell),
@@ -339,7 +364,6 @@ final class HistoryController: UIViewController {
             else { continue }
             
             let isCurrent = isItemPlaying(item)
-            print("Debug: reloadPlaying : \(isCurrent && PlayerCenter.shared.isActuallyPlaying)")
             playingCell.setPlaying(isCurrent && PlayerCenter.shared.isActuallyPlaying)
         }
     }
@@ -484,6 +508,51 @@ final class HistoryController: UIViewController {
     
     @objc private func appDidBecomeActive() {
         reloadPlayingRows()
+    }
+    
+    @objc private func playerItemChanged(_ note: Notification) {
+        if updateRowsFromNotification(note: note) {
+            return
+        }
+        reloadPlayingRows()
+    }
+    
+    private func updateRowsFromNotification(note: Notification) -> Bool {
+        let previousId = note.userInfo?["previousId"] as? String
+        let currentId  = note.userInfo?["currentId"] as? String
+        
+        var didHandle = false
+        
+        // update old row (turn off)
+        if let previousId, let oldIndexPath = indexPath(forItemId: previousId) {
+            if let cell = tableView.cellForRow(at: oldIndexPath) as? DownloadTableViewCell {
+                cell.setPlaying(false)
+            } else {
+                tableView.reloadRows(at: [oldIndexPath], with: .none)
+            }
+            didHandle = true
+        }
+        
+        // update new row (turn on)
+        if let currentId, let newIndexPath = indexPath(forItemId: currentId) {
+            if let cell = tableView.cellForRow(at: newIndexPath) as? DownloadTableViewCell {
+                cell.setPlaying(PlayerCenter.shared.isActuallyPlaying)
+            } else {
+                tableView.reloadRows(at: [newIndexPath], with: .none)
+            }
+            didHandle = true
+        }
+        return didHandle
+    }
+    
+    private func indexPath(forItemId id: String) -> IndexPath? {
+        guard let list = searchResults ?? results else { return nil }
+        for (row, item) in list.enumerated() {
+            if item.id == id {
+                return IndexPath(row: row, section: 0)
+            }
+        }
+        return nil
     }
     
     @objc private func sortButtonTapped() {
@@ -633,7 +702,7 @@ extension HistoryController: UISearchResultsUpdating {
 extension HistoryController: UISearchBarDelegate {
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         applySearch(text: nil)
-        updateEmptyState()
+        reloadPlayingRows()
     }
 }
 
@@ -645,3 +714,13 @@ extension HistoryController: DownloadTableViewCellDelegate {
     }
 }
 
+//MARK: - MiniPlayerAdjustable Delegate
+
+extension HistoryController: MiniPlayerAdjustable {
+    func setMiniPlayerVisible(_ visible: Bool, height: CGFloat) {
+        var inset = tableView.contentInset
+        inset.bottom = visible ? height : 0
+        tableView.contentInset = inset
+        tableView.scrollIndicatorInsets = inset
+    }
+}

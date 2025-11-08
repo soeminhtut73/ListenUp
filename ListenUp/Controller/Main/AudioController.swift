@@ -324,7 +324,7 @@ extension AudioController: UITableViewDelegate {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let url = docs.appendingPathComponent(rel)
         
-        MiniPlayerContainerViewController.shared.hide()
+//        MiniPlayerContainerViewController.shared.hide()
         
         let vc = MediaPlayerViewController()
         vc.downloadsResults = searchResults

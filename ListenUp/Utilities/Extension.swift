@@ -46,6 +46,17 @@ extension UIViewController {
         
         return nil
     }
+    
+    func hideKeyboardWhenTappedAround() {
+        let tap = UITapGestureRecognizer(target: self,
+                                         action: #selector(dismissKeyboard))
+        tap.cancelsTouchesInView = false   // important: so tableView cells still get taps
+        view.addGestureRecognizer(tap)
+    }
+    
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
+    }
 }
 
 //MARK: - UIButton
@@ -212,6 +223,12 @@ extension UIView {
 //MARK: - Notification
 extension Notification.Name {
     static let playbackDidUpdate = Notification.Name("PlaybackManager.didUpdate")
+    
+    static let playerCenterNextRequested     = Notification.Name("playerCenterNextRequested")
+    static let playerCenterPrevRequested     = Notification.Name("playerCenterPrevRequested")
+    static let playerCenterLoopModeDidChange = Notification.Name("playerCenterLoopModeDidChange")
+    static let playerCenterShuffleDidChange  = Notification.Name("playerCenterShuffleDidChange")
+    static let playerCenterItemChanged       = Notification.Name("playerCenterItemChanged")
 }
 
 //MARK: - Int64+fileSize
@@ -263,9 +280,12 @@ extension UITabBarController {
     // Adjust content insets when mini player is showing
     func adjustForMiniPlayer(height: CGFloat, animated: Bool = true) {
         viewControllers?.forEach { vc in
-            if let nav = vc as? UINavigationController {
+            if let nav = vc as? UINavigationController,
+               let top = nav.topViewController {
+                
                 nav.viewControllers.forEach { child in
                     adjustContentInsets(for: child, height: height, animated: animated)
+                    top.view.layoutIfNeeded()
                 }
             } else {
                 adjustContentInsets(for: vc, height: height, animated: animated)
@@ -277,20 +297,10 @@ extension UITabBarController {
         guard viewController.isViewLoaded else { return }
         
         let update = {
-            // Adjust table views
             if let tableVC = viewController as? UITableViewController {
                 tableVC.tableView.contentInset.bottom = height
-                tableVC.tableView.scrollIndicatorInsets.bottom = height
-            }
-            // Adjust collection views
-            else if let collectionVC = viewController as? UICollectionViewController {
-                collectionVC.collectionView.contentInset.bottom = height
-                collectionVC.collectionView.scrollIndicatorInsets.bottom = height
-            }
-            // Adjust scroll views
-            else if let scrollView = viewController.view as? UIScrollView {
-                scrollView.contentInset.bottom = height
-                scrollView.scrollIndicatorInsets.bottom = height
+                tableVC.tableView.verticalScrollIndicatorInsets.bottom = height
+                
             }
         }
         

@@ -35,7 +35,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneDidBecomeActive(_ scene: UIScene) {
-        setupMiniPlayerIfNeeded()
+
     }
 
     func sceneWillResignActive(_ scene: UIScene) {
@@ -47,15 +47,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func sceneDidEnterBackground(_ scene: UIScene) {
         
-    }
-
-    func setupMiniPlayerIfNeeded() {
-        // Check if there's an active player session
-        if PlayerCenter.shared.player.currentItem != nil {
-            if let tabBarController = window?.rootViewController as? UITabBarController {
-                MiniPlayerContainerViewController.shared.show(in: tabBarController)
-            }
-        }
     }
 
 }
