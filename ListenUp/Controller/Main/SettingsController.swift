@@ -179,7 +179,7 @@ class SettingsController: UITableViewController {
         cell.textLabel?.textColor = .label
         
         switch indexPath.row {
-        case 0: // About
+        case 0:
             cell.textLabel?.text = "Terms of Service"
             
         case 1:
@@ -235,11 +235,11 @@ class SettingsController: UITableViewController {
     
     private func handleLegalSelection(at indexPath: IndexPath) {
         switch indexPath.row {
-        case 0: // About
-            openWebView(url: "https://example.com/terms")
-        case 1: // Terms of Service
-            openWebView(url: "https://example.com/privacy")
-        case 2: // Privacy Policy
+        case 0: // Term of Service
+            openWebView()
+        case 1: // Privacy Policy
+            openWebView()
+        case 2: // Licenses
             showLicensesScreen()
         case 3: // Licenses
             showContactSupport()
@@ -318,10 +318,9 @@ class SettingsController: UITableViewController {
         navigationController?.pushViewController(vc, animated: true)
     }
     
-    private func openWebView(url: String) {
-        if let url = URL(string: url) {
-            UIApplication.shared.open(url)
-        }
+    private func openWebView() {
+        let vc = PrivacyViewController()
+        navigationController?.pushViewController(vc, animated: true)
     }
     
     private func showContactSupport() {

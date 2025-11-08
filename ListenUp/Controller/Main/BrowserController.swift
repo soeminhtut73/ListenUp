@@ -238,7 +238,7 @@ class BrowserController: UIViewController {
                 switch result {
                 case .failure(let error):
                     print("Debug: Extract failed - \(error.localizedDescription)")
-                    self.showMessage(withTitle: "Oops!", message: "Failed to extract media information")
+                    self.showMessage(withTitle: "Oops!", message: "Unauthorized to download!")
                     
                 case .success(let response):
                     self.handleExtractSuccess(response)

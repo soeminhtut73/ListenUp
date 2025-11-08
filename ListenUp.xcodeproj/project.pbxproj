@@ -40,6 +40,7 @@
 		04396CD22E9A129D002B907A /* DownloadNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396CD12E9A129D002B907A /* DownloadNotificationManager.swift */; };
 		0461FED52E2A9D680052F966 /* WebViewScripts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0461FED42E2A9D680052F966 /* WebViewScripts.swift */; };
 		0461FEEF2E2E8C050052F966 /* CircularProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0461FEEE2E2E8C050052F966 /* CircularProgressView.swift */; };
+		0476C66D2EBF1D03003C9E08 /* PrivacyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0476C66C2EBF1D03003C9E08 /* PrivacyViewController.swift */; };
 		04B16ABE2EA0E7F500332961 /* MusicCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04B16ABD2EA0E7F500332961 /* MusicCategory.swift */; };
 		04B16AC02EA0E90300332961 /* Ringtone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04B16ABF2EA0E90300332961 /* Ringtone.swift */; };
 		04B16AC22EA0F21F00332961 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04B16AC12EA0F21F00332961 /* APIService.swift */; };
@@ -113,6 +114,7 @@
 		0440B2892DF003DE00184BE2 /* ListenUpUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ListenUpUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0461FED42E2A9D680052F966 /* WebViewScripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewScripts.swift; sourceTree = "<group>"; };
 		0461FEEE2E2E8C050052F966 /* CircularProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularProgressView.swift; sourceTree = "<group>"; };
+		0476C66C2EBF1D03003C9E08 /* PrivacyViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyViewController.swift; sourceTree = "<group>"; };
 		04B16ABD2EA0E7F500332961 /* MusicCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicCategory.swift; sourceTree = "<group>"; };
 		04B16ABF2EA0E90300332961 /* Ringtone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ringtone.swift; sourceTree = "<group>"; };
 		04B16AC12EA0F21F00332961 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
@@ -181,6 +183,7 @@
 		041469622DF00978009D6EF9 /* Controller */ = {
 			isa = PBXGroup;
 			children = (
+				0476C66B2EBF1CF8003C9E08 /* Privacy */,
 				04D81B6C2EB3A717003F9392 /* Ringtone */,
 				04D81B6B2EB3A70F003F9392 /* Player */,
 				04D81B6A2EB3A32B003F9392 /* Main */,
@@ -283,6 +286,14 @@
 				041C4AC22E655BAE005B7DEC /* Network */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		0476C66B2EBF1CF8003C9E08 /* Privacy */ = {
+			isa = PBXGroup;
+			children = (
+				0476C66C2EBF1D03003C9E08 /* PrivacyViewController.swift */,
+			);
+			path = Privacy;
 			sourceTree = "<group>";
 		};
 		04D81B622EB387BA003F9392 /* App */ = {
@@ -670,6 +681,7 @@
 				04396CCA2E961CAA002B907A /* SettingsController.swift in Sources */,
 				041BB0BE2EACD60A004BC0D8 /* AudioController.swift in Sources */,
 				04CB2A7F2EBCAB130065FAAB /* MiniPlayerController.swift in Sources */,
+				0476C66D2EBF1D03003C9E08 /* PrivacyViewController.swift in Sources */,
 				04D81B642EB39ADA003F9392 /* MediaItem.swift in Sources */,
 				04B16AC92EA1196D00332961 /* RingtoneCell.swift in Sources */,
 				041469712DF00978009D6EF9 /* SceneDelegate.swift in Sources */,
