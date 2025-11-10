@@ -27,6 +27,8 @@ class BrowserController: UIViewController {
     // WebView
     private(set) var webView: WKWebView!
     
+    private let initialView = InitialSearchView()
+    
     // Download tracking
     private var lastWatchURL: String?
     private var pendingMediaURL: URL?
@@ -128,6 +130,8 @@ class BrowserController: UIViewController {
         view.addSubview(progressView)
         view.addSubview(searchBar)
         view.addSubview(backButton)
+        view.addSubview(initialView)
+        initialView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             // WebView
@@ -135,6 +139,10 @@ class BrowserController: UIViewController {
             webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             webView.bottomAnchor.constraint(equalTo: searchBar.topAnchor),
+            
+            // initialView
+            initialView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            initialView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             
             // Progress View
             progressView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -392,6 +400,7 @@ extension BrowserController: UISearchBarDelegate {
               !text.isEmpty else {
             return
         }
+        initialView.isHidden = true
         
         loadURL(text)
     }

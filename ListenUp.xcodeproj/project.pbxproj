@@ -56,6 +56,7 @@
 		04D81BAD2EB47FA1003F9392 /* FormatterHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04D81BAC2EB47F9A003F9392 /* FormatterHelper.swift */; };
 		04F213352EC0DE8D005255EB /* APIConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F213342EC0DE8D005255EB /* APIConfiguration.swift */; };
 		04F213372EC0F6B0005255EB /* APIEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F213362EC0F6B0005255EB /* APIEndpoint.swift */; };
+		04F2134D2EC1EFD3005255EB /* initialSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F2134C2EC1EFD3005255EB /* initialSearchView.swift */; };
 		490DF94C2B40AA0E2D8FBA51 /* Pods_ListenUpTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6A1B391BE616A1989A549AB /* Pods_ListenUpTests.framework */; };
 		50241556AAD13BBBBFC4A104 /* Pods_ListenUp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B72DDFEC1DAD08A7D4DC97D1 /* Pods_ListenUp.framework */; };
 		D03EE9922D419A2E6094BC5B /* Pods_ListenUp_ListenUpUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E836D5D13BB0499862FD3E59 /* Pods_ListenUp_ListenUpUITests.framework */; };
@@ -132,6 +133,7 @@
 		04D81BAC2EB47F9A003F9392 /* FormatterHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatterHelper.swift; sourceTree = "<group>"; };
 		04F213342EC0DE8D005255EB /* APIConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIConfiguration.swift; sourceTree = "<group>"; };
 		04F213362EC0F6B0005255EB /* APIEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIEndpoint.swift; sourceTree = "<group>"; };
+		04F2134C2EC1EFD3005255EB /* initialSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = initialSearchView.swift; sourceTree = "<group>"; };
 		0F3EF8745F5BB7CD67BB0237 /* Pods-ListenUp-ListenUpUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ListenUp-ListenUpUITests.debug.xcconfig"; path = "Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests.debug.xcconfig"; sourceTree = "<group>"; };
 		1712B13EF12EBF608FF1C2F2 /* Pods-ListenUpTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ListenUpTests.debug.xcconfig"; path = "Target Support Files/Pods-ListenUpTests/Pods-ListenUpTests.debug.xcconfig"; sourceTree = "<group>"; };
 		28DB171FD6D9A2BE6A80BEF8 /* Pods-ListenUp-ListenUpUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ListenUp-ListenUpUITests.release.xcconfig"; path = "Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests.release.xcconfig"; sourceTree = "<group>"; };
@@ -328,6 +330,7 @@
 				04396C902E893B69002B907A /* PlayingIndicatorView.swift */,
 				04C00F4F2E77B30400104CD9 /* PlayerView.swift */,
 				041BB0B52EAB6413004BC0D8 /* ThumbnailStripView.swift */,
+				04F2134C2EC1EFD3005255EB /* initialSearchView.swift */,
 			);
 			path = Custom;
 			sourceTree = "<group>";
@@ -701,6 +704,7 @@
 				04F213352EC0DE8D005255EB /* APIConfiguration.swift in Sources */,
 				04B16ACB2EA125B300332961 /* RingtoneDetailViewController.swift in Sources */,
 				04396C912E893B69002B907A /* PlayingIndicatorView.swift in Sources */,
+				04F2134D2EC1EFD3005255EB /* initialSearchView.swift in Sources */,
 				04F213372EC0F6B0005255EB /* APIEndpoint.swift in Sources */,
 				041C4AFF2E696B0B005B7DEC /* DownloadItem.swift in Sources */,
 				041BB0BC2EABC7B7004BC0D8 /* DownloadTableViewCell.swift in Sources */,
