@@ -260,11 +260,6 @@ class BrowserController: UIViewController {
             return
         }
         
-        print("Debug: Extract success - Ready to download")
-        print("Debug: Title: \(response.title)")
-        print("Debug: URL: \(response.url)")
-        print("Debug: Duration: \(response.duration)s")
-        
         // Enqueue download
         DownloadManager.shared.enqueue(
             url: mediaURL,

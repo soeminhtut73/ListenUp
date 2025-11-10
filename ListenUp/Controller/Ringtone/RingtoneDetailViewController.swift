@@ -7,7 +7,7 @@
 
 import UIKit
 import AVFoundation
-import RealmSwift
+import SDWebImage
 
 class RingtoneDetailViewController: UIViewController {
     
@@ -187,12 +187,11 @@ class RingtoneDetailViewController: UIViewController {
     }
     
     private func loadImage(from url: URL) {
-        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-            guard let data = data, let image = UIImage(data: data) else { return }
-            DispatchQueue.main.async {
-                self?.thumbnailImageView.image = image
-            }
-        }.resume()
+        thumbnailImageView.sd_setImage(
+            with: url,
+            placeholderImage: UIImage(systemName: "play.rectangle.fill"),
+            options: [.retryFailed, .continueInBackground]
+        )
     }
     
     // Helper function to create info rows
