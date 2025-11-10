@@ -36,7 +36,7 @@ class BrowserController: UIViewController {
     
     private let searchBar: UISearchBar = {
         let searchBar = UISearchBar()
-        searchBar.placeholder = "Enter URL"
+        searchBar.placeholder = "Search ..."
         searchBar.autocapitalizationType = .none
         searchBar.keyboardType = .URL
         searchBar.returnKeyType = .go
@@ -78,7 +78,7 @@ class BrowserController: UIViewController {
         setupWebView()
         setupUI()
         setupSearchBar()
-        loadInitialPage()
+//        loadInitialPage()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -146,17 +146,14 @@ class BrowserController: UIViewController {
             backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             backButton.widthAnchor.constraint(equalToConstant: 54),
             backButton.heightAnchor.constraint(equalToConstant: 54),
-            backButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            backButton.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor),
             
             // Search Bar (Right side, same height)
             searchBar.leadingAnchor.constraint(equalTo: backButton.trailingAnchor),
             searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             searchBar.heightAnchor.constraint(equalTo: backButton.heightAnchor),
-            searchBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            searchBar.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor)
         ])
-        
-        // Keep search bar above keyboard
-        view.keyboardLayoutGuide.topAnchor.constraint(equalTo: searchBar.bottomAnchor).isActive = true
     }
     
     private func setupSearchBar() {
@@ -164,7 +161,7 @@ class BrowserController: UIViewController {
     }
     
     private func loadInitialPage() {
-        loadURL("https://www.youtube.com")
+        
     }
     
     private func cleanupObservers() {
@@ -355,7 +352,6 @@ extension BrowserController: WKScriptMessageHandler {
     private func handlePageURL(_ body: [String: Any]) {
         if let href = body["href"] as? String {
             lastWatchURL = href
-            print("Debug: 🌐 Page URL updated: \(href)")
         }
     }
 }
@@ -369,7 +365,7 @@ extension BrowserController: WKNavigationDelegate {
         title = webView.title
         
         // Update search bar
-        searchBar.text = webView.url?.absoluteString
+        searchBar.text = webView.url?.host()
         
         print("Debug: Page loaded - \(webView.title ?? "No title")")
     }
@@ -403,14 +399,6 @@ extension BrowserController: UISearchBarDelegate {
     func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
         // Select all text for easy editing
         searchBar.searchTextField.selectAll(nil)
-    }
-}
-
-// MARK: - UISearchResultsUpdating
-
-extension BrowserController: UISearchResultsUpdating {
-    func updateSearchResults(for searchController: UISearchController) {
-        searchBar.text = webView.url?.absoluteString
     }
 }
 

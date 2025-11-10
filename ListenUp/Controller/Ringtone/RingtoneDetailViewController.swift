@@ -251,6 +251,7 @@ class RingtoneDetailViewController: UIViewController {
     @objc private func playTapped() {
 //        guard let url = URL(string: ringtone.fileUrl!) else { return }
         guard let url = URL(string: "http://192.168.10.7:8000/storage/ringtones/1dee5636-7a81-4148-816b-655bf8199fa2.mp3") else { return }
+        PlayerCenter.shared.pause()
         
         Task {
             try? await APIService.shared.trackPlay(ringtoneId: ringtone.id)
