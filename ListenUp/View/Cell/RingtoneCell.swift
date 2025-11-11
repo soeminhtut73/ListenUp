@@ -66,7 +66,7 @@ class RingtoneCell: UITableViewCell {
         // Load thumbnail image
         if let thumbnailUrl = ringtone.thumbnailUrl, let url = URL(string: thumbnailUrl) {
             // Use SDWebImage or similar library
-            // thumbnailImageView.sd_setImage(with: url, placeholderImage: UIImage(systemName: "music.note"))
+             thumbnailImageView.sd_setImage(with: url, placeholderImage: UIImage(systemName: "music.note"))
         } else {
             thumbnailImageView.image = UIImage(systemName: "music.note")
         }

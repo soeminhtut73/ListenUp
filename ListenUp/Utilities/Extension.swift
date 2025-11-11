@@ -54,6 +54,32 @@ extension UIViewController {
         view.addGestureRecognizer(tap)
     }
     
+    func showRenameAlert(title: String = "Rename",
+                         message: String? = "Enter a new title",
+                         currentName: String?,
+                         placeholder: String = "Title",
+                         completion: @escaping (String) -> Void) {
+        
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addTextField { textField in
+            textField.placeholder = placeholder
+            textField.text = currentName
+        }
+        
+        let saveAction = UIAlertAction(title: "Save", style: .default) { _ in
+            let text = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            guard !text.isEmpty else { return }
+            completion(text)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        
+        alert.addAction(saveAction)
+        alert.addAction(cancelAction)
+        
+        self.present(alert, animated: true)
+    }
+    
     @objc private func dismissKeyboard() {
         view.endEditing(true)
     }

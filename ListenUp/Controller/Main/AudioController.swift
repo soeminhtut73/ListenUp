@@ -398,6 +398,15 @@ extension AudioController: ActionSheetConfigurable {
         }
         actions.append(shareAction)
         
+        let renameAction = UIAlertAction(title: "Rename", style: .default) { _ in
+            self.showRenameAlert(currentName: item.title) { newTitle in
+                RealmService.shared.update(item.id) { obj in
+                    obj.title = newTitle
+                }
+            }
+        }
+        actions.append(renameAction)
+        
         // Delete Action
         let deleteAction = UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
             self?.showDeleteConfirmation(for: item)

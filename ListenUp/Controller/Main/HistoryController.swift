@@ -422,9 +422,19 @@ final class HistoryController: UIViewController {
             guard let localPath = item.localPath as String?,
                   let fileURL = FileHelper.fileURL(for: localPath) else { return }
             
+            PlayerCenter.shared.pause()
             let vc = RingtoneTrimWithStripViewController(videoURL: fileURL, item: item)
             let nav = UINavigationController(rootViewController: vc)
             self.present(nav, animated: true)
+        }
+        
+        // Rename action
+        let renameAction = UIAlertAction(title: "Rename", style: .default) { _ in
+            self.showRenameAlert(currentName: item.title) { newTitle in
+                RealmService.shared.update(item.id) { obj in
+                    obj.title = newTitle
+                }
+            }
         }
         
         // Delete Action
@@ -438,6 +448,7 @@ final class HistoryController: UIViewController {
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
         
         actionSheet.addAction(convertAction)
+        actionSheet.addAction(renameAction)
         actionSheet.addAction(deleteAction)
         actionSheet.addAction(cancelAction)
         

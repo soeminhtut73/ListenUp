@@ -26,6 +26,7 @@ public final class RingtoneTrimWithStripViewController: UIViewController, Thumbn
 
     // UI
     private let videoContainer = UIView()
+    private let titleLabel = UILabel()
     private let strip = ThumbnailStripView()
     private let exportButton = UIButton(type: .system)
     private let timesLabel = UILabel()
@@ -44,6 +45,7 @@ public final class RingtoneTrimWithStripViewController: UIViewController, Thumbn
     init(videoURL: URL, item: DownloadItem) {
         self.item = item
         self.videoURL = videoURL
+        self.titleLabel.text = item.title
         
         super.init(nibName: nil, bundle: nil)
     }
@@ -84,8 +86,14 @@ public final class RingtoneTrimWithStripViewController: UIViewController, Thumbn
     }
 
     private func setupUI() {
+        titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
+        titleLabel.textColor = .label
+        titleLabel.numberOfLines = 2
+        titleLabel.textAlignment = .center
+        view.addSubview(titleLabel)
+        
         videoContainer.backgroundColor = .black
-        videoContainer.layer.cornerRadius = 20
+//        videoContainer.layer.cornerRadius = 20
         view.addSubview(videoContainer)
 
         strip.delegate = self
@@ -111,13 +119,18 @@ public final class RingtoneTrimWithStripViewController: UIViewController, Thumbn
     }
 
     private func layoutUI() {
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         videoContainer.translatesAutoresizingMaskIntoConstraints = false
         strip.translatesAutoresizingMaskIntoConstraints = false
         exportButton.translatesAutoresizingMaskIntoConstraints = false
         timesLabel.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            videoContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            
+            videoContainer.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 32),
             videoContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             videoContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             videoContainer.heightAnchor.constraint(equalTo: videoContainer.widthAnchor, multiplier: 9.0/16.0),
