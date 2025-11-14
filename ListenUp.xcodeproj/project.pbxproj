@@ -54,6 +54,7 @@
 		04CB2A7F2EBCAB130065FAAB /* MiniPlayerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04CB2A7E2EBCAB130065FAAB /* MiniPlayerController.swift */; };
 		04D81B642EB39ADA003F9392 /* MediaItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04D81B632EB39ADA003F9392 /* MediaItem.swift */; };
 		04D81BAD2EB47FA1003F9392 /* FormatterHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04D81BAC2EB47F9A003F9392 /* FormatterHelper.swift */; };
+		04EE2BCD2EC4F3410020833E /* DeviceID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EE2BCC2EC4F3410020833E /* DeviceID.swift */; };
 		04F213352EC0DE8D005255EB /* APIConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F213342EC0DE8D005255EB /* APIConfiguration.swift */; };
 		04F213372EC0F6B0005255EB /* APIEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F213362EC0F6B0005255EB /* APIEndpoint.swift */; };
 		04F2134D2EC1EFD3005255EB /* initialSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F2134C2EC1EFD3005255EB /* initialSearchView.swift */; };
@@ -131,6 +132,7 @@
 		04CB2A7E2EBCAB130065FAAB /* MiniPlayerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerController.swift; sourceTree = "<group>"; };
 		04D81B632EB39ADA003F9392 /* MediaItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaItem.swift; sourceTree = "<group>"; };
 		04D81BAC2EB47F9A003F9392 /* FormatterHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatterHelper.swift; sourceTree = "<group>"; };
+		04EE2BCC2EC4F3410020833E /* DeviceID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceID.swift; sourceTree = "<group>"; };
 		04F213342EC0DE8D005255EB /* APIConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIConfiguration.swift; sourceTree = "<group>"; };
 		04F213362EC0F6B0005255EB /* APIEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIEndpoint.swift; sourceTree = "<group>"; };
 		04F2134C2EC1EFD3005255EB /* initialSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = initialSearchView.swift; sourceTree = "<group>"; };
@@ -240,14 +242,15 @@
 			isa = PBXGroup;
 			children = (
 				04D81BAC2EB47F9A003F9392 /* FormatterHelper.swift */,
-				0414698F2DF415A3009D6EF9 /* Extension.swift */,
 				0414698B2DF41531009D6EF9 /* Style.swift */,
 				0461FED42E2A9D680052F966 /* WebViewScripts.swift */,
+				0414698F2DF415A3009D6EF9 /* Extension.swift */,
 				04C00F532E77FD5300104CD9 /* PlayerCenter.swift */,
 				04396C9E2E8D0833002B907A /* FileHelper.swift */,
 				04396CCF2E99E509002B907A /* NetworkMonitor.swift */,
 				04396CCD2E993D90002B907A /* DownloadGuard.swift */,
 				041BB0B72EAB643C004BC0D8 /* AudioConverter.swift */,
+				04EE2BCC2EC4F3410020833E /* DeviceID.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -685,6 +688,7 @@
 				04C00F542E77FD5300104CD9 /* PlayerCenter.swift in Sources */,
 				041C4AF72E693EDC005B7DEC /* DownloadManager.swift in Sources */,
 				04396CD22E9A129D002B907A /* DownloadNotificationManager.swift in Sources */,
+				04EE2BCD2EC4F3410020833E /* DeviceID.swift in Sources */,
 				04396C692E824EC4002B907A /* MiniPlayerView.swift in Sources */,
 				0461FED52E2A9D680052F966 /* WebViewScripts.swift in Sources */,
 				04396CCA2E961CAA002B907A /* SettingsController.swift in Sources */,

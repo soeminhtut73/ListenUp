@@ -21,16 +21,16 @@ final class DownloadItem: Object, ObjectKeyIdentifiable {
     @Persisted(primaryKey: true) var id: String = UUID().uuidString
 
     @Persisted var title: String = ""
-    @Persisted var sourceURL: String = ""        // the extract (googlevideo) URL you started with
-    @Persisted var thumbURL: String = ""         // optional
+    @Persisted var sourceURL: String = ""
+    @Persisted var thumbURL: String = ""
     @Persisted var localPath: String?
     @Persisted var status: DLStatus = .queued
-    @Persisted var progress: Double = 0          // 0...1
+    @Persisted var progress: Double = 0
     @Persisted var fileSize: Int64 = 0
     @Persisted var createdAt: Date = Date()
     @Persisted var errorMessage: String?
     
     @Persisted var mediaType: MediaType = .video
-    @Persisted var duration: TimeInterval = 0       // For displaying length
+    @Persisted var duration: TimeInterval = 0
     @Persisted var format: String = ""
 }

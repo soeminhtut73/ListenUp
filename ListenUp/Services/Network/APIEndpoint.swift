@@ -20,6 +20,9 @@ enum APIEndpoint {
     case downloadRingtone(id: Int)
     case trackPlay(id: Int)
     
+    //MARK: - Register (v1)
+    case registerDevice
+    
     var version: APIConfiguration.APIVersion {
         return .v1
     }
@@ -40,13 +43,17 @@ enum APIEndpoint {
         case .categoryRingtones(let categoryID, page: let page):
             return "\(baseURL)/categories/\(categoryID)/ringtones?page=\(page)"
             
-            // ringtone
+        // ringtone
         case .ringtoneDetail(let id):
             return "\(baseURL)/ringtones/\(id)"
         case .downloadRingtone(id: let id):
             return "\(baseURL)/ringtones/\(id)/download"
         case .trackPlay(let id):
             return "\(baseURL)/ringtones/\(id)/play"
+            
+            // register device
+        case .registerDevice:
+            return "\(baseURL)/register_device_id"
         }
     }
 }

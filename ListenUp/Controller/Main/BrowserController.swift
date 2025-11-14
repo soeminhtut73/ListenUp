@@ -236,7 +236,9 @@ class BrowserController: UIViewController {
     }
     
     private func performDownload(with url: String) {
-        ExtractAPI.extract(from: url) { [weak self] result in
+        let deviceId = DeviceID.shared.get()
+        
+        ExtractAPI.extract(deviceId: deviceId, from: url) { [weak self] result in
             guard let self = self else { return }
             
             DispatchQueue.main.async {

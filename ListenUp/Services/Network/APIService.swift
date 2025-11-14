@@ -52,6 +52,16 @@ class APIService {
         request.httpMethod = HTTPMethod.post.rawValue
         let (_, _) = try await URLSession.shared.data(for: request)
     }
+    
+    //MARK: - Register Device
+    func registerDevice(deviceId: String) async throws {
+        let endpoint = URL(string: APIEndpoint.registerDevice.fullPath)!
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = HTTPMethod.post.rawValue
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONEncoder().encode(["device_id": deviceId])
+        let (_, _) = try await URLSession.shared.data(for: request)
+    }
 }
 
 struct APIResponse<T: Codable>: Codable {

@@ -50,10 +50,10 @@ extension UIViewController {
     func hideKeyboardWhenTappedAround() {
         let tap = UITapGestureRecognizer(target: self,
                                          action: #selector(dismissKeyboard))
-        tap.cancelsTouchesInView = false   // important: so tableView cells still get taps
+        tap.cancelsTouchesInView = false
         view.addGestureRecognizer(tap)
     }
-    
+
     func showRenameAlert(title: String = "Rename",
                          message: String? = "Enter a new title",
                          currentName: String?,

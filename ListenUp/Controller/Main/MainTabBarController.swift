@@ -13,12 +13,9 @@ class MainTabBarController: UITabBarController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         configureTabController()
+        checkDidRegisterDeivceId()
     }
-    
-    //MARK: - API
-    
     
     //MARK: - HelperFunctions
     
@@ -60,6 +57,19 @@ class MainTabBarController: UITabBarController {
         navigationController.navigationBar.isTranslucent = false
         
         return navigationController
+    }
+    
+    private func checkDidRegisterDeivceId() {
+        guard !DeviceID.shared.exists() else { return }
+        
+        Task { @MainActor in
+            do {
+                let deviceId = DeviceID.shared.get()
+                try await APIService.shared.registerDevice(deviceId: deviceId)
+            } catch {
+                self.showMessage(withTitle: "Oops!", message: "Failed to register device.")
+            }
+        }
     }
     
 }
