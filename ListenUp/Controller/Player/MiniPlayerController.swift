@@ -236,7 +236,6 @@ final class MiniPlayerController: UIViewController {
     
     private func expandToFullPlayer() {
         guard let tabBarController = UIApplication.shared.rootTabBarController else {
-            print("❌ Tab bar controller not found")
             return
         }
         

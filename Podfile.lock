@@ -1,4 +1,7 @@
 PODS:
+  - Google-Mobile-Ads-SDK (12.13.0):
+    - GoogleUserMessagingPlatform (>= 1.1)
+  - GoogleUserMessagingPlatform (3.1.0)
   - Realm (20.0.3):
     - Realm/Headers (= 20.0.3)
   - Realm/Headers (20.0.3)
@@ -9,20 +12,25 @@ PODS:
   - SDWebImage/Core (5.21.3)
 
 DEPENDENCIES:
+  - Google-Mobile-Ads-SDK
   - RealmSwift
   - SDWebImage
 
 SPEC REPOS:
   trunk:
+    - Google-Mobile-Ads-SDK
+    - GoogleUserMessagingPlatform
     - Realm
     - RealmSwift
     - SDWebImage
 
 SPEC CHECKSUMS:
+  Google-Mobile-Ads-SDK: fa5e7457f7dcd55a1958c29e71cc67cd4f3f2de3
+  GoogleUserMessagingPlatform: befe603da6501006420c206222acd449bba45a9c
   Realm: 853e5089d6042dff807bda000277eadfe2da93d2
   RealmSwift: f33c19577cefcbf681345d721fcbc7b42be4c949
   SDWebImage: 16309af6d214ba3f77a7c6f6fdda888cb313a50a
 
-PODFILE CHECKSUM: bbc4d8c6a924fdaaf9bc8a84aa78cc1fc18f0382
+PODFILE CHECKSUM: dc0e4ee8b099ac2550ed6fec02328d06287df365
 
 COCOAPODS: 1.16.2

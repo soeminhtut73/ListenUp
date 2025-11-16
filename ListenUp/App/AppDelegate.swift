@@ -7,7 +7,6 @@
 
 import UIKit
 import AVFoundation
-import UserNotifications
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -24,6 +23,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 AppSettingsManager.shared.isDownloadCompleteNotificationEnabled = false
             }
         }
+        
+        AdsManager.configure()
         
         // Set notification delegate
         UNUserNotificationCenter.current().delegate = self

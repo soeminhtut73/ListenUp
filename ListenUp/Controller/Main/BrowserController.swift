@@ -28,6 +28,7 @@ class BrowserController: UIViewController {
     private(set) var webView: WKWebView!
     
     private let initialView = InitialSearchView()
+    private let rewarded = RewardedAdManager()
     
     // Download tracking
     private var lastWatchURL: String?
@@ -77,11 +78,15 @@ class BrowserController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        rewarded.load()
         setupWebView()
         setupUI()
         setupSearchBar()
-//        loadInitialPage()
     }
+    
+//    override func viewWillAppear(_ animated: Bool) {
+//        MiniPlayerController.shared.hid
+//    }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
@@ -228,7 +233,30 @@ class BrowserController: UIViewController {
             
             switch decision {
             case .proceed:
-                self.performDownload(with: url)
+                
+                if RewardWallet.shared.consumeDownloadToken() {
+                    self.showMessage(withTitle: "Success", message: "Start downloading...")
+                    self.performDownload(with: url)
+                } else {
+                    rewarded.present(from: self, onEarned: { _ in
+                        RewardWallet.shared.grantDownloadTokens()
+                        
+                    }, onDismiss: { [weak self] earned in
+                        guard let self else { return }
+                        if earned {
+                            _ = RewardWallet.shared.consumeDownloadToken()
+                            self.showMessage(withTitle: "Success", message: "Start downloading...")
+                            self.performDownload(with: url)
+                        } else {
+                            self.showMessage(withTitle: "Ad closed", message: "Watch to unlock conversion.")
+                        }
+                        
+                    }, onUnavailable: { [weak self] in
+                        self?.showMessage(withTitle: "Ad not avaliable!", message: "Convertion is starting automatically.")
+                        self?.performDownload(with: url)
+                    })
+                }
+                
             case .cancelled:
                 self.showMessage(withTitle: "Cancelled", message: "Download was cancelled")
             }
@@ -236,9 +264,8 @@ class BrowserController: UIViewController {
     }
     
     private func performDownload(with url: String) {
-        let deviceId = DeviceID.shared.get()
         
-        ExtractAPI.extract(deviceId: deviceId, from: url) { [weak self] result in
+        ExtractAPI.extract( from: url) { [weak self] result in
             guard let self = self else { return }
             
             DispatchQueue.main.async {
@@ -257,7 +284,7 @@ class BrowserController: UIViewController {
     private func handleExtractSuccess(_ response: ExtractResponse) {
         // Check duration limit
         if response.isTooLong {
-            showMessage(withTitle: "Duration Limit", message: "Please choose media no longer than 10 minutes")
+            showMessage(withTitle: "Duration Limit", message: "Please choose media no longer than 30 minutes")
             return
         }
         

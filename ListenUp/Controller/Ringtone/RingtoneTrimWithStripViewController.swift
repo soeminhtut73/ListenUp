@@ -30,6 +30,8 @@ public final class RingtoneTrimWithStripViewController: UIViewController, Thumbn
     private let strip = ThumbnailStripView()
     private let exportButton = UIButton(type: .system)
     private let timesLabel = UILabel()
+    
+    private let rewarded = RewardedAdManager()
 
     // State
     private var startTime: TimeInterval = 0 {
@@ -57,6 +59,7 @@ public final class RingtoneTrimWithStripViewController: UIViewController, Thumbn
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         title = "Trim"
+        rewarded.load()
 
         setupAV()
         setupUI()
@@ -93,7 +96,6 @@ public final class RingtoneTrimWithStripViewController: UIViewController, Thumbn
         view.addSubview(titleLabel)
         
         videoContainer.backgroundColor = .black
-//        videoContainer.layer.cornerRadius = 20
         view.addSubview(videoContainer)
 
         strip.delegate = self
@@ -199,23 +201,17 @@ public final class RingtoneTrimWithStripViewController: UIViewController, Thumbn
     public func strip(_ strip: ThumbnailStripView, didChangeStartTime start: TimeInterval) {
         startTime = start
     }
-
-    // Export
-    @objc private func tapExport() {
-        exportButton.isEnabled = false
-        exportButton.alpha = 0.6
-        
+    
+    private func startConvertion() {
         AudioConverter.shared.convertToAudio(with: item.title, from: videoURL, startTime: startTime) { [weak self] result in
             guard let self = self else { return }
             DispatchQueue.main.async {
-                self.exportButton.isHidden = true
+                self.exportButton.isEnabled = true
                 self.exportButton.alpha = 1.0
                 
                 switch result {
-                case .success(let outputURL):
-                    let av = UIActivityViewController(activityItems: [outputURL], applicationActivities: nil)
-                    self.present(av, animated: true)
-                    
+                case .success(_:):
+                    self.showMessage(withTitle: "Success", message: "Audio Converted!")
                 case .failure(let err):
                     let alert = UIAlertController(title: "Export Failed", message: err.localizedDescription, preferredStyle: .alert)
                     alert.addAction(UIAlertAction(title: "OK", style: .default))
@@ -223,5 +219,24 @@ public final class RingtoneTrimWithStripViewController: UIViewController, Thumbn
                 }
             }
         }
+    }
+
+    // Export
+    @objc private func tapExport() {
+        exportButton.isEnabled = false
+        exportButton.alpha = 0.6
+        player.pause()
+        
+        rewarded.present(from: self, onDismiss: { [weak self] earned in
+            guard let self else { return }
+            if earned {
+                self.startConvertion()
+            } else {
+                self.showMessage(withTitle: "Ad closed", message: "Watch to unlock conversion.")
+            }
+        }, onUnavailable: { [weak self] in
+            self?.showMessage(withTitle: "Ad not avaliable!", message: "Convertion is starting automatically.")
+            self?.startConvertion()
+        })
     }
 }

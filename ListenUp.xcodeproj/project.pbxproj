@@ -55,6 +55,10 @@
 		04D81B642EB39ADA003F9392 /* MediaItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04D81B632EB39ADA003F9392 /* MediaItem.swift */; };
 		04D81BAD2EB47FA1003F9392 /* FormatterHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04D81BAC2EB47F9A003F9392 /* FormatterHelper.swift */; };
 		04EE2BCD2EC4F3410020833E /* DeviceID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EE2BCC2EC4F3410020833E /* DeviceID.swift */; };
+		04EE2BDC2EC70DE50020833E /* AdIDs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EE2BDB2EC70DE50020833E /* AdIDs.swift */; };
+		04EE2BDE2EC730900020833E /* AdsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EE2BDD2EC730900020833E /* AdsManager.swift */; };
+		04EE2BE02EC730D80020833E /* RewardedAdManager..swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EE2BDF2EC730D80020833E /* RewardedAdManager..swift */; };
+		04EE2BE22EC75A2E0020833E /* RewardWallet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EE2BE12EC75A2C0020833E /* RewardWallet.swift */; };
 		04F213352EC0DE8D005255EB /* APIConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F213342EC0DE8D005255EB /* APIConfiguration.swift */; };
 		04F213372EC0F6B0005255EB /* APIEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F213362EC0F6B0005255EB /* APIEndpoint.swift */; };
 		04F2134D2EC1EFD3005255EB /* initialSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F2134C2EC1EFD3005255EB /* initialSearchView.swift */; };
@@ -133,6 +137,10 @@
 		04D81B632EB39ADA003F9392 /* MediaItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaItem.swift; sourceTree = "<group>"; };
 		04D81BAC2EB47F9A003F9392 /* FormatterHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatterHelper.swift; sourceTree = "<group>"; };
 		04EE2BCC2EC4F3410020833E /* DeviceID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceID.swift; sourceTree = "<group>"; };
+		04EE2BDB2EC70DE50020833E /* AdIDs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdIDs.swift; sourceTree = "<group>"; };
+		04EE2BDD2EC730900020833E /* AdsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdsManager.swift; sourceTree = "<group>"; };
+		04EE2BDF2EC730D80020833E /* RewardedAdManager..swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardedAdManager..swift; sourceTree = "<group>"; };
+		04EE2BE12EC75A2C0020833E /* RewardWallet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardWallet.swift; sourceTree = "<group>"; };
 		04F213342EC0DE8D005255EB /* APIConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIConfiguration.swift; sourceTree = "<group>"; };
 		04F213362EC0F6B0005255EB /* APIEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIEndpoint.swift; sourceTree = "<group>"; };
 		04F2134C2EC1EFD3005255EB /* initialSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = initialSearchView.swift; sourceTree = "<group>"; };
@@ -223,6 +231,7 @@
 		0414696F2DF00978009D6EF9 /* ListenUp */ = {
 			isa = PBXGroup;
 			children = (
+				04EE2BDA2EC70DCF0020833E /* Ads */,
 				04D81B622EB387BA003F9392 /* App */,
 				041469632DF00978009D6EF9 /* Model */,
 				041469642DF00978009D6EF9 /* View */,
@@ -405,6 +414,17 @@
 			path = Manager;
 			sourceTree = "<group>";
 		};
+		04EE2BDA2EC70DCF0020833E /* Ads */ = {
+			isa = PBXGroup;
+			children = (
+				04EE2BE12EC75A2C0020833E /* RewardWallet.swift */,
+				04EE2BDB2EC70DE50020833E /* AdIDs.swift */,
+				04EE2BDD2EC730900020833E /* AdsManager.swift */,
+				04EE2BDF2EC730D80020833E /* RewardedAdManager..swift */,
+			);
+			path = Ads;
+			sourceTree = "<group>";
+		};
 		24CCC883B4C52F81768FCE95 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -440,6 +460,7 @@
 				0440B2662DF003DD00184BE2 /* Frameworks */,
 				0440B2672DF003DD00184BE2 /* Resources */,
 				1728CDB28997E75946AACBC3 /* [CP] Embed Pods Frameworks */,
+				A7BBF70C2342C56B2961846B /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -481,6 +502,7 @@
 				0440B2862DF003DE00184BE2 /* Frameworks */,
 				0440B2872DF003DE00184BE2 /* Resources */,
 				18F365BBE139B686C7994D0B /* [CP] Embed Pods Frameworks */,
+				2AA5856AC22831D3F299B057 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -653,6 +675,48 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
+		2AA5856AC22831D3F299B057 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ListenUp-ListenUpUITests/Pods-ListenUp-ListenUpUITests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		A7BBF70C2342C56B2961846B /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ListenUp/Pods-ListenUp-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ListenUp/Pods-ListenUp-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ListenUp/Pods-ListenUp-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		DE2D4B67EF34FBED6AC43319 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -684,6 +748,8 @@
 			files = (
 				041469702DF00978009D6EF9 /* AppDelegate.swift in Sources */,
 				04396CD02E99E509002B907A /* NetworkMonitor.swift in Sources */,
+				04EE2BDE2EC730900020833E /* AdsManager.swift in Sources */,
+				04EE2BE22EC75A2E0020833E /* RewardWallet.swift in Sources */,
 				041BB0C82EAE120A004BC0D8 /* ActionSheetConfigurable.swift in Sources */,
 				04C00F542E77FD5300104CD9 /* PlayerCenter.swift in Sources */,
 				041C4AF72E693EDC005B7DEC /* DownloadManager.swift in Sources */,
@@ -702,6 +768,7 @@
 				041BB0B62EAB6413004BC0D8 /* ThumbnailStripView.swift in Sources */,
 				041C4AC42E655C22005B7DEC /* ExtractAPI.swift in Sources */,
 				041469802DF009F9009D6EF9 /* HistoryController.swift in Sources */,
+				04EE2BE02EC730D80020833E /* RewardedAdManager..swift in Sources */,
 				041BB0B42EAB6180004BC0D8 /* RingtoneTrimWithStripViewController.swift in Sources */,
 				041469902DF415A3009D6EF9 /* Extension.swift in Sources */,
 				041BB0B82EAB643C004BC0D8 /* AudioConverter.swift in Sources */,
@@ -715,6 +782,7 @@
 				04B16ABE2EA0E7F500332961 /* MusicCategory.swift in Sources */,
 				04B16AC02EA0E90300332961 /* Ringtone.swift in Sources */,
 				0461FEEF2E2E8C050052F966 /* CircularProgressView.swift in Sources */,
+				04EE2BDC2EC70DE50020833E /* AdIDs.swift in Sources */,
 				041469782DF009B0009D6EF9 /* MainTabBarController.swift in Sources */,
 				04396C9F2E8D0833002B907A /* FileHelper.swift in Sources */,
 				04B16AC42EA0F43800332961 /* CategoriesViewController.swift in Sources */,

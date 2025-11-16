@@ -15,13 +15,14 @@ struct ExtractResponse: Codable {
     let duration: Int
     let thumb: String
     
-    var isTooLong: Bool { duration > 1200 }
+    var isTooLong: Bool { duration > 1800 }
 }
 
 enum ExtractAPI {
-    static func extract(deviceId: String, from url: String, completion: @escaping (Result<ExtractResponse, Error>) -> Void) {
+    static func extract(from url: String, completion: @escaping (Result<ExtractResponse, Error>) -> Void) {
         
         guard let endpoint = URL(string: APIEndpoint.ytExtract.fullPath) else { return }
+        let deviceId = DeviceID.shared.get()
         
         var request = URLRequest(url: endpoint)
         request.httpMethod = HTTPMethod.post.rawValue

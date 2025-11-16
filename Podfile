@@ -22,13 +22,7 @@ target 'ListenUp' do
   target 'ListenUpUITests' do
     # Pods for testing
   end
-  
-#    pod 'RealmSwift'
-#    pod 'Firebase/Core'
-#    pod 'Firebase/Database'
-#    pod 'Firebase/Firestore'
-#    pod 'Firebase/Storage'
-#    pod 'Firebase/Auth'
     pod 'SDWebImage'
     pod 'RealmSwift'
+    pod 'Google-Mobile-Ads-SDK'
 end

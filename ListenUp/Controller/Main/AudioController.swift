@@ -135,7 +135,10 @@ class AudioController: UIViewController {
         results = RealmService.shared.fetchAudioItems()
             .sorted(byKeyPath: "createdAt", ascending: false)
         searchResults = results
-        tableView.reloadData()
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.tableView.reloadData()
+        }
     }
     
     private func observeRealmChanges() {
