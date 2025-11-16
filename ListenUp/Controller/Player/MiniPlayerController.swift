@@ -31,6 +31,8 @@ final class MiniPlayerController: UIViewController {
     // MARK: - Realm Access
     private var downloadsResults: Results<DownloadItem>!
     
+    private var isVisible: Bool = false
+    
     // MARK: - Init
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         super.init(nibName: nil, bundle: nil)
@@ -259,6 +261,24 @@ final class MiniPlayerController: UIViewController {
             PlayerCenter.shared.player.play()
         }
         updateMiniPlayerUI()
+    }
+    
+    func hide(animated: Bool = true) {
+        guard isVisible else { return }
+        isVisible = false
+        UIView.animate(withDuration: animated ? 0.25 : 0) {
+            self.miniPlayerView?.alpha = 0
+            self.miniPlayerView?.isUserInteractionEnabled = false
+        }
+    }
+    
+    func show(animated: Bool = true) {
+        guard !isVisible else { return }
+        isVisible = true
+        UIView.animate(withDuration: animated ? 0.25 : 0) {
+            self.miniPlayerView?.alpha = 1
+            self.miniPlayerView?.isUserInteractionEnabled = true
+        }
     }
     
 }

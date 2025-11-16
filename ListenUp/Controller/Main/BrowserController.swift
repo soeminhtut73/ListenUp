@@ -84,13 +84,15 @@ class BrowserController: UIViewController {
         setupSearchBar()
     }
     
-//    override func viewWillAppear(_ animated: Bool) {
-//        MiniPlayerController.shared.hid
-//    }
-    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        MiniPlayerController.shared.hide(animated: true)
+    }
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         view.endEditing(true)
+        MiniPlayerController.shared.show(animated: true)
     }
     
     deinit {
