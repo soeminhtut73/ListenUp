@@ -23,7 +23,7 @@ struct APIConfiguration {
     static var baseURL: String {
         switch Environment.current {
         case .development:
-            return "http://192.168.10.7:8000"
+            return "http://192.168.10.38:8000"
         case .production:
             return "https://api.yourapp.com"
         }

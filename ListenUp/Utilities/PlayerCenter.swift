@@ -169,13 +169,7 @@ final class PlayerCenter {
     func play(url: URL, itemID: String? = nil) {
         let item = AVPlayerItem(url: url)
         player.replaceCurrentItem(with: item)
-        
-//        do {
-//            try AVAudioSession.sharedInstance().setActive(true)
-//        } catch {
-//            print("❌ Failed to activate audio session:", error)
-//        }
-        
+
         player.play()
         currentPlayingItemId = itemID
         NotificationCenter.default.post(name: .playerCenterItemChanged, object: nil)

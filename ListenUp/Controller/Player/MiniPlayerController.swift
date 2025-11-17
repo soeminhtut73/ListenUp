@@ -32,6 +32,7 @@ final class MiniPlayerController: UIViewController {
     private var downloadsResults: Results<DownloadItem>!
     
     private var isVisible: Bool = false
+    private var mediaType: MediaType!
     
     // MARK: - Init
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
@@ -52,8 +53,9 @@ final class MiniPlayerController: UIViewController {
         view.isUserInteractionEnabled = false   // container itself doesn’t need touches
     }
     
-    func setPlaylist(with playlists: Results<DownloadItem>) {
+    func setPlaylist(with playlists: Results<DownloadItem>, mediaType: MediaType? = .video) {
         downloadsResults = playlists
+        self.mediaType = mediaType
     }
     
     // call this once after tab bar is ready (e.g. from SceneDelegate/app entry)
@@ -129,8 +131,7 @@ final class MiniPlayerController: UIViewController {
         ) { [weak self] _ in
             self?.updateMiniPlayerUI()
         }
-        
-        // listen to PlayerCenter “next/prev” so we can advance even when full player is gone
+    
         let nc = NotificationCenter.default
         
         let nextTok = nc.addObserver(
@@ -245,7 +246,7 @@ final class MiniPlayerController: UIViewController {
         playerVC.downloadsResults = downloadsResults
         
         if let url = PlayerCenter.shared.currentURL {
-            playerVC.startAt(url: url)
+            playerVC.startAt(url: url, mediaType: mediaType)
         }
         
         playerVC.modalPresentationStyle = .overFullScreen

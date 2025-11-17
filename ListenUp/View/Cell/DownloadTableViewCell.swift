@@ -272,7 +272,7 @@ class DownloadTableViewCell: UITableViewCell {
     func setPlaying(_ isPlaying: Bool) {
         if isPlaying {
             playingIndicator.isHidden = false
-            albumImageView.layer.opacity = 0.5
+            albumImageView.layer.opacity = 0.7
             playingIndicator.start()
         } else {
             playingIndicator.stop()

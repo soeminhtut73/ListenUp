@@ -7,6 +7,7 @@
 
 import UIKit
 import RealmSwift
+import AVFoundation
 
 class AudioController: UIViewController {
     
@@ -15,10 +16,20 @@ class AudioController: UIViewController {
     // Data
     private var results: Results<DownloadItem>!
     private var searchResults: Results<DownloadItem>!
-    private var notificationToken: NotificationToken?
+    private var tokens: NotificationToken?
     
     // Search
     private let searchController = UISearchController(searchResultsController: nil)
+    private var searchWorkItem: DispatchWorkItem?
+    private var isSearching: Bool {
+        let raw = (searchController.searchBar.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return !raw.isEmpty
+    }
+    
+    // Player Observation
+    private var playerRateKVO: NSKeyValueObservation?
+    private var playerItemKVO: NSKeyValueObservation?
+    private var lastObservedRate: Float = 0
     
     // Navigation Bar Items
     internal lazy var sortButton = UIBarButtonItem(
@@ -82,11 +93,29 @@ class AudioController: UIViewController {
         setupUI()
         setupSearch()
         fetchResult()
-        observeRealmChanges()
+        configureToken()
+        startObservingPlayer()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if let tabBar = self.tabBarController {
+            MiniPlayerController.shared.attach(to: tabBar)
+        }
+        
+        if tableView.window != nil {
+            reloadPlayingRows()
+        }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        searchWorkItem?.cancel()
     }
     
     deinit {
-        notificationToken?.invalidate()
+        tokens?.invalidate()
         NotificationCenter.default.removeObserver(self)
     }
     
@@ -129,6 +158,83 @@ class AudioController: UIViewController {
         definesPresentationContext = true
     }
     
+    private func setupNotifications() {
+        let nc = NotificationCenter.default
+        
+        nc.addObserver(
+            self,
+            selector: #selector(playerItemChanged),
+            name: .playerCenterNextRequested,
+            object: nil)
+        
+        nc.addObserver(
+            self,
+            selector: #selector(playerItemChanged(_:)),
+            name: .playerCenterItemChanged,
+            object: nil
+        )
+    }
+    
+    func configureToken() {
+        
+        tokens = results.observe { [weak self] changes in
+            guard let self = self else { return }
+            
+            if self.isSearching {
+                self.applySearch(text: self.searchController.searchBar.text)
+                self.updateEmptyState()
+                return
+            }
+            
+            switch changes {
+            case .initial:
+                self.updateEmptyState()
+                self.tableView.reloadData()
+                
+            case .update(_, let deletions, let insertions, let modifications):
+                let currentCount = searchResults.count
+                
+                // Validate indices
+                let validDeletions = deletions.filter { $0 < currentCount }
+                let validInsertions = insertions.filter { $0 < currentCount + validDeletions.count }
+                let validModifications = modifications.filter { $0 < currentCount }
+                
+                guard !validDeletions.isEmpty || !validInsertions.isEmpty || !validModifications.isEmpty else {
+                    self.updateEmptyState()
+                    return
+                }
+                
+                self.tableView.performBatchUpdates({
+                    if !validDeletions.isEmpty {
+                        self.tableView.deleteRows(
+                            at: validDeletions.map { IndexPath(row: $0, section: 0) },
+                            with: .automatic
+                        )
+                    }
+                    
+                    if !validInsertions.isEmpty {
+                        self.tableView.insertRows(
+                            at: validInsertions.map { IndexPath(row: $0, section: 0) },
+                            with: .automatic
+                        )
+                    }
+                    
+                    if !validModifications.isEmpty {
+                        self.tableView.reloadRows(
+                            at: validModifications.map { IndexPath(row: $0, section: 0) },
+                            with: .none
+                        )
+                    }
+                }, completion: { _ in
+                    self.updateEmptyState()
+                })
+                
+            case .error(let error):
+                print("Realm error:", error)
+            }
+        }
+    }
+    
     // MARK: - Data Management
     
     private func fetchResult() {
@@ -141,43 +247,9 @@ class AudioController: UIViewController {
         }
     }
     
-    private func observeRealmChanges() {
-        notificationToken = searchResults.observe { [weak self] changes in
-            guard let self = self else { return }
-            switch changes {
-            case .initial:
-                self.updateEmptyState()
-                self.tableView.reloadData()
-                
-            case .update(_, let deletions, let insertions, let modifications):
-                self.tableView.performBatchUpdates({
-                    self.tableView.deleteRows(
-                        at: deletions.map { IndexPath(row: $0, section: 0) },
-                        with: .automatic
-                    )
-                    self.tableView.insertRows(
-                        at: insertions.map { IndexPath(row: $0, section: 0) },
-                        with: .automatic
-                    )
-                    self.tableView.reloadRows(
-                        at: modifications.map { IndexPath(row: $0, section: 0) },
-                        with: .none
-                    )
-                    self.updateEmptyState()
-                })
-                
-                if self.tableView.isEditing {
-                    self.updateSelectAllButtonTitle()
-                }
-                
-            default:
-                break
-            }
-        }
-    }
-    
     private func updateEmptyState() {
-        emptyStateLabel.isHidden = !results.isEmpty
+        let isEmpty = (searchResults?.isEmpty ?? true)
+        emptyStateLabel.isHidden = !isEmpty
     }
     
     // MARK: - Sorting
@@ -190,6 +262,8 @@ class AudioController: UIViewController {
     // MARK: - Search
     
     private func applySearch(text: String?) {
+        searchWorkItem?.cancel()
+        
         let raw = (text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !raw.isEmpty else {
             searchResults = results
@@ -197,25 +271,100 @@ class AudioController: UIViewController {
             return
         }
         
-        // Split into tokens by spaces; ignore empties
-        let tokens = raw
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            self.performSearch(with: raw)
+        }
+        
+        searchWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: workItem)
+    }
+    
+    private func performSearch(with query: String) {
+        let tokens = query
             .components(separatedBy: .whitespacesAndNewlines)
             .filter { !$0.isEmpty }
         
-        var andSubpredicates: [NSPredicate] = []
-        for tok in tokens {
-            let orForToken = NSCompoundPredicate(orPredicateWithSubpredicates: [
-                NSPredicate(format: "title CONTAINS[c] %@", tok)
-            ])
-            andSubpredicates.append(orForToken)
+        guard !tokens.isEmpty else {
+            searchResults = results
+            tableView.reloadData()
+            reloadPlayingRows()
+            return
         }
         
-        let compound = NSCompoundPredicate(andPredicateWithSubpredicates: andSubpredicates)
+        let predicateString = tokens
+            .map { "title CONTAINS[c] '\($0)'" }
+            .joined(separator: " AND ")
         
-        // Filter from the full, already-sorted Results
-        searchResults = results.filter(compound)
+        let predicate = NSPredicate(format: predicateString)
+        searchResults = results.filter(predicate)
         
         tableView.reloadData()
+        reloadPlayingRows()
+    }
+    
+    // MARK: - Playing Indicator
+    
+    private func isItemPlaying(_ item: DownloadItem) -> Bool {
+        return PlayerCenter.shared.currentPlayingItemId == item.id
+    }
+    
+    private func reloadPlayingRows() {
+        guard tableView.window != nil else { return }
+        
+        for cell in tableView.visibleCells {
+            guard
+                let indexPath = tableView.indexPath(for: cell),
+                let item = searchResults?[indexPath.row] ?? results?[indexPath.row],
+                let playingCell = cell as? DownloadTableViewCell
+            else { continue }
+            
+            let isCurrent = isItemPlaying(item)
+            playingCell.setPlaying(isCurrent && PlayerCenter.shared.isActuallyPlaying)
+        }
+    }
+    
+    // MARK: - Player Observation
+    
+    private func startObservingPlayer() {
+        playerRateKVO = PlayerCenter.shared.player.observe(\.rate, options: [.new]) { [weak self] player, _ in
+            guard let self = self else { return }
+            
+            let newRate = player.rate
+            let wasPlaying = self.lastObservedRate > 0
+            let isPlaying = newRate > 0
+            
+            // Only reload if play/pause state actually changed
+            guard wasPlaying != isPlaying else { return }
+            
+            self.lastObservedRate = newRate
+            DispatchQueue.main.async {
+                self.reloadPlayingRows()
+            }
+        }
+        
+        // Item changes
+        playerItemKVO = PlayerCenter.shared.player.observe(\.currentItem, options: [.new, .old]) { [weak self] _, change in
+            guard let self = self else { return }
+            
+            // Safely unwrap the optional values returned by KVO
+            let oldItem: AVPlayerItem? = change.oldValue ?? nil
+            let newItem: AVPlayerItem? = change.newValue ?? nil
+            
+            // Only reload if the item actually changed (identity difference)
+            let isSameItem: Bool
+            if let o = oldItem, let n = newItem {
+                isSameItem = (o === n)
+            } else {
+                // One or both are nil – treat as changed only if both are nil
+                isSameItem = (oldItem == nil && newItem == nil)
+            }
+            guard !isSameItem else { return }
+            
+            DispatchQueue.main.async {
+                self.reloadPlayingRows()
+            }
+        }
     }
     
     // MARK: - Helper Methods
@@ -242,6 +391,44 @@ class AudioController: UIViewController {
             RealmService.shared.delete(item)
         })
         present(alert, animated: true)
+    }
+    
+    private func updateRowsFromNotification(note: Notification) -> Bool {
+        let previousId = note.userInfo?["previousId"] as? String
+        let currentId  = note.userInfo?["currentId"] as? String
+        
+        var didHandle = false
+        
+        // update old row (turn off)
+        if let previousId, let oldIndexPath = indexPath(forItemId: previousId) {
+            if let cell = tableView.cellForRow(at: oldIndexPath) as? DownloadTableViewCell {
+                cell.setPlaying(false)
+            } else {
+                tableView.reloadRows(at: [oldIndexPath], with: .none)
+            }
+            didHandle = true
+        }
+        
+        // update new row (turn on)
+        if let currentId, let newIndexPath = indexPath(forItemId: currentId) {
+            if let cell = tableView.cellForRow(at: newIndexPath) as? DownloadTableViewCell {
+                cell.setPlaying(PlayerCenter.shared.isActuallyPlaying)
+            } else {
+                tableView.reloadRows(at: [newIndexPath], with: .none)
+            }
+            didHandle = true
+        }
+        return didHandle
+    }
+    
+    private func indexPath(forItemId id: String) -> IndexPath? {
+        guard let list = searchResults ?? results else { return nil }
+        for (row, item) in list.enumerated() {
+            if item.id == id {
+                return IndexPath(row: row, section: 0)
+            }
+        }
+        return nil
     }
     
     // MARK: - Actions
@@ -281,6 +468,17 @@ class AudioController: UIViewController {
     @objc private func cancelTapped() {
         handleCancelTapped()
     }
+    
+    @objc private func appDidBecomeActive() {
+        reloadPlayingRows()
+    }
+    
+    @objc private func playerItemChanged(_ note: Notification) {
+        if updateRowsFromNotification(note: note) {
+            return
+        }
+        reloadPlayingRows()
+    }
 }
 
 // MARK: - UITableViewDataSource
@@ -300,6 +498,9 @@ extension AudioController: UITableViewDataSource {
         cell.configure(with: item, mode: .audio)
         cell.delegate = self
         
+        let isCurrent = isItemPlaying(item)
+        cell.setPlaying(isCurrent && PlayerCenter.shared.isActuallyPlaying)
+        
         return cell
     }
 }
@@ -312,26 +513,17 @@ extension AudioController: UITableViewDelegate {
             updateSelectAllButtonTitle()
             return
         }
-        
         tableView.deselectRow(at: indexPath, animated: true)
-        guard !tableView.isEditing else {
-            updateSelectAllButtonTitle()
-            return
-        }
         
         let item = searchResults[indexPath.row]
-        guard item.status == .completed else { return }
+        guard item.status == .completed, let url = item.localPath else { return }
+        let fileURL = FileHelper.fileURL(for: url)
         
-        let tapped = searchResults[indexPath.row]
-        guard let rel = tapped.localPath else { return }
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let url = docs.appendingPathComponent(rel)
-        
-//        MiniPlayerContainerViewController.shared.hide()
+        PlayerCenter.shared.setCurrentPlayingItem(id: item.id)
         
         let vc = MediaPlayerViewController()
         vc.downloadsResults = searchResults
-        vc.startAt(url: url, mediaType: item.mediaType)
+        vc.startAt(url: fileURL, mediaType: item.mediaType)
         vc.modalPresentationStyle = .overFullScreen
         present(vc, animated: true)
     }
@@ -355,6 +547,7 @@ extension AudioController: UISearchResultsUpdating {
 extension AudioController: UISearchBarDelegate {
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         applySearch(text: nil)
+        reloadPlayingRows()
     }
 }
 

@@ -52,6 +52,8 @@ final class MediaPlayerViewController: UIViewController {
     private var currentIndex: Int = 0
     private var pendingStartURL: URL?
     
+    private var mediaType: MediaType?
+    
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -74,14 +76,17 @@ final class MediaPlayerViewController: UIViewController {
     
     func startAt(url: URL?, mediaType: MediaType? = .video) {
         pendingStartURL = url
+        self.mediaType = mediaType
         
         switch mediaType {
         case .video:
             artworkView.isHidden = true
             videoView.isHidden = false
+            expandButton.isHidden = false
         case.audio:
             artworkView.isHidden = false
             videoView.isHidden = true
+            expandButton.isHidden = true
         case .none:
             break
         }
@@ -248,7 +253,7 @@ final class MediaPlayerViewController: UIViewController {
         prevButton.contentHorizontalAlignment = .fill
         prevButton.contentVerticalAlignment = .fill
         
-        playPauseButton.setImage(UIImage(systemName: "play.circle.fill"), for: .normal)
+        playPauseButton.setImage(UIImage(systemName: "pause.circle.fill"), for: .normal)
         playPauseButton.tintColor = .label
         playPauseButton.contentHorizontalAlignment = .fill
         playPauseButton.contentVerticalAlignment = .fill
@@ -450,7 +455,6 @@ final class MediaPlayerViewController: UIViewController {
             let shouldDismiss = translation.y > 100 || velocity.y > 500
             
             if shouldDismiss {
-                // Dismiss and show mini player
                 UIView.animate(withDuration: 0.3, animations: {
                     self.view.transform = CGAffineTransform(translationX: 0, y: self.view.frame.height)
                     self.view.alpha = 0
@@ -458,7 +462,6 @@ final class MediaPlayerViewController: UIViewController {
                     self.dismiss(animated: false)
                 }
             } else {
-                // Snap back to original position
                 UIView.animate(withDuration: 0.3) {
                     self.view.transform = .identity
                     self.view.alpha = 1.0
@@ -490,7 +493,7 @@ final class MediaPlayerViewController: UIViewController {
         refreshPlayIcon()
         updateLoopUI()
         
-        MiniPlayerController.shared.setPlaylist(with: downloadsResults)
+        MiniPlayerController.shared.setPlaylist(with: downloadsResults, mediaType: mediaType)
         
         PlayerCenter.shared.updateNowPlaying(title: item.title,
                                              duration: duration,
