@@ -26,10 +26,33 @@ final class HistoryController: UIViewController {
     private var searchWorkItem: DispatchWorkItem?
     
     // Navigation Bar Items
-    private var deleteButton: UIBarButtonItem!
-    private var selectAllButton: UIBarButtonItem!
-    private var cancelButton: UIBarButtonItem!
-    private var sortButton: UIBarButtonItem!
+    private lazy var deleteButton = UIBarButtonItem(
+        image: UIImage(systemName: "trash"),
+        style: .done,
+        target: self,
+        action: #selector(deleteButtonTapped)
+    )
+
+    private lazy var selectAllButton = UIBarButtonItem(
+        image: UIImage(systemName: "checkmark.circle"),
+        style: .plain,
+        target: self,
+        action: #selector(selectAllTapped)
+    )
+
+    private lazy var cancelButton = UIBarButtonItem(
+        image: UIImage(systemName: "xmark"),
+        style: .done,
+        target: self,
+        action: #selector(cancelTapped)
+    )
+
+    private lazy var sortButton = UIBarButtonItem(
+        image: UIImage(systemName: "arrow.up.arrow.down"),
+        style: .plain,
+        target: self,
+        action: #selector(sortButtonTapped)
+    )
     
     // Player Observation
     private var playerRateKVO: NSKeyValueObservation?
@@ -49,16 +72,26 @@ final class HistoryController: UIViewController {
     
     // MARK: - UI Components
     
-    private let tableView: UITableView = {
+    private lazy var tableView: UITableView = {
         let tv = UITableView()
         tv.separatorStyle = .singleLine
         tv.rowHeight = 64
+        tv.estimatedRowHeight = 64  // NEW - add estimated height
         tv.register(DownloadTableViewCell.self, forCellReuseIdentifier: DownloadTableViewCell.identifier)
         tv.translatesAutoresizingMaskIntoConstraints = false
+        tv.dataSource = self
+        tv.delegate = self
+        tv.contentInsetAdjustmentBehavior = .always
+        tv.allowsMultipleSelectionDuringEditing = true
+        
+        // NEW - Performance optimizations
+//        tv.prefetchDataSource = self
+//        tv.isPrefetchingEnabled = true
+        
         return tv
     }()
     
-    private let emptyStateLabel: UILabel = {
+    private lazy var emptyStateLabel: UILabel = {
         let label = UILabel()
         label.text = "No downloads yet"
         label.textColor = .secondaryLabel
@@ -142,43 +175,11 @@ final class HistoryController: UIViewController {
             emptyStateLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyStateLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
-        
-        tableView.dataSource = self
-        tableView.delegate = self
-        tableView.contentInsetAdjustmentBehavior = .always
-        tableView.allowsMultipleSelectionDuringEditing = true
     }
     
     private func setupNavigationBar() {
-        sortButton = UIBarButtonItem(
-            image: UIImage(systemName: "arrow.up.arrow.down"),
-            style: .plain,
-            target: self,
-            action: #selector(sortButtonTapped)
-        )
         navigationItem.leftBarButtonItem = sortButton
-        
-        deleteButton = UIBarButtonItem(
-            image: UIImage(systemName: "trash"),
-            style: .done,
-            target: self,
-            action: #selector(deleteButtonTapped)
-        )
         navigationItem.rightBarButtonItem = deleteButton
-        
-        selectAllButton = UIBarButtonItem(
-            image: UIImage(systemName: "checkmark.circle"),
-            style: .plain,
-            target: self,
-            action: #selector(selectAllTapped)
-        )
-        
-        cancelButton = UIBarButtonItem(
-            image: UIImage(systemName: "xmark"),
-            style: .done,
-            target: self,
-            action: #selector(cancelTapped)
-        )
     }
     
     private func setupSearch() {
