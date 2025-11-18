@@ -36,6 +36,12 @@ final class HistoryController: UIViewController {
     private var playerItemKVO: NSKeyValueObservation?
     private var lastObservedRate: Float = 0
     
+    private var didAttachMiniPlayer = false
+    private var isVisible = false
+    private var needsFullReload = false
+    
+    private var playingReloadWorkItem: DispatchWorkItem?
+    
     private var isSearching: Bool {
         let raw = (searchController.searchBar.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         return !raw.isEmpty
@@ -68,30 +74,39 @@ final class HistoryController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        hideKeyboardWhenTappedAround()
+        fetchResult()
         setupNavigationBar()
         setupSearch()
-        fetchResult()
-        configureToken()
-        startObservingPlayer()
-        setupNotifications()
+        
+        // Defer heavy operations
+        DispatchQueue.main.async { [weak self] in
+            self?.performInitialSetup()
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        if let tabBar = self.tabBarController {
+        isVisible = true
+        if !didAttachMiniPlayer, let tabBar = tabBarController {
             MiniPlayerController.shared.attach(to: tabBar)
+            didAttachMiniPlayer = true
         }
         
         if tableView.window != nil {
-            reloadPlayingRows()
+            reloadPlayingRowsDebounced()
+        }
+        
+        if needsFullReload {
+            needsFullReload = false
+            tableView.reloadData()
+            reloadPlayingRowsDebounced()
         }
     }
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         searchWorkItem?.cancel()
+        isVisible = false
         
         if isMovingFromParent {
             cleanupObservers()
@@ -103,6 +118,13 @@ final class HistoryController: UIViewController {
     }
     
     // MARK: - Setup
+    
+    private func performInitialSetup() {
+        hideKeyboardWhenTappedAround()
+        configureToken()
+        startObservingPlayer()
+        setupNotifications()
+    }
     
     private func setupUI() {
         title = "Library"
@@ -230,9 +252,12 @@ final class HistoryController: UIViewController {
                 self.tableView.reloadData()
                 
             case .update(_, let deletions, let insertions, let modifications):
-                let currentCount = searchResults.count
+                guard isVisible else {
+                    needsFullReload = true
+                    return
+                }
                 
-                // Validate indices
+                let currentCount = searchResults.count
                 let validDeletions = deletions.filter { $0 < currentCount }
                 let validInsertions = insertions.filter { $0 < currentCount + validDeletions.count }
                 let validModifications = modifications.filter { $0 < currentCount }
@@ -334,7 +359,7 @@ final class HistoryController: UIViewController {
         guard !tokens.isEmpty else {
             searchResults = results
             tableView.reloadData()
-            reloadPlayingRows()
+            reloadPlayingRowsDebounced()
             return
         }
         
@@ -346,13 +371,20 @@ final class HistoryController: UIViewController {
         searchResults = results.filter(predicate)
         
         tableView.reloadData()
-        reloadPlayingRows()
+        reloadPlayingRowsDebounced()
     }
     
     // MARK: - Playing Indicator
     
     private func isItemPlaying(_ item: DownloadItem) -> Bool {
         return PlayerCenter.shared.currentPlayingItemId == item.id
+    }
+    
+    private func reloadPlayingRowsDebounced() {
+        playingReloadWorkItem?.cancel()
+        let wi = DispatchWorkItem { [weak self] in self?.reloadPlayingRows() }
+        playingReloadWorkItem = wi
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: wi)
     }
     
     private func reloadPlayingRows() {
@@ -385,7 +417,7 @@ final class HistoryController: UIViewController {
             
             self.lastObservedRate = newRate
             DispatchQueue.main.async {
-                self.reloadPlayingRows()
+                self.reloadPlayingRowsDebounced()
             }
         }
         
@@ -408,7 +440,7 @@ final class HistoryController: UIViewController {
             guard !isSameItem else { return }
 
             DispatchQueue.main.async {
-                self.reloadPlayingRows()
+                self.reloadPlayingRowsDebounced()
             }
         }
         
@@ -520,14 +552,14 @@ final class HistoryController: UIViewController {
     // MARK: - Actions
     
     @objc private func appDidBecomeActive() {
-        reloadPlayingRows()
+        reloadPlayingRowsDebounced()
     }
     
     @objc private func playerItemChanged(_ note: Notification) {
         if updateRowsFromNotification(note: note) {
             return
         }
-        reloadPlayingRows()
+        reloadPlayingRowsDebounced()
     }
     
     private func updateRowsFromNotification(note: Notification) -> Bool {
@@ -715,7 +747,7 @@ extension HistoryController: UISearchResultsUpdating {
 extension HistoryController: UISearchBarDelegate {
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         applySearch(text: nil)
-        reloadPlayingRows()
+        reloadPlayingRowsDebounced()
     }
 }
 
