@@ -64,6 +64,8 @@ final class MiniPlayerController: UIViewController {
         
         PlayerCenter.shared.setupRemoteCommands()
         
+        isVisible = true
+        
         let mini = createMiniPlayer()
         tabBarController.view.addSubview(mini)
         let bottomConstraint = setupConstraints(

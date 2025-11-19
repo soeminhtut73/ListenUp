@@ -19,7 +19,13 @@ final class HistoryController: UIViewController {
     private var results: Results<DownloadItem>!
     private var searchResults: Results<DownloadItem>!
     private var token: NotificationToken?
-    private var progressCache: [ObjectId: Float] = [:]
+    private var didAttachMiniPlayer = false
+    
+    // Player Observation
+    private var lastObservedRate: Float = 0
+    
+    private var playerObservers: [NSKeyValueObservation] = []
+    private var cachedPlayingItemId: String?
     
     // Search
     private let searchController = UISearchController(searchResultsController: nil)
@@ -54,17 +60,6 @@ final class HistoryController: UIViewController {
         action: #selector(sortButtonTapped)
     )
     
-    // Player Observation
-    private var playerRateKVO: NSKeyValueObservation?
-    private var playerItemKVO: NSKeyValueObservation?
-    private var lastObservedRate: Float = 0
-    
-    private var didAttachMiniPlayer = false
-    private var isVisible = false
-    private var needsFullReload = false
-    
-    private var playingReloadWorkItem: DispatchWorkItem?
-    
     private var isSearching: Bool {
         let raw = (searchController.searchBar.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         return !raw.isEmpty
@@ -75,8 +70,8 @@ final class HistoryController: UIViewController {
     private lazy var tableView: UITableView = {
         let tv = UITableView()
         tv.separatorStyle = .singleLine
-        tv.rowHeight = 64
-        tv.estimatedRowHeight = 64  // NEW - add estimated height
+        tv.rowHeight = 74
+        tv.estimatedRowHeight = 74
         tv.register(DownloadTableViewCell.self, forCellReuseIdentifier: DownloadTableViewCell.identifier)
         tv.translatesAutoresizingMaskIntoConstraints = false
         tv.dataSource = self
@@ -107,11 +102,14 @@ final class HistoryController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        fetchResult()
         setupNavigationBar()
         setupSearch()
         
-        // Defer heavy operations
+        if !didAttachMiniPlayer, let tabBar = tabBarController {
+            MiniPlayerController.shared.attach(to: tabBar)
+            didAttachMiniPlayer = true
+        }
+        
         DispatchQueue.main.async { [weak self] in
             self?.performInitialSetup()
         }
@@ -119,27 +117,15 @@ final class HistoryController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        isVisible = true
-        if !didAttachMiniPlayer, let tabBar = tabBarController {
-            MiniPlayerController.shared.attach(to: tabBar)
-            didAttachMiniPlayer = true
-        }
-        
-        if tableView.window != nil {
-            reloadPlayingRowsDebounced()
-        }
-        
-        if needsFullReload {
-            needsFullReload = false
-            tableView.reloadData()
-            reloadPlayingRowsDebounced()
-        }
+        reloadPlayingRows()
+//        DispatchQueue.main.async { [weak self] in
+//            self?.reloadPlayingRowsIfNeeded()
+//        }
     }
     
-    override func viewDidDisappear(_ animated: Bool) {
-        super.viewDidDisappear(animated)
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
         searchWorkItem?.cancel()
-        isVisible = false
         
         if isMovingFromParent {
             cleanupObservers()
@@ -153,6 +139,7 @@ final class HistoryController: UIViewController {
     // MARK: - Setup
     
     private func performInitialSetup() {
+        fetchResult()
         hideKeyboardWhenTappedAround()
         configureToken()
         startObservingPlayer()
@@ -220,8 +207,9 @@ final class HistoryController: UIViewController {
     
     private func cleanupObservers() {
         token?.invalidate()
-        playerRateKVO?.invalidate()
-        playerItemKVO?.invalidate()
+        token = nil
+        playerObservers.forEach { $0.invalidate() }
+        playerObservers.removeAll()
         NotificationCenter.default.removeObserver(self)
     }
     
@@ -231,6 +219,7 @@ final class HistoryController: UIViewController {
         results = RealmService.shared.fetchVideoItems()
             .sorted(byKeyPath: "createdAt", ascending: false)
         searchResults = results
+        
         DispatchQueue.main.async { [weak self] in
             self?.tableView.reloadData()
         }
@@ -241,87 +230,72 @@ final class HistoryController: UIViewController {
         token = results.observe { [weak self] changes in
             guard let self = self else { return }
             
+            // NEW - Separate handling
             if self.isSearching {
-                self.applySearch(text: self.searchController.searchBar.text)
+                self.handleSearchResultsUpdate()
+                return
+            }
+            
+            self.handleResultsUpdate(changes)
+        }
+    }
+    
+    private func handleSearchResultsUpdate() {
+        applySearch(text: searchController.searchBar.text)
+        updateEmptyState()
+    }
+
+    private func handleResultsUpdate(_ changes: RealmCollectionChange<Results<DownloadItem>>) {
+        switch changes {
+        case .initial:
+            self.updateEmptyState()
+            self.tableView.reloadData()
+            
+        case .update(_, let deletions, let insertions, let modifications):
+            
+            let currentCount = searchResults.count
+            let validDeletions = deletions.filter { $0 < currentCount }
+            let validInsertions = insertions.filter { $0 < currentCount + validDeletions.count }
+            let validModifications = modifications.filter { $0 < currentCount }
+            
+            guard !validDeletions.isEmpty || !validInsertions.isEmpty || !validModifications.isEmpty else {
                 self.updateEmptyState()
                 return
             }
             
-            switch changes {
-            case .initial:
+            self.tableView.performBatchUpdates({
+                if !validDeletions.isEmpty {
+                    self.tableView.deleteRows(
+                        at: validDeletions.map { IndexPath(row: $0, section: 0) },
+                        with: .automatic
+                    )
+                }
+                
+                if !validInsertions.isEmpty {
+                    self.tableView.insertRows(
+                        at: validInsertions.map { IndexPath(row: $0, section: 0) },
+                        with: .automatic
+                    )
+                }
+                
+                if !validModifications.isEmpty {
+                    self.tableView.reloadRows(
+                        at: validModifications.map { IndexPath(row: $0, section: 0) },
+                        with: .none
+                    )
+                }
+            }, completion: { _ in
                 self.updateEmptyState()
-                self.tableView.reloadData()
-                
-            case .update(_, let deletions, let insertions, let modifications):
-                guard isVisible else {
-                    needsFullReload = true
-                    return
-                }
-                
-                let currentCount = searchResults.count
-                let validDeletions = deletions.filter { $0 < currentCount }
-                let validInsertions = insertions.filter { $0 < currentCount + validDeletions.count }
-                let validModifications = modifications.filter { $0 < currentCount }
-                
-                guard !validDeletions.isEmpty || !validInsertions.isEmpty || !validModifications.isEmpty else {
-                    self.updateEmptyState()
-                    return
-                }
-                
-                self.tableView.performBatchUpdates({
-                    if !validDeletions.isEmpty {
-                        self.tableView.deleteRows(
-                            at: validDeletions.map { IndexPath(row: $0, section: 0) },
-                            with: .automatic
-                        )
-                    }
-                    
-                    if !validInsertions.isEmpty {
-                        self.tableView.insertRows(
-                            at: validInsertions.map { IndexPath(row: $0, section: 0) },
-                            with: .automatic
-                        )
-                    }
-                    
-                    if !validModifications.isEmpty {
-                        self.tableView.reloadRows(
-                            at: validModifications.map { IndexPath(row: $0, section: 0) },
-                            with: .none
-                        )
-                    }
-                }, completion: { _ in
-                    self.updateEmptyState()
-                })
-                
-            case .error(let error):
-                print("Realm error:", error)
-            }
+            })
+            
+        case .error(let error):
+            print("Realm error:", error)
         }
     }
     
     private func updateEmptyState() {
         let isEmpty = (searchResults?.isEmpty ?? true)
         emptyStateLabel.isHidden = !isEmpty
-    }
-    
-    // MARK: - Audio Session
-    
-    private func configureAudioSession() {
-        let session = AVAudioSession.sharedInstance()
-        do {
-            try session.setCategory(
-                .playback,
-                mode: .moviePlayback,
-                options: [
-                    .allowBluetoothA2DP,
-                    .allowBluetoothHFP,
-                    .allowAirPlay,
-                    .mixWithOthers
-                ]
-            )
-        } catch {
-            print("Audio session error:", error)
-        }
     }
     
     // MARK: - Sorting
@@ -360,19 +334,16 @@ final class HistoryController: UIViewController {
         guard !tokens.isEmpty else {
             searchResults = results
             tableView.reloadData()
-            reloadPlayingRowsDebounced()
             return
         }
         
-        let predicateString = tokens
-            .map { "title CONTAINS[c] '\($0)'" }
-            .joined(separator: " AND ")
+        let predicates = tokens.map { token in
+            NSPredicate(format: "title CONTAINS[c] %@", token)
+        }
+        let compoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
         
-        let predicate = NSPredicate(format: predicateString)
-        searchResults = results.filter(predicate)
-        
+        searchResults = results.filter(compoundPredicate)
         tableView.reloadData()
-        reloadPlayingRowsDebounced()
     }
     
     // MARK: - Playing Indicator
@@ -381,70 +352,53 @@ final class HistoryController: UIViewController {
         return PlayerCenter.shared.currentPlayingItemId == item.id
     }
     
-    private func reloadPlayingRowsDebounced() {
-        playingReloadWorkItem?.cancel()
-        let wi = DispatchWorkItem { [weak self] in self?.reloadPlayingRows() }
-        playingReloadWorkItem = wi
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: wi)
+    private func reloadPlayingRowsIfNeeded() {
+        guard tableView.window != nil else { return }
+        
+        let currentPlayingId = PlayerCenter.shared.currentPlayingItemId
+        
+        guard currentPlayingId != cachedPlayingItemId else { return }
+        
+        cachedPlayingItemId = currentPlayingId
+        reloadPlayingRows()
     }
     
     private func reloadPlayingRows() {
         guard tableView.window != nil else { return }
         
+        let isPlaying = PlayerCenter.shared.isActuallyPlaying
+        
         for cell in tableView.visibleCells {
-            guard
-                let indexPath = tableView.indexPath(for: cell),
-                let item = searchResults?[indexPath.row] ?? results?[indexPath.row],
-                let playingCell = cell as? DownloadTableViewCell
-            else { continue }
+            guard let playingCell = cell as? DownloadTableViewCell,
+                  let indexPath = tableView.indexPath(for: cell),
+                  indexPath.row < (searchResults?.count ?? 0) else { continue }
             
+            let item = searchResults[indexPath.row]
             let isCurrent = isItemPlaying(item)
-            playingCell.setPlaying(isCurrent && PlayerCenter.shared.isActuallyPlaying)
+            print("Debug: isCurrent : \(isCurrent)")
+            print("Debug: isPlaying : \(isPlaying)")
+            playingCell.setPlaying(isCurrent && isPlaying)
         }
     }
     
     // MARK: - Player Observation
     
     private func startObservingPlayer() {
-        playerRateKVO = PlayerCenter.shared.player.observe(\.rate, options: [.new]) { [weak self] player, _ in
+        let rateObserver = PlayerCenter.shared.player.observe(\.rate, options: [.new]) { [weak self] player, _ in
             guard let self = self else { return }
             
             let newRate = player.rate
-            let wasPlaying = self.lastObservedRate > 0
-            let isPlaying = newRate > 0
+            let stateChanged = (self.lastObservedRate > 0) != (newRate > 0)
             
-            // Only reload if play/pause state actually changed
-            guard wasPlaying != isPlaying else { return }
+            guard stateChanged else { return }
             
             self.lastObservedRate = newRate
             DispatchQueue.main.async {
-                self.reloadPlayingRowsDebounced()
+                self.reloadPlayingRows()
             }
         }
         
-        // Item changes
-        playerItemKVO = PlayerCenter.shared.player.observe(\.currentItem, options: [.new, .old]) { [weak self] _, change in
-            guard let self = self else { return }
-
-            // Safely unwrap the optional values returned by KVO
-            let oldItem: AVPlayerItem? = change.oldValue ?? nil
-            let newItem: AVPlayerItem? = change.newValue ?? nil
-
-            // Only reload if the item actually changed (identity difference)
-            let isSameItem: Bool
-            if let o = oldItem, let n = newItem {
-                isSameItem = (o === n)
-            } else {
-                // One or both are nil – treat as changed only if both are nil
-                isSameItem = (oldItem == nil && newItem == nil)
-            }
-            guard !isSameItem else { return }
-
-            DispatchQueue.main.async {
-                self.reloadPlayingRowsDebounced()
-            }
-        }
-        
+        playerObservers.append(rateObserver)
     }
     
     // MARK: - Action Sheet
@@ -553,14 +507,14 @@ final class HistoryController: UIViewController {
     // MARK: - Actions
     
     @objc private func appDidBecomeActive() {
-        reloadPlayingRowsDebounced()
+        reloadPlayingRows()
     }
     
     @objc private func playerItemChanged(_ note: Notification) {
         if updateRowsFromNotification(note: note) {
             return
         }
-        reloadPlayingRowsDebounced()
+        reloadPlayingRows()
     }
     
     private func updateRowsFromNotification(note: Notification) -> Bool {
@@ -569,7 +523,6 @@ final class HistoryController: UIViewController {
         
         var didHandle = false
         
-        // update old row (turn off)
         if let previousId, let oldIndexPath = indexPath(forItemId: previousId) {
             if let cell = tableView.cellForRow(at: oldIndexPath) as? DownloadTableViewCell {
                 cell.setPlaying(false)
@@ -748,7 +701,7 @@ extension HistoryController: UISearchResultsUpdating {
 extension HistoryController: UISearchBarDelegate {
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         applySearch(text: nil)
-        reloadPlayingRowsDebounced()
+        reloadPlayingRows()
     }
 }
 

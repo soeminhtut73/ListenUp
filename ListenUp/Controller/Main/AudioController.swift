@@ -110,7 +110,7 @@ class AudioController: UIViewController {
     }
     
     override func viewWillDisappear(_ animated: Bool) {
-        super.viewDidDisappear(animated)
+        super.viewWillDisappear(animated)
         searchWorkItem?.cancel()
     }
     

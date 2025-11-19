@@ -24,6 +24,16 @@ class CategoriesViewController: UIViewController {
         setupNavigationMenu()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        MiniPlayerController.shared.hide(animated: true)
+    }
+    
+    override func viewWillDisappear (_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        MiniPlayerController.shared.hide(animated: true)
+    }
+    
     //MARK: - UISetup
     private func setupTableView() {
         view.addSubview(tableView)

@@ -91,8 +91,8 @@ class BrowserController: UIViewController {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        view.endEditing(true)
         MiniPlayerController.shared.show(animated: true)
+        view.endEditing(true)
     }
     
     deinit {

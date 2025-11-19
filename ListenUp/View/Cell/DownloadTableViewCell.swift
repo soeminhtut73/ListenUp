@@ -32,9 +32,15 @@ class DownloadTableViewCell: UITableViewCell {
     
     //MARK: - UIComponent
     
-    private let playingIndicator = PlayingIndicatorView()
+    private lazy var playingIndicator: PlayingIndicatorView = {
+        let playingIndicator = PlayingIndicatorView()
+        playingIndicator.barColor = .black
+        playingIndicator.barCount = 3
+        playingIndicator.backgroundColor = .clear
+        return playingIndicator
+    }()
     
-    private let albumImageView: UIImageView = {
+    private lazy var albumImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
         imageView.backgroundColor = .systemGray5
@@ -44,7 +50,7 @@ class DownloadTableViewCell: UITableViewCell {
         return imageView
     }()
     
-    private let titleLabel: UILabel = {
+    private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         label.numberOfLines = 1
@@ -62,7 +68,7 @@ class DownloadTableViewCell: UITableViewCell {
         return button
     }()
     
-    private let detailLabel: UILabel = {
+    private lazy var detailLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 12, weight: .regular)
         label.textColor = .tertiaryLabel
@@ -70,7 +76,7 @@ class DownloadTableViewCell: UITableViewCell {
         return label
     }()
     
-    private let circularProgressView: CircularProgressView = {
+    private lazy var circularProgressView: CircularProgressView = {
         let view = CircularProgressView.appStoreStyle(size: 40)
         view.isHidden = true
         return view
@@ -122,10 +128,6 @@ class DownloadTableViewCell: UITableViewCell {
         stackView.spacing = 6
         stackView.distribution = .fillProportionally
         
-        playingIndicator.barColor = .label
-        playingIndicator.barCount = 4
-        playingIndicator.backgroundColor = .clear
-        
         [albumImageView, stackView, optionButton, circularProgressView, playingIndicator].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview($0)
@@ -136,14 +138,14 @@ class DownloadTableViewCell: UITableViewCell {
             // Album image
             albumImageView.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
             albumImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            albumImageView.widthAnchor.constraint(equalToConstant: 46),
-            albumImageView.heightAnchor.constraint(equalToConstant: 46),
+            albumImageView.widthAnchor.constraint(equalToConstant: 54),
+            albumImageView.heightAnchor.constraint(equalToConstant: 54),
             
             // Playing indicator (over album)
             playingIndicator.centerXAnchor.constraint(equalTo: albumImageView.centerXAnchor),
             playingIndicator.centerYAnchor.constraint(equalTo: albumImageView.centerYAnchor),
-            playingIndicator.widthAnchor.constraint(equalToConstant: 24),
-            playingIndicator.heightAnchor.constraint(equalToConstant: 24),
+            playingIndicator.widthAnchor.constraint(equalToConstant: 30),
+            playingIndicator.heightAnchor.constraint(equalToConstant: 30),
             
             // Circular progress (over album)
             circularProgressView.centerXAnchor.constraint(equalTo: albumImageView.centerXAnchor),
@@ -270,14 +272,16 @@ class DownloadTableViewCell: UITableViewCell {
     // MARK: - Playing State
     /// Call from controller to toggle animation on/off
     func setPlaying(_ isPlaying: Bool) {
-        if isPlaying {
-            playingIndicator.isHidden = false
-            albumImageView.layer.opacity = 0.7
-            playingIndicator.start()
-        } else {
-            playingIndicator.stop()
-            albumImageView.layer.opacity = 1
-            playingIndicator.isHidden = true
+        DispatchQueue.main.async {
+            if isPlaying {
+                self.playingIndicator.start()
+                self.playingIndicator.isHidden = false
+                self.albumImageView.isHidden = true
+            } else {
+                self.playingIndicator.stop()
+                self.albumImageView.isHidden = false
+                self.playingIndicator.isHidden = true
+            }
         }
     }
 }
