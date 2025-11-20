@@ -117,10 +117,11 @@ final class HistoryController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        reloadPlayingRows()
-//        DispatchQueue.main.async { [weak self] in
-//            self?.reloadPlayingRowsIfNeeded()
-//        }
+        DispatchQueue.main.async { [weak self] in
+            self?.reloadPlayingRowsIfNeeded()
+//            self?.reloadPlayingRows()
+            self?.tableView.reloadData()
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -375,8 +376,6 @@ final class HistoryController: UIViewController {
             
             let item = searchResults[indexPath.row]
             let isCurrent = isItemPlaying(item)
-            print("Debug: isCurrent : \(isCurrent)")
-            print("Debug: isPlaying : \(isPlaying)")
             playingCell.setPlaying(isCurrent && isPlaying)
         }
     }

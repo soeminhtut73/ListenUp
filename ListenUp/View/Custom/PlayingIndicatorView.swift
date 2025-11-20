@@ -6,6 +6,9 @@ final class PlayingIndicatorView: UIView {
     private let bar = CALayer()
     private let animationKey = "eq-bounce"
     
+    // Cache animation to avoid recreation
+    private var cachedAnimation: CAAnimationGroup?
+    
     // MARK: - Customization Properties
     var barColor: UIColor = .systemBlue {
         didSet { updateBarColor() }
@@ -15,7 +18,11 @@ final class PlayingIndicatorView: UIView {
         didSet { replicator.instanceCount = barCount }
     }
     
-    var animationSpeed: Double = 0.8
+    var animationSpeed: Double = 0.7 {
+        didSet {
+            cachedAnimation = nil // Invalidate cache if speed changes
+        }
+    }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -99,10 +106,50 @@ final class PlayingIndicatorView: UIView {
     }
     
     // MARK: - Public Methods
+    
     func start() {
         guard !isAnimating else { return }
         isAnimating = true
         
+        // Use cached animation if available
+        if cachedAnimation == nil {
+            cachedAnimation = createAnimation()
+        }
+        
+        // CRITICAL: Use fill mode to prevent lag
+        guard let animation = cachedAnimation?.copy() as? CAAnimationGroup else { return }
+        
+        // Start from current presentation layer state to avoid jump
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        CATransaction.setAnimationDuration(0)
+        
+        bar.add(animation, forKey: animationKey)
+        
+        CATransaction.commit()
+    }
+    
+    func stop() {
+        guard isAnimating else { return }
+        isAnimating = false
+        
+        // CRITICAL: Smooth stop without removing animation layer
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        CATransaction.setAnimationDuration(0)
+        
+        // Set to resting state
+        bar.transform = CATransform3DIdentity
+        bar.opacity = 1.0
+        
+        bar.removeAnimation(forKey: animationKey)
+        
+        CATransaction.commit()
+    }
+    
+    // MARK: - Private Methods
+    
+    private func createAnimation() -> CAAnimationGroup {
         // Create more dynamic animation
         let scaleAnimation = CABasicAnimation(keyPath: "transform.scale.y")
         scaleAnimation.fromValue = 0.25
@@ -127,15 +174,13 @@ final class PlayingIndicatorView: UIView {
         group.autoreverses = true
         group.repeatCount = .infinity
         
-        bar.add(group, forKey: animationKey)
+        // CRITICAL: Fill modes to prevent lag
+        group.fillMode = .both
+        group.isRemovedOnCompletion = false
+        
+        return group
     }
     
-    func stop() {
-        isAnimating = false
-        bar.removeAllAnimations()
-    }
-    
-    // MARK: - Private Methods
     private func updateBarColor() {
         bar.backgroundColor = barColor.cgColor
         bar.shadowColor = barColor.cgColor
@@ -144,8 +189,23 @@ final class PlayingIndicatorView: UIView {
     
     private func ensureRunningIfNeeded() {
         guard isAnimating, window != nil else { return }
+        
+        // Check if animation is actually running
         if bar.animation(forKey: animationKey) == nil {
-            start()
+            // Restart without lag
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            CATransaction.setAnimationDuration(0)
+            
+            if cachedAnimation == nil {
+                cachedAnimation = createAnimation()
+            }
+            
+            if let animation = cachedAnimation?.copy() as? CAAnimationGroup {
+                bar.add(animation, forKey: animationKey)
+            }
+            
+            CATransaction.commit()
         }
     }
     

@@ -34,8 +34,8 @@ class DownloadTableViewCell: UITableViewCell {
     
     private lazy var playingIndicator: PlayingIndicatorView = {
         let playingIndicator = PlayingIndicatorView()
-        playingIndicator.barColor = .black
-        playingIndicator.barCount = 3
+        playingIndicator.barColor = .white
+        playingIndicator.barCount = 4
         playingIndicator.backgroundColor = .clear
         return playingIndicator
     }()
@@ -93,6 +93,15 @@ class DownloadTableViewCell: UITableViewCell {
         preservesSuperviewLayoutMargins = false
         contentView.preservesSuperviewLayoutMargins = false
         shouldIndentWhileEditing = true
+        
+        if albumImageView.viewWithTag(999) == nil {
+            let dim = UIView(frame: albumImageView.bounds)
+            dim.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            dim.backgroundColor = .black
+            dim.alpha = 0
+            dim.tag = 999
+            albumImageView.addSubview(dim)
+        }
     }
     
     required init?(coder: NSCoder) {
@@ -179,13 +188,10 @@ class DownloadTableViewCell: UITableViewCell {
         let isDifferentItem = currentItemId != item.id
         currentItemId = item.id
         
-        // Configure based on status
         configureForStatus(item: item, isDifferentItem: isDifferentItem)
         
-        // Configure details based on mode
         configureDetailLabel(for: item, mode: mode)
         
-        // Configure thumbnail based on media type
         if item.status == .completed {
             configureThumbnail(for: item, mode: mode)
         }
@@ -231,17 +237,14 @@ class DownloadTableViewCell: UITableViewCell {
     private func configureDetailLabel(for item: DownloadItem, mode: DownloadCellDisplayMode) {
         var detailComponents: [String] = []
         
-        // Add file size if available
         if item.fileSize > 0 {
             detailComponents.append(item.fileSize.fileSizeString)
         }
         
-        // Add duration if available
         if item.duration > 0 {
             detailComponents.append(item.duration.timeFormattedString)
         }
         
-        // Add format if available
         if !item.format.isEmpty {
             detailComponents.append(item.format.uppercased())
         }
@@ -272,15 +275,21 @@ class DownloadTableViewCell: UITableViewCell {
     // MARK: - Playing State
     /// Call from controller to toggle animation on/off
     func setPlaying(_ isPlaying: Bool) {
+        let dim = self.albumImageView.viewWithTag(999)!
         DispatchQueue.main.async {
             if isPlaying {
                 self.playingIndicator.start()
                 self.playingIndicator.isHidden = false
-                self.albumImageView.isHidden = true
+                dim.alpha = isPlaying ? 0.6 : 0.0
             } else {
                 self.playingIndicator.stop()
-                self.albumImageView.isHidden = false
+                dim.alpha = isPlaying ? 0.6 : 0.0
                 self.playingIndicator.isHidden = true
+            }
+            
+            
+            UIView.animate(withDuration: 0.2) {
+                
             }
         }
     }

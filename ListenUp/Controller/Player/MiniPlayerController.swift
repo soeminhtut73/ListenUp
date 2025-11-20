@@ -29,7 +29,7 @@ final class MiniPlayerController: UIViewController {
     private var notiTokens: [NSObjectProtocol] = []
     
     // MARK: - Realm Access
-    private var downloadsResults: Results<DownloadItem>!
+    private var downloadsResults: Results<DownloadItem>?
     
     private var isVisible: Bool = false
     private var mediaType: MediaType!
@@ -244,8 +244,10 @@ final class MiniPlayerController: UIViewController {
             return
         }
         
+        guard let results = downloadsResults else { return }
+        
         let playerVC = MediaPlayerViewController()
-        playerVC.downloadsResults = downloadsResults
+        playerVC.downloadsResults = results
         
         if let url = PlayerCenter.shared.currentURL {
             playerVC.startAt(url: url, mediaType: mediaType)
