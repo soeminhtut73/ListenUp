@@ -23,11 +23,10 @@ final class HistoryController: UIViewController {
     private var didAttachMiniPlayer = false
     private var isInitialized = false
     
-    private let maxAllowedDuration: TimeInterval = 10 * 60 /// for 10 mins
+    private let maxAllowedDuration: TimeInterval = 10 * 60
     
     // Player Observation
     private var lastObservedRate: Float = 0
-    
     private var playerObservers: [NSKeyValueObservation] = []
     private var cachedPlayingItemId: String?
     
@@ -106,13 +105,13 @@ final class HistoryController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupNavigationBar()
-
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         if !isInitialized {
+            isInitialized = true
             performInitialSetup()
         }
         
@@ -143,11 +142,7 @@ final class HistoryController: UIViewController {
     // MARK: - Setup
     
     private func performInitialSetup() {
-        guard !isInitialized else { return }
-        isInitialized = true
-        
         fetchResult()
-        
         setupSearch()
         configureToken()
         startObservingPlayer()

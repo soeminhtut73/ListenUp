@@ -51,8 +51,8 @@ final class MiniPlayerView: UIView {
         thumbnailImageView.clipsToBounds = true
         thumbnailImageView.tintColor = .secondaryLabel
         thumbnailImageView.layer.cornerRadius = 8
-        thumbnailImageView.image = UIImage(systemName: "music.note")
-//        thumbnailImageView.backgroundColor = .systemGray5
+        thumbnailImageView.image = UIImage(systemName: "music.note.list")
+        thumbnailImageView.backgroundColor = .systemGray5
         
         // Title
         titleLabel.font = .systemFont(ofSize: 14, weight: .medium)

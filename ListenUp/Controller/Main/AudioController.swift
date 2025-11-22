@@ -18,6 +18,9 @@ class AudioController: UIViewController {
     private var searchResults: Results<DownloadItem>!
     private var tokens: NotificationToken?
     
+    private var didAttachMiniPlayer = false
+    private var isInitialized = false
+    
     // Search
     private let searchController = UISearchController(searchResultsController: nil)
     private var searchWorkItem: DispatchWorkItem?
@@ -70,6 +73,8 @@ class AudioController: UIViewController {
             DownloadTableViewCell.self,
             forCellReuseIdentifier: DownloadTableViewCell.identifier
         )
+        tv.dataSource = self
+        tv.delegate = self
         tv.allowsMultipleSelectionDuringEditing = true
         tv.translatesAutoresizingMaskIntoConstraints = false
         return tv
@@ -90,37 +95,39 @@ class AudioController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         setupUI()
-        setupSearch()
-        
-        DispatchQueue.main.async { [weak self] in
-            self?.performInitialSetup()
-        }
-        
-        startObservingPlayer()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        if let tabBar = self.tabBarController {
-            MiniPlayerController.shared.attach(to: tabBar)
+        if !isInitialized {
+            isInitialized = true
+            performInitialSetup()
         }
         
-        if tableView.window != nil {
-            reloadPlayingRows()
+        if !didAttachMiniPlayer, let tabBar = self.tabBarController {
+            MiniPlayerController.shared.attach(to: tabBar)
+            didAttachMiniPlayer = true
+        }
+        
+        DispatchQueue.main.async { [weak self] in
+            MiniPlayerController.shared.show(animated: true)
+            self?.reloadPlayingRowsIfNeeded()
         }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         searchWorkItem?.cancel()
+        
+        if isMovingFromParent {
+            cleanupObservers()
+        }
     }
     
     deinit {
-        tokens?.invalidate()
-        NotificationCenter.default.removeObserver(self)
+        cleanupObservers()
     }
     
     // MARK: - Setup
@@ -142,19 +149,24 @@ class AudioController: UIViewController {
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
         
-        tableView.dataSource = self
-        tableView.delegate = self
-        tableView.allowsMultipleSelectionDuringEditing = true
-        
         navigationItem.rightBarButtonItem = deleteButton
         navigationItem.leftBarButtonItem = sortButton
     }
     
     private func performInitialSetup() {
         fetchResult()
+        setupSearch()
         configureToken()
         startObservingPlayer()
         setupNotifications()
+    }
+    
+    private func cleanupObservers() {
+        tokens?.invalidate()
+        tokens = nil
+        playerObservers.forEach { $0.invalidate() }
+        playerObservers.removeAll()
+        NotificationCenter.default.removeObserver(self)
     }
     
     private func setupSearch() {
@@ -187,63 +199,70 @@ class AudioController: UIViewController {
     }
     
     func configureToken() {
-        
         tokens = results.observe { [weak self] changes in
             guard let self = self else { return }
             
+            // NEW - Separate handling
             if self.isSearching {
-                self.applySearch(text: self.searchController.searchBar.text)
+                self.handleSearchResultsUpdate()
+                return
+            }
+            
+            self.handleResultsUpdate(changes)
+        }
+    }
+    
+    private func handleResultsUpdate(_ changes: RealmCollectionChange<Results<DownloadItem>>) {
+        switch changes {
+        case .initial:
+            self.updateEmptyState()
+            self.tableView.reloadData()
+            
+        case .update(_, let deletions, let insertions, let modifications):
+            
+            let currentCount = searchResults.count
+            let validDeletions = deletions.filter { $0 < currentCount }
+            let validInsertions = insertions.filter { $0 < currentCount + validDeletions.count }
+            let validModifications = modifications.filter { $0 < currentCount }
+            
+            guard !validDeletions.isEmpty || !validInsertions.isEmpty || !validModifications.isEmpty else {
                 self.updateEmptyState()
                 return
             }
             
-            switch changes {
-            case .initial:
-                self.updateEmptyState()
-                self.tableView.reloadData()
-                
-            case .update(_, let deletions, let insertions, let modifications):
-                let currentCount = searchResults.count
-                
-                // Validate indices
-                let validDeletions = deletions.filter { $0 < currentCount }
-                let validInsertions = insertions.filter { $0 < currentCount + validDeletions.count }
-                let validModifications = modifications.filter { $0 < currentCount }
-                
-                guard !validDeletions.isEmpty || !validInsertions.isEmpty || !validModifications.isEmpty else {
-                    self.updateEmptyState()
-                    return
+            self.tableView.performBatchUpdates({
+                if !validDeletions.isEmpty {
+                    self.tableView.deleteRows(
+                        at: validDeletions.map { IndexPath(row: $0, section: 0) },
+                        with: .automatic
+                    )
                 }
                 
-                self.tableView.performBatchUpdates({
-                    if !validDeletions.isEmpty {
-                        self.tableView.deleteRows(
-                            at: validDeletions.map { IndexPath(row: $0, section: 0) },
-                            with: .automatic
-                        )
-                    }
-                    
-                    if !validInsertions.isEmpty {
-                        self.tableView.insertRows(
-                            at: validInsertions.map { IndexPath(row: $0, section: 0) },
-                            with: .automatic
-                        )
-                    }
-                    
-                    if !validModifications.isEmpty {
-                        self.tableView.reloadRows(
-                            at: validModifications.map { IndexPath(row: $0, section: 0) },
-                            with: .none
-                        )
-                    }
-                }, completion: { _ in
-                    self.updateEmptyState()
-                })
+                if !validInsertions.isEmpty {
+                    self.tableView.insertRows(
+                        at: validInsertions.map { IndexPath(row: $0, section: 0) },
+                        with: .automatic
+                    )
+                }
                 
-            case .error(let error):
-                print("Realm error:", error)
-            }
+                if !validModifications.isEmpty {
+                    self.tableView.reloadRows(
+                        at: validModifications.map { IndexPath(row: $0, section: 0) },
+                        with: .none
+                    )
+                }
+            }, completion: { _ in
+                self.updateEmptyState()
+            })
+            
+        case .error(let error):
+            print("Realm error:", error)
         }
+    }
+    
+    private func handleSearchResultsUpdate() {
+        applySearch(text: searchController.searchBar.text)
+        updateEmptyState()
     }
     
     // MARK: - Data Management
@@ -299,19 +318,16 @@ class AudioController: UIViewController {
         guard !tokens.isEmpty else {
             searchResults = results
             tableView.reloadData()
-            reloadPlayingRows()
             return
         }
         
-        let predicateString = tokens
-            .map { "title CONTAINS[c] '\($0)'" }
-            .joined(separator: " AND ")
+        let predicates = tokens.map { token in
+            NSPredicate(format: "title CONTAINS[c] %@", token)
+        }
+        let compoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
         
-        let predicate = NSPredicate(format: predicateString)
-        searchResults = results.filter(predicate)
-        
+        searchResults = results.filter(compoundPredicate)
         tableView.reloadData()
-        reloadPlayingRows()
     }
     
     // MARK: - Playing Indicator
@@ -320,18 +336,30 @@ class AudioController: UIViewController {
         return PlayerCenter.shared.currentPlayingItemId == item.id
     }
     
+    private func reloadPlayingRowsIfNeeded() {
+        guard tableView.window != nil else { return }
+        
+        let currentPlayingId = PlayerCenter.shared.currentPlayingItemId
+        
+        guard currentPlayingId != cachedPlayingItemId else { return }
+        
+        cachedPlayingItemId = currentPlayingId
+        reloadPlayingRows()
+    }
+    
     private func reloadPlayingRows() {
         guard tableView.window != nil else { return }
         
+        let isPlaying = PlayerCenter.shared.isActuallyPlaying
+        
         for cell in tableView.visibleCells {
-            guard
-                let indexPath = tableView.indexPath(for: cell),
-                let item = searchResults?[indexPath.row] ?? results?[indexPath.row],
-                let playingCell = cell as? DownloadTableViewCell
-            else { continue }
+            guard let playingCell = cell as? DownloadTableViewCell,
+                  let indexPath = tableView.indexPath(for: cell),
+                  indexPath.row < (searchResults?.count ?? 0) else { continue }
             
+            let item = searchResults[indexPath.row]
             let isCurrent = isItemPlaying(item)
-            playingCell.setPlaying(isCurrent && PlayerCenter.shared.isActuallyPlaying)
+            playingCell.setPlaying(isCurrent && isPlaying)
         }
     }
     

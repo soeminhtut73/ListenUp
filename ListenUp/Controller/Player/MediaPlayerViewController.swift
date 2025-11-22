@@ -122,39 +122,14 @@ final class MediaPlayerViewController: UIViewController {
     
     //MARK: - VideoFull Implementation
     @objc private func openLandscapeQuickControls() {
-        guard let window = view.window ?? UIApplication.shared.firstActiveWindow else {
-            // Fallback: present directly
-            let vc = QuickLandscapePlayerViewController(player: PlayerCenter.shared.player) { [weak self] in
-                guard let self else { return }
-                self.videoView.player = PlayerCenter.shared.player
-                self.videoView.playerLayer.videoGravity = .resizeAspectFill
-            }
-            present(vc, animated: true)
-            return
-        }
-        
-        // Snapshot animation from inline video to fullscreen
-        let origin = videoView.convert(videoView.bounds, to: window)
-        let snap = videoView.snapshotView(afterScreenUpdates: false) ?? UIView(frame: origin)
-        snap.frame = origin
-        snap.backgroundColor = .black
-        window.addSubview(snap)
-        
-        videoView.player = nil
-        
-        let target = window.bounds
-        UIView.animate(withDuration: 0.28, delay: 0, options: [.curveEaseInOut]) {
-            snap.frame = target
-        } completion: { [weak self] _ in
+        let vc = QuickLandscapePlayerViewController(player: PlayerCenter.shared.player) { [weak self] in
             guard let self else { return }
-            let vc = QuickLandscapePlayerViewController(player: PlayerCenter.shared.player) { [weak self] in
-                guard let self else { return }
-                self.videoView.player = PlayerCenter.shared.player
-                self.videoView.playerLayer.videoGravity = .resizeAspectFill
-            }
-            snap.removeFromSuperview()
-            self.present(vc, animated: false)
+            self.videoView.player = PlayerCenter.shared.player
+            self.videoView.playerLayer.videoGravity = .resizeAspectFill
         }
+
+        vc.modalPresentationStyle = .fullScreen
+        present(vc, animated: true)
     }
     
     //MARK: - AudioSessionObserver
