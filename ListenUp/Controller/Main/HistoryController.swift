@@ -19,7 +19,9 @@ final class HistoryController: UIViewController {
     private var results: Results<DownloadItem>!
     private var searchResults: Results<DownloadItem>!
     private var token: NotificationToken?
+    
     private var didAttachMiniPlayer = false
+    private var isInitialized = false
     
     private let maxAllowedDuration: TimeInterval = 10 * 60 /// for 10 mins
     
@@ -103,22 +105,22 @@ final class HistoryController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        fetchResult()
         setupNavigationBar()
-        setupSearch()
+
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if !isInitialized {
+            performInitialSetup()
+        }
         
         if !didAttachMiniPlayer, let tabBar = tabBarController {
             MiniPlayerController.shared.attach(to: tabBar)
             didAttachMiniPlayer = true
         }
         
-        DispatchQueue.main.async { [weak self] in
-            self?.performInitialSetup()
-        }
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
         DispatchQueue.main.async { [weak self] in
             MiniPlayerController.shared.show(animated: true)
             self?.reloadPlayingRowsIfNeeded()
@@ -141,8 +143,12 @@ final class HistoryController: UIViewController {
     // MARK: - Setup
     
     private func performInitialSetup() {
-//        fetchResult()
-//        hideKeyboardWhenTappedAround()
+        guard !isInitialized else { return }
+        isInitialized = true
+        
+        fetchResult()
+        
+        setupSearch()
         configureToken()
         startObservingPlayer()
         setupNotifications()

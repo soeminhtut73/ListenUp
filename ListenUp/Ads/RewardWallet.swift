@@ -24,7 +24,7 @@ final class RewardWallet {
     // MARK: - Download reward logic
     func grantDownloadTokens() {
         // Every ad unlocks 4 downloads
-        downloadTokens += 4
+        downloadTokens += 20
     }
     
     func consumeDownloadToken() -> Bool {

@@ -11,6 +11,8 @@ class MainTabBarController: UITabBarController {
     
     //MARK: - Properties
     
+    private var hasPreloadedTabs = false
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         configureTabController()

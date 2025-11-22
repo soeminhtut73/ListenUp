@@ -77,7 +77,7 @@ class DownloadTableViewCell: UITableViewCell {
     }()
     
     private lazy var circularProgressView: CircularProgressView = {
-        let view = CircularProgressView.appStoreStyle(size: 40)
+        let view = CircularProgressView.appStoreStyle(size: 60)
         view.isHidden = true
         return view
     }()
@@ -147,8 +147,8 @@ class DownloadTableViewCell: UITableViewCell {
             // Album image
             albumImageView.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
             albumImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            albumImageView.widthAnchor.constraint(equalToConstant: 54),
-            albumImageView.heightAnchor.constraint(equalToConstant: 54),
+            albumImageView.widthAnchor.constraint(equalToConstant: 46),
+            albumImageView.heightAnchor.constraint(equalToConstant: 46),
             
             // Playing indicator (over album)
             playingIndicator.centerXAnchor.constraint(equalTo: albumImageView.centerXAnchor),

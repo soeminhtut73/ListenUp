@@ -121,50 +121,30 @@ class CircularProgressView: UIView {
     }
     
     /// Set progress for a specific item (recommended for table view cells)
-    /// This prevents backward animation when cell is reused for different items
+    /// This prevents weird animation when cell is reused for different items
     func setProgress(_ progress: Double, for itemId: String?, animated: Bool = true) {
         let clampedProgress = CGFloat(max(0.0, min(progress, 1.0)))
         
-        // Check if this is a different item
-        let isDifferentItem = itemId != nil && itemId != currentItemId
-        
-        if isDifferentItem {
-            // Different item - reset immediately without animation
+        // New item → reset immediately without animation
+        if let itemId = itemId, itemId != currentItemId {
             currentItemId = itemId
             progressLayer.removeAllAnimations()
-            progressLayer.strokeEnd = 0
             currentProgress = 0
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            progressLayer.strokeEnd = 0
+            CATransaction.commit()
             updateIcon()
-            
-            // Then animate to new progress if non-zero
-            if clampedProgress > 0 {
-                DispatchQueue.main.async {
-                    self.animateProgress(to: clampedProgress, animated: animated)
-                }
-            }
+        }
+        
+        // If progress is going backwards (or same), ignore.
+        // This avoids "jumping back" for small files / noisy updates.
+        let epsilon: CGFloat = 0.001
+        if clampedProgress <= currentProgress + epsilon {
             return
         }
         
-        // Same item - check if progress is going backwards
-        let isGoingBackwards = clampedProgress < currentProgress - 0.01 // Small threshold for rounding
-        
-        if isGoingBackwards {
-            // Progress decreased - this shouldn't normally happen
-            // Reset and animate to new value
-            progressLayer.removeAllAnimations()
-            progressLayer.strokeEnd = 0
-            currentProgress = 0
-            updateIcon()
-            
-            if clampedProgress > 0 {
-                DispatchQueue.main.async {
-                    self.animateProgress(to: clampedProgress, animated: animated)
-                }
-            }
-        } else {
-            // Normal forward progress or staying same
-            animateProgress(to: clampedProgress, animated: animated)
-        }
+        animateProgress(to: clampedProgress, animated: animated)
     }
     
     /// Reset progress to 0 and clear item tracking
@@ -172,11 +152,15 @@ class CircularProgressView: UIView {
         currentItemId = nil
         currentProgress = 0
         
+        progressLayer.removeAllAnimations()
+        
         if animated {
             animateProgress(to: 0, animated: true)
         } else {
-            progressLayer.removeAllAnimations()
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
             progressLayer.strokeEnd = 0
+            CATransaction.commit()
             updateIcon()
         }
     }
@@ -193,29 +177,35 @@ class CircularProgressView: UIView {
     }
     
     // MARK: - Private Methods
-    private func animateProgress(to progress: CGFloat, animated: Bool) {
-        let oldProgress = currentProgress
-        currentProgress = progress
+    private func animateProgress(to newValue: CGFloat, animated: Bool) {
+        let oldValue = currentProgress
+        currentProgress = newValue
         
-        if animated && abs(progress - oldProgress) > 0.001 {
-            // Remove existing animation
-            progressLayer.removeAnimation(forKey: "strokeEndAnimation")
-            
-            // Use presentation layer for smooth transitions
-            let fromValue = progressLayer.presentation()?.strokeEnd ?? progressLayer.strokeEnd
-            
+        progressLayer.removeAnimation(forKey: "strokeEndAnimation")
+        
+        if animated && newValue > oldValue {
             let animation = CABasicAnimation(keyPath: "strokeEnd")
-            animation.fromValue = fromValue
-            animation.toValue = progress
-            animation.duration = 0.3
+            animation.fromValue = oldValue
+            animation.toValue = newValue
+            
+            // Shorter animation for small jumps, a bit longer for big jumps
+            let delta = newValue - oldValue
+            animation.duration = Double(max(0.08, min(0.25, delta * 0.4)))
             animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             animation.fillMode = .forwards
             animation.isRemovedOnCompletion = false
             
+            // Set final value and add animation
+            progressLayer.strokeEnd = newValue
             progressLayer.add(animation, forKey: "strokeEndAnimation")
+        } else {
+            // No animation: just snap to value
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            progressLayer.strokeEnd = newValue
+            CATransaction.commit()
         }
         
-        progressLayer.strokeEnd = progress
         updateIcon()
     }
     
@@ -266,6 +256,8 @@ class CircularProgressView: UIView {
     func stopIndeterminateAnimation() {
         progressLayer.removeAnimation(forKey: "rotationAnimation")
         progressLayer.strokeEnd = 0
+        currentProgress = 0
+        updateIcon()
     }
 }
 
@@ -277,7 +269,7 @@ extension CircularProgressView {
         let view = CircularProgressView(frame: CGRect(x: 0, y: 0, width: size, height: size))
         view.progressColor = .systemBlue
         view.trackColor = .systemGray5
-        view.lineWidth = 3
+        view.lineWidth = 4
         view.showIcon = true
         return view
     }
