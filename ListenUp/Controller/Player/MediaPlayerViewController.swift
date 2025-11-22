@@ -218,10 +218,10 @@ final class MediaPlayerViewController: UIViewController {
         
         // Artwork overlay for audio
         artworkView.contentMode = .scaleAspectFit
-        artworkView.image = UIImage(systemName: "music.note.list")
+        artworkView.image = UIImage(systemName: "music.note")
         artworkView.tintColor = .secondaryLabel
         artworkView.layer.cornerRadius = 20
-        artworkView.backgroundColor = .systemGray5
+        artworkView.backgroundColor = .clear
         artworkView.clipsToBounds = true
         
         // Expand control
@@ -481,23 +481,16 @@ final class MediaPlayerViewController: UIViewController {
         if replace {
             let currentURL = (PlayerCenter.shared.player.currentItem?.asset as? AVURLAsset)?.url
             if currentURL != item.url {
-                PlayerCenter.shared.play(url: item.url, itemID: item.id)
+                PlayerCenter.shared.play(url: item.url, itemID: item.id, title: item.title, duration: item.duration)
 
             } else {
                 PlayerCenter.shared.player.play()
             }
         }
-        
-        let duration = Double(item.duration)
-        
         refreshPlayIcon()
         updateLoopUI()
         
         MiniPlayerController.shared.setPlaylist(with: downloadsResults, mediaType: mediaType)
-        
-        PlayerCenter.shared.updateNowPlaying(title: item.title,
-                                             duration: duration,
-                                             isPlaying: true)
     }
     
     private func refreshUIForCurrent() {

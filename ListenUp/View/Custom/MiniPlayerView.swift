@@ -87,8 +87,8 @@ final class MiniPlayerView: UIView {
             
             thumbnailImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
             thumbnailImageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            thumbnailImageView.widthAnchor.constraint(equalToConstant: 40),
-            thumbnailImageView.heightAnchor.constraint(equalToConstant: 40),
+            thumbnailImageView.widthAnchor.constraint(equalToConstant: 52),
+            thumbnailImageView.heightAnchor.constraint(equalToConstant: 52),
             
             titleLabel.leadingAnchor.constraint(equalTo: thumbnailImageView.trailingAnchor, constant: 12),
             titleLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),

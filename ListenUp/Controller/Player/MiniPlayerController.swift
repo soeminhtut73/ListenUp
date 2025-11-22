@@ -22,7 +22,7 @@ final class MiniPlayerController: UIViewController {
     // MARK: - UI
     private var miniPlayerView: MiniPlayerView!
     private var miniPlayerBottomConstraint: NSLayoutConstraint?
-    private let miniPlayerHeight: CGFloat = 65
+    private let miniPlayerHeight: CGFloat = 70
     
     // MARK: - Player observation
     private var timeObserver: Any?
@@ -233,7 +233,7 @@ final class MiniPlayerController: UIViewController {
         else { return }
         
         // pass id if you added that to PlayerCenter
-        PlayerCenter.shared.play(url: url, itemID: targetItem.id)
+        PlayerCenter.shared.play(url: url, itemID: targetItem.id, title: targetItem.title, duration: targetItem.duration)
         updateMiniPlayerUI()
     }
     

@@ -27,9 +27,9 @@ class AudioController: UIViewController {
     }
     
     // Player Observation
-    private var playerRateKVO: NSKeyValueObservation?
-    private var playerItemKVO: NSKeyValueObservation?
     private var lastObservedRate: Float = 0
+    private var playerObservers: [NSKeyValueObservation] = []
+    private var cachedPlayingItemId: String?
     
     // Navigation Bar Items
     internal lazy var sortButton = UIBarButtonItem(
@@ -75,7 +75,7 @@ class AudioController: UIViewController {
         return tv
     }()
     
-    private let emptyStateLabel: UILabel = {
+    private lazy var emptyStateLabel: UILabel = {
         let label = UILabel()
         label.text = "No downloads yet"
         label.textColor = .secondaryLabel
@@ -90,10 +90,14 @@ class AudioController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         setupUI()
         setupSearch()
-        fetchResult()
-        configureToken()
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.performInitialSetup()
+        }
+        
         startObservingPlayer()
     }
     
@@ -144,6 +148,13 @@ class AudioController: UIViewController {
         
         navigationItem.rightBarButtonItem = deleteButton
         navigationItem.leftBarButtonItem = sortButton
+    }
+    
+    private func performInitialSetup() {
+        fetchResult()
+        configureToken()
+        startObservingPlayer()
+        setupNotifications()
     }
     
     private func setupSearch() {
@@ -327,15 +338,13 @@ class AudioController: UIViewController {
     // MARK: - Player Observation
     
     private func startObservingPlayer() {
-        playerRateKVO = PlayerCenter.shared.player.observe(\.rate, options: [.new]) { [weak self] player, _ in
+        let rateObserver = PlayerCenter.shared.player.observe(\.rate, options: [.new]) { [weak self] player, _ in
             guard let self = self else { return }
             
             let newRate = player.rate
-            let wasPlaying = self.lastObservedRate > 0
-            let isPlaying = newRate > 0
+            let stateChanged = (self.lastObservedRate > 0) != (newRate > 0)
             
-            // Only reload if play/pause state actually changed
-            guard wasPlaying != isPlaying else { return }
+            guard stateChanged else { return }
             
             self.lastObservedRate = newRate
             DispatchQueue.main.async {
@@ -343,28 +352,7 @@ class AudioController: UIViewController {
             }
         }
         
-        // Item changes
-        playerItemKVO = PlayerCenter.shared.player.observe(\.currentItem, options: [.new, .old]) { [weak self] _, change in
-            guard let self = self else { return }
-            
-            // Safely unwrap the optional values returned by KVO
-            let oldItem: AVPlayerItem? = change.oldValue ?? nil
-            let newItem: AVPlayerItem? = change.newValue ?? nil
-            
-            // Only reload if the item actually changed (identity difference)
-            let isSameItem: Bool
-            if let o = oldItem, let n = newItem {
-                isSameItem = (o === n)
-            } else {
-                // One or both are nil – treat as changed only if both are nil
-                isSameItem = (oldItem == nil && newItem == nil)
-            }
-            guard !isSameItem else { return }
-            
-            DispatchQueue.main.async {
-                self.reloadPlayingRows()
-            }
-        }
+        playerObservers.append(rateObserver)
     }
     
     // MARK: - Helper Methods
@@ -485,7 +473,7 @@ class AudioController: UIViewController {
 
 extension AudioController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return searchResults.count
+        return searchResults?.count ?? 0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -610,5 +598,16 @@ extension AudioController: ActionSheetConfigurable {
         actions.append(deleteAction)
         
         return actions
+    }
+}
+
+//MARK: - MiniPlayerAdjustable Delegate
+
+extension AudioController: MiniPlayerAdjustable {
+    func setMiniPlayerVisible(_ visible: Bool, height: CGFloat) {
+        var inset = tableView.contentInset
+        inset.bottom = visible ? height : 0
+        tableView.contentInset = inset
+        tableView.scrollIndicatorInsets = inset
     }
 }

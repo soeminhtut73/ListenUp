@@ -166,12 +166,13 @@ final class PlayerCenter {
     
     // MARK: - Playback Control
     
-    func play(url: URL, itemID: String? = nil) {
+    func play(url: URL, itemID: String? = nil, title: String, duration: Double) {
         let item = AVPlayerItem(url: url)
         player.replaceCurrentItem(with: item)
 
         player.play()
         currentPlayingItemId = itemID
+        updateNowPlaying(title: title, duration: duration, isPlaying: true)
         NotificationCenter.default.post(name: .playerCenterItemChanged, object: nil)
     }
     
@@ -243,7 +244,7 @@ final class PlayerCenter {
     
     // MARK: - Now Playing Info
     
-    func updateNowPlaying(title: String, duration: Double, isPlaying: Bool) {
+    private func updateNowPlaying(title: String, duration: Double, isPlaying: Bool) {
         var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
         info[MPMediaItemPropertyTitle] = title
         info[MPMediaItemPropertyPlaybackDuration] = duration

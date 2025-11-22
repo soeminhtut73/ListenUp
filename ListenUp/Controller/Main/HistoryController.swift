@@ -21,6 +21,8 @@ final class HistoryController: UIViewController {
     private var token: NotificationToken?
     private var didAttachMiniPlayer = false
     
+    private let maxAllowedDuration: TimeInterval = 10 * 60 /// for 10 mins
+    
     // Player Observation
     private var lastObservedRate: Float = 0
     
@@ -30,6 +32,10 @@ final class HistoryController: UIViewController {
     // Search
     private let searchController = UISearchController(searchResultsController: nil)
     private var searchWorkItem: DispatchWorkItem?
+    private var isSearching: Bool {
+        let raw = (searchController.searchBar.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return !raw.isEmpty
+    }
     
     // Navigation Bar Items
     private lazy var deleteButton = UIBarButtonItem(
@@ -59,11 +65,6 @@ final class HistoryController: UIViewController {
         target: self,
         action: #selector(sortButtonTapped)
     )
-    
-    private var isSearching: Bool {
-        let raw = (searchController.searchBar.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        return !raw.isEmpty
-    }
     
     // MARK: - UI Components
     
@@ -102,6 +103,7 @@ final class HistoryController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        fetchResult()
         setupNavigationBar()
         setupSearch()
         
@@ -118,9 +120,8 @@ final class HistoryController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         DispatchQueue.main.async { [weak self] in
+            MiniPlayerController.shared.show(animated: true)
             self?.reloadPlayingRowsIfNeeded()
-//            self?.reloadPlayingRows()
-            self?.tableView.reloadData()
         }
     }
     
@@ -140,8 +141,8 @@ final class HistoryController: UIViewController {
     // MARK: - Setup
     
     private func performInitialSetup() {
-        fetchResult()
-        hideKeyboardWhenTappedAround()
+//        fetchResult()
+//        hideKeyboardWhenTappedAround()
         configureToken()
         startObservingPlayer()
         setupNotifications()
@@ -410,6 +411,11 @@ final class HistoryController: UIViewController {
             guard let localPath = item.localPath as String?,
                   let fileURL = FileHelper.fileURL(for: localPath) else { return }
             
+            guard self.isDurationValid(for: item.duration) else {
+                self.showMessage(withTitle: "Oop!", message: "Choose no longer than 10 minutes!")
+                return
+            }
+            
             PlayerCenter.shared.pause()
             let vc = RingtoneTrimWithStripViewController(videoURL: fileURL, item: item)
             let nav = UINavigationController(rootViewController: vc)
@@ -441,6 +447,10 @@ final class HistoryController: UIViewController {
         actionSheet.addAction(cancelAction)
         
         present(actionSheet, animated: true)
+    }
+    
+    private func isDurationValid(for duration: TimeInterval) -> Bool {
+        return duration >= 0 && duration <= maxAllowedDuration
     }
     
     // MARK: - Selection Mode
