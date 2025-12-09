@@ -30,6 +30,7 @@
 		041C4AF52E693E91005B7DEC /* RealmService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041C4AF42E693E90005B7DEC /* RealmService.swift */; };
 		041C4AF72E693EDC005B7DEC /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041C4AF62E693EDC005B7DEC /* DownloadManager.swift */; };
 		041C4AFF2E696B0B005B7DEC /* DownloadItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041C4AFE2E696B0B005B7DEC /* DownloadItem.swift */; };
+		041CBA9D2ED405B2009C2BEA /* CookieUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041CBA9C2ED405B2009C2BEA /* CookieUploader.swift */; };
 		04396C692E824EC4002B907A /* MiniPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396C682E824EC4002B907A /* MiniPlayerView.swift */; };
 		04396C912E893B69002B907A /* PlayingIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396C902E893B69002B907A /* PlayingIndicatorView.swift */; };
 		04396C9F2E8D0833002B907A /* FileHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04396C9E2E8D0833002B907A /* FileHelper.swift */; };
@@ -109,6 +110,7 @@
 		041C4AF42E693E90005B7DEC /* RealmService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealmService.swift; sourceTree = "<group>"; };
 		041C4AF62E693EDC005B7DEC /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
 		041C4AFE2E696B0B005B7DEC /* DownloadItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadItem.swift; sourceTree = "<group>"; };
+		041CBA9C2ED405B2009C2BEA /* CookieUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CookieUploader.swift; sourceTree = "<group>"; };
 		04396C682E824EC4002B907A /* MiniPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerView.swift; sourceTree = "<group>"; };
 		04396C902E893B69002B907A /* PlayingIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayingIndicatorView.swift; sourceTree = "<group>"; };
 		04396C9E2E8D0833002B907A /* FileHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileHelper.swift; sourceTree = "<group>"; };
@@ -260,6 +262,7 @@
 				04396CCD2E993D90002B907A /* DownloadGuard.swift */,
 				041BB0B72EAB643C004BC0D8 /* AudioConverter.swift */,
 				04EE2BCC2EC4F3410020833E /* DeviceID.swift */,
+				041CBA9C2ED405B2009C2BEA /* CookieUploader.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -781,6 +784,7 @@
 				041BB0BC2EABC7B7004BC0D8 /* DownloadTableViewCell.swift in Sources */,
 				04B16ABE2EA0E7F500332961 /* MusicCategory.swift in Sources */,
 				04B16AC02EA0E90300332961 /* Ringtone.swift in Sources */,
+				041CBA9D2ED405B2009C2BEA /* CookieUploader.swift in Sources */,
 				0461FEEF2E2E8C050052F966 /* CircularProgressView.swift in Sources */,
 				04EE2BDC2EC70DE50020833E /* AdIDs.swift in Sources */,
 				041469782DF009B0009D6EF9 /* MainTabBarController.swift in Sources */,

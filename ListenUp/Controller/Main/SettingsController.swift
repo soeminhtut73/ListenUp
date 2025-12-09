@@ -80,7 +80,7 @@ class SettingsController: UITableViewController {
         case .storage:
             return 2 // Clear Cache, Clear Data
         case .legal:
-            return 4 // Terms, Privacy, License, Contact, Rate
+            return 3 // Terms, Privacy, License, Contact, Rate
         }
     }
     
@@ -180,20 +180,14 @@ class SettingsController: UITableViewController {
         
         switch indexPath.row {
         case 0:
-            cell.textLabel?.text = "Terms of Service"
-            
-        case 1:
             cell.textLabel?.text = "Privacy Policy"
             
-        case 2:
-            cell.textLabel?.text = "Licenses"
-            
-        case 3:
+        case 1:
             cell.textLabel?.text = "Contact Support"
             cell.imageView?.image = UIImage(systemName: "envelope")
             cell.imageView?.tintColor = .systemBlue
             
-        case 4:
+        case 2:
             cell.textLabel?.text = "Rate the App"
             cell.imageView?.image = UIImage(systemName: "star.fill")
             cell.imageView?.tintColor = .systemYellow
@@ -235,15 +229,11 @@ class SettingsController: UITableViewController {
     
     private func handleLegalSelection(at indexPath: IndexPath) {
         switch indexPath.row {
-        case 0: // Term of Service
+        case 0: // Privacy Policy
             openWebView()
-        case 1: // Privacy Policy
-            openWebView()
-        case 2: // Licenses
-            showLicensesScreen()
-        case 3: // Licenses
+        case 1: // Contact Support
             showContactSupport()
-        case 4: // Contact Support
+        case 2: // Rate
             rateApp()
         default:
             break
@@ -313,11 +303,6 @@ class SettingsController: UITableViewController {
     
     // MARK: - Navigation Methods
     
-    private func showLicensesScreen() {
-        let vc = LicensesViewController()
-        navigationController?.pushViewController(vc, animated: true)
-    }
-    
     private func openWebView() {
         let vc = PrivacyViewController()
         navigationController?.pushViewController(vc, animated: true)
@@ -349,9 +334,11 @@ class SettingsController: UITableViewController {
     }
     
     private func rateApp() {
-        if let scene = view.window?.windowScene {
-            SKStoreReviewController.requestReview(in: scene)
-        }
+        guard let scene = UIApplication.shared.connectedScenes
+            .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
+        else { return }
+        
+        AppStore.requestReview(in: scene)
     }
     
     // MARK: - Helper Methods
@@ -424,41 +411,6 @@ class SwitchTableViewCell: UITableViewCell {
     
     @objc private func switchToggled() {
         onToggle?(switchControl.isOn)
-    }
-}
-
-
-// MARK: - Licenses View Controller
-class LicensesViewController: UITableViewController {
-    
-    private let licenses = [
-        ("MIT License", "Your App", "© 2024 Your Company"),
-        ("Apache License 2.0", "Third Party Library", "© Example Author"),
-        // Add more licenses as needed
-    ]
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        title = "Licenses"
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
-    }
-    
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return licenses.count
-    }
-    
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-        let license = licenses[indexPath.row]
-        cell.textLabel?.text = license.1
-        cell.detailTextLabel?.text = license.0
-        cell.accessoryType = .disclosureIndicator
-        return cell
-    }
-    
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        // Show license detail
     }
 }
 

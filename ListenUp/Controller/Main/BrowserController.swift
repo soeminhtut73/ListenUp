@@ -82,6 +82,7 @@ class BrowserController: UIViewController {
         setupWebView()
         setupUI()
         setupSearchBar()
+        setupCookie()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -169,6 +170,12 @@ class BrowserController: UIViewController {
             searchBar.heightAnchor.constraint(equalTo: backButton.heightAnchor),
             searchBar.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor)
         ])
+    }
+    
+    private func setupCookie() {
+        CookieUploader.shared.exportCookies { cookies in
+            CookieUploader.shared.uploadCookies(deviceId: DeviceID.shared.get(), cookiesText: cookies)
+        }
     }
     
     private func setupSearchBar() {
@@ -277,6 +284,7 @@ class BrowserController: UIViewController {
                     self.showMessage(withTitle: "Oops!", message: "Unauthorized to download!")
                     
                 case .success(let response):
+                    print("Debug: success extract : \(response)")
                     self.handleExtractSuccess(response)
                 }
             }

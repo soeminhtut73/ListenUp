@@ -9,9 +9,7 @@ import Foundation
 
 struct ExtractResponse: Codable {
     let title: String
-    let ext: String
     let url: String
-    let isHLS: Bool
     let duration: Int
     let thumb: String
     

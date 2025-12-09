@@ -20,6 +20,9 @@ enum APIEndpoint {
     case downloadRingtone(id: Int)
     case trackPlay(id: Int)
     
+    //MARK: - Cookie
+    case uploadCookie
+    
     //MARK: - Register (v1)
     case registerDevice
     
@@ -51,9 +54,12 @@ enum APIEndpoint {
         case .trackPlay(let id):
             return "\(baseURL)/ringtones/\(id)/play"
             
-            // register device
+        // register device
         case .registerDevice:
             return "\(baseURL)/register_device_id"
+            
+        case .uploadCookie:
+            return "\(baseURL)/upload-cookies"
         }
     }
 }

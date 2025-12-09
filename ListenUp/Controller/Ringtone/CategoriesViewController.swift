@@ -13,8 +13,6 @@ class CategoriesViewController: UIViewController {
     private let tableView = UITableView()
     private var categories: [MusicCategory] = []
     
-    private let kMaxDuration: TimeInterval = 20 * 60
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         

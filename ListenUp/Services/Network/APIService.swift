@@ -10,8 +10,6 @@ import UIKit
 class APIService {
     static let shared = APIService()
     
-    private let baseURL = "http://192.168.10.7:8000/api/v1"
-    
     // MARK: - Categories
     
     func fetchCategories() async throws -> [MusicCategory] {
